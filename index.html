@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>たびノート</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f5f2ed;--paper:#faf9f6;--ink:#1c1917;--muted:#78716c;
+  --border:#e2ddd6;--accent:#c2541a;--green:#4a7c59;--stamp:#ede9e3;
+}
+body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);}
+
+/* Loading / Login */
+.center-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center;}
+.login-bg{background:var(--ink);}
+.login-icon{font-size:72px;margin-bottom:20px;}
+.login-label{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.35);margin-bottom:8px;text-transform:uppercase;}
+.login-title{font-size:34px;font-weight:800;color:#fff;margin-bottom:10px;}
+.login-sub{font-size:14px;color:rgba(255,255,255,0.45);margin-bottom:52px;line-height:1.8;}
+.google-btn{display:flex;align-items:center;gap:12px;background:#fff;border:none;border-radius:16px;padding:16px 32px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px rgba(0,0,0,0.4);width:100%;max-width:320px;justify-content:center;}
+
+/* Header */
+.app-header{background:var(--ink);color:#fff;padding:16px 20px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.header-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
+.back-btn{background:rgba(255,255,255,0.12);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.header-title{font-size:17px;font-weight:700;letter-spacing:-0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.header-sub{font-size:10px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+.header-right{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.ghost-btn{background:rgba(255,255,255,0.12);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ghost-btn.active{background:var(--accent);}
+.add-trip-btn{background:var(--accent);border:none;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+/* Toast */
+.toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:200;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.3);animation:fadeIn 0.2s ease;pointer-events:none;}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-6px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+/* Trip list */
+.trip-cards{padding:16px;display:flex;flex-direction:column;gap:12px;}
+.trip-card{background:var(--paper);border-radius:16px;padding:18px 18px 14px;border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;}
+.trip-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);border-radius:4px 0 0 4px;}
+.trip-card-del{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--border);font-size:16px;cursor:pointer;padding:4px;line-height:1;}
+.trip-name{font-size:18px;font-weight:800;color:var(--ink);}
+.trip-meta{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
+.trip-meta span{font-size:12px;color:var(--muted);}
+.days-pill{background:var(--accent)!important;color:#fff!important;font-weight:700!important;padding:2px 9px;border-radius:20px;}
+.count-chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.count-chip{background:var(--stamp);border-radius:8px;padding:4px 9px;font-size:11px;color:var(--muted);font-weight:600;}
+.type-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.type-badge.overseas{background:#dbeafe;color:#1d4ed8;}
+.type-badge.domestic{background:#dcfce7;color:#166534;}
+.shared-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:#fef3c7;color:#92400e;}
+
+/* Tabs */
+.tabs{display:flex;background:var(--paper);border-bottom:1px solid var(--border);}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;cursor:pointer;border-bottom:2.5px solid transparent;font-size:10px;font-weight:600;color:var(--muted);transition:all 0.15s;}
+.tab.active{color:var(--ink);border-bottom-color:var(--accent);}
+.tab-icon{font-size:18px;}
+.tab-badge{background:var(--stamp);color:var(--muted);font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;min-width:16px;text-align:center;}
+.tab.active .tab-badge{background:var(--accent);color:#fff;}
+
+/* Content */
+.content{padding:16px;}
+.section-box{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px;}
+.input-row{display:flex;gap:8px;margin-bottom:8px;}
+.main-input{flex:1;padding:12px 14px;background:var(--paper);border:1.5px solid var(--border);border-radius:12px;font-size:15px;color:var(--ink);outline:none;font-family:inherit;-webkit-appearance:none;width:100%;}
+.main-input:focus{border-color:var(--accent);}
+.add-btn{padding:12px 16px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:20px;cursor:pointer;font-family:inherit;line-height:1;flex-shrink:0;}
+.add-btn:disabled{opacity:0.5;}
+
+/* Progress */
+.progress-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;}
+.prog-bg{background:var(--border);border-radius:4px;height:4px;margin-bottom:16px;overflow:hidden;}
+.prog-bar{height:100%;background:var(--green);border-radius:4px;transition:width 0.4s;}
+
+/* Items */
+.item-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:13px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.item-card.done{opacity:0.48;}
+.check-btn{width:26px;height:26px;border-radius:8px;border:2px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:#fff;transition:all 0.15s;}
+.check-btn.on{background:var(--green);border-color:var(--green);}
+.item-text{flex:1;font-size:15px;color:var(--ink);line-height:1.4;}
+.item-text.done{text-decoration:line-through;color:var(--muted);}
+.icon-btn{background:var(--stamp);border:none;cursor:pointer;font-size:14px;padding:5px 8px;border-radius:7px;color:var(--muted);flex-shrink:0;}
+.tpl-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:0.5;margin-right:6px;vertical-align:middle;}
+
+/* Itinerary */
+.date-header{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.date-header::before{content:'';display:inline-block;width:4px;height:16px;background:var(--accent);border-radius:2px;}
+.itin-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding:0 4px;}
+.itin-time{font-size:13px;font-weight:700;color:var(--accent);width:44px;flex-shrink:0;padding-top:2px;}
+.itin-timeline{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:16px;padding-top:4px;}
+.itin-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);box-shadow:0 0 0 2px var(--accent);}
+.itin-line{width:2px;flex:1;min-height:16px;background:var(--border);}
+.itin-text-wrap{flex:1;font-size:14px;color:var(--ink);line-height:1.5;padding-top:1px;}
+.place-num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* Empty */
+.empty{text-align:center;padding:48px 16px;color:var(--muted);}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:0.5;}
+.empty-text{font-size:13px;line-height:1.7;}
+
+/* Tab type buttons */
+.type-btn-row{display:flex;gap:8px;margin-bottom:16px;}
+.type-btn{padding:9px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--paper);color:var(--muted);font-family:inherit;flex:1;}
+.type-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;z-index:100;backdrop-filter:blur(3px);}
+.modal{background:var(--paper);border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;margin:0 auto;box-shadow:0 -8px 40px rgba(0,0,0,0.2);animation:slideUp 0.25s ease;max-height:92vh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 20px;}
+.modal-title{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:18px;}
+.form-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;}
+.form-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;color:var(--ink);background:#fff;outline:none;font-family:inherit;-webkit-appearance:none;margin-bottom:0;}
+.form-input:focus{border-color:var(--accent);}
+.form-group{margin-bottom:12px;}
+.form-row{display:flex;gap:10px;}
+.modal-actions{display:flex;gap:8px;margin-top:18px;}
+.btn-cancel{flex:1;padding:13px;background:var(--stamp);border:none;border-radius:12px;font-size:14px;cursor:pointer;color:var(--muted);font-family:inherit;font-weight:600;}
+.btn-primary{flex:2;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-primary:disabled{opacity:0.5;}
+
+/* Map hint */
+.map-hint{padding:8px 16px;background:var(--paper);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ── Firebase config ──
+const FB_CONFIG = {
+  apiKey: "AIzaSyAc4RN6JR3DZd0d3EabrjgqT8t6ZOZQtMI",
+  authDomain: "tabinote-40a95.firebaseapp.com",
+  projectId: "tabinote-40a95",
+  storageBucket: "tabinote-40a95.firebasestorage.app",
+  messagingSenderId: "333188151359",
+  appId: "1:333188151359:web:a811a166f1fb096a20e08a"
+};
+
+firebase.initializeApp(FB_CONFIG);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── State ──
+let user = null;
+let trips = [];
+let templates = {
+  domestic: {
+    packing: ["財布・現金","スマートフォン","充電器","常備薬","着替え","タオル"],
+    todo:    ["宿泊先の予約確認","交通手段の確認","天気予報チェック"]
+  },
+  overseas: {
+    packing: ["パスポート","航空券(eチケット)","海外保険証","外貨・クレジットカード","充電器(変換プラグ)","常備薬","着替え"],
+    todo:    ["パスポート有効期限確認","ビザ取得確認","航空券の予約確認","ホテルの予約確認","海外保険加入","外貨両替"]
+  }
+};
+
+let view = "list";       // list | detail | templates
+let selId = null;
+let activeTab = "itinerary";
+
+// form state
+let tripForm = { name:"", destination:"", startDate:"", endDate:"", type:"overseas" };
+let itinForm = { date:"", time:"", text:"" };
+let checkInput = "";
+let placeInput = "";
+let placeMemo  = "";
+let shareEmail = "";
+let pinName = "";
+let tplTab = "domestic";
+let tplInput = { packing:"", todo:"" };
+
+let showNewTrip  = false;
+let showShare    = false;
+let showPinModal = false;
+let showMap      = false;
+let geocoding    = false;
+let pendingPin   = null;
+let saving       = false;
+
+let tripsUnsub = null;
+let tplUnsub   = null;
+let mapInstance = null;
+let mapMarkers  = [];
+
+// ── Helpers ──
+function mkId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function getDaysLeft(startDate) {
+  if (!startDate) return null;
+  const diff = Math.ceil((new Date(startDate) - new Date()) / 86400000);
+  if (diff > 0) return `あと${diff}日`;
+  if (diff === 0) return "今日出発！";
+  return `${Math.abs(diff)}日前`;
+}
+
+function fmtDate(d) {
+  if (!d) return "日付未設定";
+  const dt = new Date(d + "T00:00:00");
+  return `${dt.getMonth()+1}月${dt.getDate()}日（${"日月火水木金土"[dt.getDay()]}）`;
+}
+
+function getSel() { return trips.find(t => t.id === selId); }
+
+let toastTimer = null;
+function showToast(msg) {
+  const old = document.querySelector(".toast");
+  if (old) old.remove();
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 2500);
+}
+
+// ── Geocode ──
+async function geocode(q) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`, { headers:{"Accept-Language":"ja"} });
+    const d = await r.json();
+    if (d[0]) return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
+  } catch(e) {}
+  return null;
+}
+
+// ── Map ──
+function initMap() {
+  const el = document.getElementById("leaflet-map");
+  if (!el || mapInstance) return;
+  mapInstance = L.map(el).setView([35.6762, 139.6503], 5);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:"© OpenStreetMap contributors"
+  }).addTo(mapInstance);
+  mapInstance.on("click", e => {
+    pendingPin = e.latlng;
+    pinName = "";
+    showPinModal = true;
+    render();
+  });
+  syncMarkers();
+}
+
+function destroyMap() {
+  if (mapInstance) { mapInstance.remove(); mapInstance = null; mapMarkers = []; }
+}
+
+function syncMarkers() {
+  if (!mapInstance) return;
+  const sel = getSel();
+  const spots = sel?.places ?? [];
+  mapMarkers.forEach(m => m.remove());
+  mapMarkers = [];
+  spots.forEach((s, i) => {
+    if (!s.lat || !s.lng) return;
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="background:#c2541a;color:#fff;border-radius:50% 50% 50% 0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg)"><span style="transform:rotate(45deg)">${i+1}</span></div>`,
+      iconSize:[28,28], iconAnchor:[14,28], popupAnchor:[0,-30]
+    });
+    const m = L.marker([s.lat, s.lng], { icon }).addTo(mapInstance);
+    m.bindPopup(`<b>${i+1}. ${s.name}</b>${s.memo?`<br><small>${s.memo}</small>`:""}`);
+    mapMarkers.push(m);
+  });
+  if (spots.some(s=>s.lat)) {
+    const valid = spots.filter(s=>s.lat);
+    mapInstance.fitBounds(L.latLngBounds(valid.map(s=>[s.lat,s.lng])), { padding:[40,40], maxZoom:14 });
+  }
+}
+
+// ── Firebase ──
+async function loginGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try { await auth.signInWithPopup(provider); }
+  catch(e) { showToast("ログインに失敗: " + e.message); }
+}
+
+async function logout() {
+  if (tripsUnsub) { tripsUnsub(); tripsUnsub = null; }
+  if (tplUnsub)   { tplUnsub();   tplUnsub   = null; }
+  await auth.signOut();
+  trips = []; view = "list"; selId = null;
+  render();
+}
+
+async function upd(patch) {
+  const sel = getSel(); if (!sel) return;
+  await db.collection("trips").doc(sel.id).update(patch);
+}
+
+async function createTrip() {
+  if (!tripForm.name.trim()) return;
+  saving = true; render();
+  try {
+    const tpl = templates[tripForm.type] ?? { packing:[], todo:[] };
+    const ref = await db.collection("trips").add({
+      name: tripForm.name.trim(),
+      destination: tripForm.destination.trim(),
+      startDate: tripForm.startDate,
+      endDate: tripForm.endDate,
+      type: tripForm.type,
+      ownerId: user.uid,
+      ownerName: user.displayName || user.email,
+      memberIds: [user.uid],
+      members: [{ uid:user.uid, name:user.displayName||user.email, email:user.email }],
+      itinerary: [],
+      packing: tpl.packing.map(t => ({ id:mkId(), text:t, checked:false, template:true })),
+      todo:    tpl.todo.map(t => ({ id:mkId(), text:t, checked:false, template:true })),
+      places: [],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    selId = ref.id;
+    tripForm = { name:"", destination:"", startDate:"", endDate:"", type:"overseas" };
+    showNewTrip = false;
+    view = "detail";
+    activeTab = "itinerary";
+    showToast("旅行を作成しました！");
+  } catch(e) { showToast("作成に失敗: " + e.message); }
+  saving = false; render();
+}
+
+async function deleteTrip(id) {
+  if (!confirm("この旅行を削除しますか？")) return;
+  await db.collection("trips").doc(id).delete();
+  if (selId === id) { selId = null; view = "list"; }
+  showToast("削除しました");
+  render();
+}
+
+async function shareTrip() {
+  if (!shareEmail.trim()) return;
+  const sel = getSel(); if (!sel) return;
+  try {
+    await db.collection("trips").doc(sel.id).update({
+      memberIds: firebase.firestore.FieldValue.arrayUnion(shareEmail.trim()),
+      members:   firebase.firestore.FieldValue.arrayUnion({ uid:shareEmail.trim(), name:shareEmail.trim(), email:shareEmail.trim() }),
+    });
+    shareEmail = "";
+    showToast("招待しました！");
+    render();
+  } catch(e) { showToast("共有に失敗: " + e.message); }
+}
+
+async function addItin() {
+  if (!itinForm.text.trim()) return;
+  const sel = getSel(); if (!sel) return;
+  const item = { id:mkId(), date:itinForm.date, time:itinForm.time, text:itinForm.text.trim() };
+  const sorted = [...(sel.itinerary||[]), item].sort((a,b) => {
+    const da=(a.date+a.time)||"", db2=(b.date+b.time)||"";
+    return da < db2 ? -1 : da > db2 ? 1 : 0;
+  });
+  await upd({ itinerary: sorted });
+  itinForm = { date:itinForm.date, time:"", text:"" };
+  render();
+}
+
+async function delItin(id) {
+  const sel = getSel(); if (!sel) return;
+  await upd({ itinerary: (sel.itinerary||[]).filter(i=>i.id!==id) });
+}
+
+async function addCheck(tab) {
+  if (!checkInput.trim()) return;
+  const sel = getSel(); if (!sel) return;
+  await upd({ [tab]: [...(sel[tab]||[]), { id:mkId(), text:checkInput.trim(), checked:false }] });
+  checkInput = ""; render();
+}
+
+async function toggleCheck(tab, id) {
+  const sel = getSel(); if (!sel) return;
+  await upd({ [tab]: (sel[tab]||[]).map(i => i.id===id ? { ...i, checked:!i.checked } : i) });
+}
+
+async function delCheck(tab, id) {
+  const sel = getSel(); if (!sel) return;
+  await upd({ [tab]: (sel[tab]||[]).filter(i=>i.id!==id) });
+}
+
+async function addPlace() {
+  const name = placeInput.trim(); if (!name) return;
+  geocoding = true; render();
+  try {
+    const geo = await geocode(name);
+    const sel = getSel(); if (!sel) return;
+    await upd({ places: [...(sel.places||[]), { id:mkId(), name, memo:placeMemo.trim(), lat:geo?.lat, lng:geo?.lng }] });
+    placeInput = ""; placeMemo = "";
+  } finally { geocoding = false; render(); }
+}
+
+async function delPlace(id) {
+  const sel = getSel(); if (!sel) return;
+  await upd({ places: (sel.places||[]).filter(p=>p.id!==id) });
+}
+
+async function confirmPin() {
+  if (!pinName.trim() || !pendingPin) return;
+  const sel = getSel(); if (!sel) return;
+  await upd({ places: [...(sel.places||[]), { id:mkId(), name:pinName.trim(), memo:"", lat:pendingPin.lat, lng:pendingPin.lng }] });
+  showPinModal = false; pendingPin = null; pinName = ""; render();
+}
+
+async function saveTpl(next) {
+  templates = next;
+  try { await db.collection("users").doc(user.uid).collection("settings").doc("templates").set(next); } catch {}
+}
+
+async function addTplItem(tab) {
+  if (!tplInput[tab].trim()) return;
+  const next = { ...templates, [tplTab]: { ...templates[tplTab], [tab]: [...(templates[tplTab]?.[tab]??[]), tplInput[tab].trim()] } };
+  await saveTpl(next);
+  tplInput = { ...tplInput, [tab]:"" }; render();
+}
+
+async function delTplItem(tab, idx) {
+  const next = { ...templates, [tplTab]: { ...templates[tplTab], [tab]: templates[tplTab][tab].filter((_,i)=>i!==idx) } };
+  await saveTpl(next);
+}
+
+// ── Subscribe on login ──
+function subscribeTrips() {
+  if (tripsUnsub) tripsUnsub();
+  tripsUnsub = db.collection("trips")
+    .where("memberIds","array-contains", user.uid)
+    .onSnapshot(snap => {
+      trips = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      trips.sort((a,b) => (a.createdAt?.seconds??0) - (b.createdAt?.seconds??0));
+      syncMarkers();
+      render();
+    }, err => {
+      // fallback without order
+      if (tripsUnsub) tripsUnsub();
+      tripsUnsub = db.collection("trips")
+        .where("memberIds","array-contains", user.uid)
+        .onSnapshot(snap => {
+          trips = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+          syncMarkers(); render();
+        });
+    });
+}
+
+function subscribeTemplates() {
+  if (tplUnsub) tplUnsub();
+  tplUnsub = db.collection("users").doc(user.uid)
+    .collection("settings").doc("templates")
+    .onSnapshot(snap => {
+      if (snap.exists) { templates = snap.data(); render(); }
+    });
+}
+
+auth.onAuthStateChanged(u => {
+  user = u;
+  if (u) { subscribeTrips(); subscribeTemplates(); }
+  else   { trips = []; }
+  render();
+});
+
+// ── RENDER ──
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => {
+    if (k === "className") el.className = v;
+    else if (k.startsWith("on")) el[k.toLowerCase()] = v;
+    else if (k === "style" && typeof v === "object") Object.assign(el.style, v);
+    else el.setAttribute(k, v);
+  });
+  children.flat(Infinity).forEach(c => {
+    if (c == null || c === false) return;
+    el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  });
+  return el;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  if (!user) { app.appendChild(renderLogin()); return; }
+
+  app.appendChild(renderHeader());
+  if (view === "list")      app.appendChild(renderList());
+  if (view === "templates") app.appendChild(renderTemplates());
+  if (view === "detail")    app.appendChild(renderDetail());
+  if (showNewTrip)  app.appendChild(renderNewTripModal());
+  if (showShare)    app.appendChild(renderShareModal());
+  if (showPinModal) app.appendChild(renderPinModal());
+
+  // init map after DOM
+  if (view === "detail" && activeTab === "places" && showMap) {
+    requestAnimationFrame(() => { if (!mapInstance) initMap(); else syncMarkers(); });
+  }
+}
+
+function renderLogin() {
+  return h("div", { className:"center-screen login-bg" },
+    h("div", { className:"login-icon" }, "✈️"),
+    h("div", { className:"login-label" }, "Travel Memo"),
+    h("div", { className:"login-title" }, "たびノート"),
+    h("div", { className:"login-sub" }, "旅行の行程・持ち物・ToDoを管理\n友人と旅行を共有できます"),
+    h("button", { className:"google-btn", onclick: loginGoogle },
+      h("svg", { width:"20", height:"20", viewBox:"0 0 48 48" },
+        ...[
+          ["#EA4335","M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"],
+          ["#4285F4","M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"],
+          ["#FBBC05","M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"],
+          ["#34A853","M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.32-8.16 2.32-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"]
+        ].map(([fill, d]) => { const p = document.createElementNS("http://www.w3.org/2000/svg","path"); p.setAttribute("fill",fill); p.setAttribute("d",d); return p; })
+      ),
+      "Googleでログイン"
+    )
+  );
+}
+
+function renderHeader() {
+  const sel = getSel();
+  const leftBtns = [];
+  if (view === "detail" || view === "templates") {
+    leftBtns.push(h("button", { className:"back-btn", onclick:() => { destroyMap(); showMap=false; view="list"; render(); } }, "←"));
+  }
+  const titleText = view==="list" ? "✈️ たびノート" : view==="templates" ? "📋 テンプレート" : (sel?.name ?? "");
+  leftBtns.push(h("div", null,
+    h("div", { className:"header-title" }, titleText),
+    view==="list" ? h("div", { className:"header-sub" }, user.displayName||user.email) : null
+  ));
+
+  const rightBtns = [];
+  if (view === "list") {
+    rightBtns.push(h("button", { className:"ghost-btn", title:"テンプレート", onclick:()=>{ view="templates"; render(); } }, "📋"));
+    rightBtns.push(h("button", { className:"ghost-btn", title:"ログアウト", onclick: logout }, "👤"));
+    rightBtns.push(h("button", { className:"add-trip-btn", onclick:()=>{ showNewTrip=true; render(); } }, "＋ 追加"));
+  }
+  if (view === "detail") {
+    if (sel?.ownerId === user.uid) {
+      rightBtns.push(h("button", { className:"ghost-btn", title:"共有", onclick:()=>{ showShare=true; render(); } }, "🔗"));
+    }
+    if (activeTab === "places") {
+      rightBtns.push(h("button", {
+        className: showMap ? "ghost-btn active" : "ghost-btn",
+        onclick:() => {
+          showMap = !showMap;
+          if (!showMap) destroyMap();
+          render();
+        }
+      }, showMap ? "📋" : "🗺️"));
+    }
+  }
+
+  return h("div", { className:"app-header" },
+    h("div", { className:"header-left" }, ...leftBtns),
+    h("div", { className:"header-right" }, ...rightBtns)
+  );
+}
+
+function renderList() {
+  if (trips.length === 0) {
+    return h("div", { style:{ textAlign:"center", padding:"80px 24px", color:"var(--muted)" } },
+      h("div", { style:{ fontSize:"56px", marginBottom:"16px", opacity:"0.5" } }, "🗺️"),
+      h("div", { style:{ fontSize:"15px", fontWeight:"700", color:"var(--ink)", marginBottom:"6px" } }, "旅行がまだありません"),
+      h("div", { style:{ fontSize:"13px", marginBottom:"20px" } }, "右上のボタンから旅行を追加"),
+      h("button", { className:"btn-primary", style:{ padding:"13px 28px", borderRadius:"12px", fontSize:"14px", border:"none", fontFamily:"inherit", cursor:"pointer" }, onclick:()=>{ showNewTrip=true; render(); } }, "＋ 最初の旅行を作成")
+    );
+  }
+  return h("div", { className:"trip-cards" },
+    ...trips.map(trip => {
+      const chips = [["itinerary","🗓"],["packing","🎒"],["todo","✅"],["places","📍"]]
+        .filter(([k]) => (trip[k]?.length??0) > 0)
+        .map(([k,icon]) => h("div", { className:"count-chip" }, `${icon} ${trip[k].length}`));
+      return h("div", { className:"trip-card", onclick:()=>{ selId=trip.id; activeTab="itinerary"; view="detail"; showMap=false; render(); } },
+        trip.ownerId===user.uid ? h("button", { className:"trip-card-del", onclick:e=>{ e.stopPropagation(); deleteTrip(trip.id); } }, "✕") : null,
+        h("div", { style:{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"4px" } },
+          h("div", { className:"trip-name" }, trip.name),
+          h("div", { className:`type-badge ${trip.type==="overseas"?"overseas":"domestic"}` }, trip.type==="overseas"?"海外":"国内"),
+          (trip.memberIds?.length??0) > 1 ? h("div", { className:"shared-badge" }, "👥 共有") : null
+        ),
+        h("div", { className:"trip-meta" },
+          trip.destination ? h("span", null, `📍 ${trip.destination}`) : null,
+          trip.startDate   ? h("span", null, `🗓 ${trip.startDate}${trip.endDate?` → ${trip.endDate}`:""}`) : null,
+          trip.startDate   ? h("span", { className:"days-pill" }, getDaysLeft(trip.startDate)) : null
+        ),
+        chips.length ? h("div", { className:"count-chips" }, ...chips) : null
+      );
+    })
+  );
+}
+
+function renderTemplates() {
+  const tabBtns = ["domestic","overseas"].map(t =>
+    h("button", { className: tplTab===t ? "type-btn active" : "type-btn", onclick:()=>{ tplTab=t; render(); } },
+      t==="domestic" ? "🏠 国内" : "✈️ 海外")
+  );
+  const sections = ["packing","todo"].map(tab => {
+    const items = (templates[tplTab]?.[tab] ?? []);
+    return h("div", { style:{ marginBottom:"24px" } },
+      h("div", { style:{ fontSize:"12px", fontWeight:"700", color:"var(--muted)", marginBottom:"8px", letterSpacing:"1px", textTransform:"uppercase" } }, tab==="packing"?"🎒 持ち物":"✅ ToDo"),
+      h("div", { style:{ display:"flex", gap:"8px", marginBottom:"10px" } },
+        h("input", { className:"main-input", placeholder:"項目を追加", value: tplInput[tab],
+          oninput: e => { tplInput[tab]=e.target.value; },
+          onkeydown: e => { if(e.key==="Enter") addTplItem(tab); }
+        }),
+        h("button", { className:"add-btn", onclick:()=>addTplItem(tab) }, "＋")
+      ),
+      ...items.map((item,idx) =>
+        h("div", { className:"item-card" },
+          h("div", { style:{ width:"8px",height:"8px",borderRadius:"50%",background:"var(--accent)",opacity:"0.4",flexShrink:"0" } }),
+          h("div", { style:{ flex:"1",fontSize:"15px",color:"var(--ink)" } }, item),
+          h("button", { className:"icon-btn", onclick:()=>delTplItem(tab,idx) }, "🗑")
+        )
+      )
+    );
+  });
+  return h("div", { style:{ padding:"16px" } },
+    h("p", { style:{ fontSize:"13px", color:"var(--muted)", lineHeight:"1.6", marginBottom:"12px" } }, "新しい旅行作成時に自動追加されるテンプレートです。"),
+    h("div", { className:"type-btn-row" }, ...tabBtns),
+    ...sections
+  );
+}
+
+function renderDetail() {
+  const sel = getSel(); if (!sel) return h("div");
+  const tabItems = sel[activeTab] ?? [];
+  const checkedCount = tabItems.filter(i=>i.checked).length;
+  const progress = tabItems.length ? Math.round((checkedCount/tabItems.length)*100) : 0;
+
+  const hero = h("div", { style:{ background:"var(--paper)", padding:"12px 20px", borderBottom:"1px solid var(--border)" } },
+    h("div", { style:{ display:"flex", alignItems:"center", gap:"8px", flexWrap:"wrap" } },
+      sel.destination ? h("span", { style:{ fontSize:"12px", color:"var(--muted)" } }, `📍 ${sel.destination}`) : null,
+      sel.startDate   ? h("span", { style:{ fontSize:"12px", color:"var(--muted)" } }, `🗓 ${sel.startDate}${sel.endDate?` → ${sel.endDate}`:""}`) : null,
+      sel.startDate   ? h("span", { className:"days-pill", style:{ fontSize:"11px" } }, getDaysLeft(sel.startDate)) : null,
+      (sel.memberIds?.length??0)>1 ? h("span", { style:{ fontSize:"11px", color:"var(--muted)" } }, `👥 ${sel.memberIds.length}人で共有中`) : null
+    )
+  );
+
+  const tabDefs = [["itinerary","🗓","行程"],["packing","🎒","持ち物"],["todo","✅","ToDo"],["places","📍","スポット"]];
+  const tabBar = h("div", { className:"tabs" },
+    ...tabDefs.map(([id,icon,label]) => {
+      const cnt = sel[id]?.length ?? 0;
+      return h("div", { className:`tab ${activeTab===id?"active":""}`, onclick:()=>{ activeTab=id; checkInput=""; destroyMap(); showMap=false; render(); } },
+        h("span", { className:"tab-icon" }, icon),
+        h("span", null, label),
+        cnt > 0 ? h("span", { className:`tab-badge ${activeTab===id?"active":""}` }, String(cnt)) : null
+      );
+    })
+  );
+
+  let tabContent;
+  if (activeTab === "itinerary") {
+    tabContent = renderItinerary(sel);
+  } else if (activeTab === "packing" || activeTab === "todo") {
+    tabContent = renderCheckList(sel, activeTab, tabItems, checkedCount, progress);
+  } else {
+    tabContent = renderPlaces(sel);
+  }
+
+  return h("div", null, hero, tabBar, tabContent);
+}
+
+function renderItinerary(sel) {
+  const form = h("div", { className:"section-box" },
+    h("div", { style:{ display:"flex", gap:"8px", marginBottom:"8px" } },
+      h("input", { type:"date", className:"main-input", style:{ flex:"1" }, value: itinForm.date,
+        min: sel.startDate||"", max: sel.endDate||"",
+        oninput: e => { itinForm.date = e.target.value; }
+      }),
+      h("input", { type:"time", className:"main-input", style:{ width:"110px" }, value: itinForm.time,
+        oninput: e => { itinForm.time = e.target.value; }
+      })
+    ),
+    h("div", { style:{ display:"flex", gap:"8px" } },
+      h("input", { className:"main-input", placeholder:"例：仁川空港 到着", value: itinForm.text,
+        oninput: e => { itinForm.text = e.target.value; },
+        onkeydown: e => { if(e.key==="Enter") addItin(); }
+      }),
+      h("button", { className:"add-btn", onclick: addItin }, "＋")
+    )
+  );
+
+  const itin = sel.itinerary ?? [];
+  if (itin.length === 0) {
+    return h("div", { className:"content" }, form,
+      h("div", { className:"empty" },
+        h("div", { className:"empty-icon" }, "🗓"),
+        h("div", { className:"empty-text" }, "行程がありません\n日付・時刻・内容を入力して追加")
+      )
+    );
+  }
+
+  const groups = {};
+  itin.forEach(item => { const k=item.date||"__"; if(!groups[k])groups[k]=[]; groups[k].push(item); });
+  const groupEls = Object.entries(groups).sort(([a],[b])=>a<b?-1:1).map(([date,items]) =>
+    h("div", { style:{ marginBottom:"20px" } },
+      h("div", { className:"date-header" }, date==="__" ? "日付未設定" : fmtDate(date)),
+      ...items.map(item =>
+        h("div", { className:"itin-row" },
+          h("div", { className:"itin-time" }, item.time||"--:--"),
+          h("div", { className:"itin-timeline" },
+            h("div", { className:"itin-dot" }),
+            h("div", { className:"itin-line" })
+          ),
+          h("div", { className:"itin-text-wrap" }, item.text),
+          h("button", { className:"icon-btn", onclick:()=>delItin(item.id) }, "🗑")
+        )
+      )
+    )
+  );
+
+  return h("div", { className:"content" }, form, ...groupEls);
+}
+
+function renderCheckList(sel, tab, items, checkedCount, progress) {
+  const ph = tab==="packing" ? "例：パスポート" : "例：ホテルの予約確認";
+  const inputRow = h("div", { style:{ display:"flex", gap:"8px", marginBottom:"16px" } },
+    h("input", { className:"main-input", placeholder: ph, value: checkInput,
+      oninput: e => { checkInput = e.target.value; },
+      onkeydown: e => { if(e.key==="Enter") addCheck(tab); }
+    }),
+    h("button", { className:"add-btn", onclick:()=>addCheck(tab) }, "＋")
+  );
+
+  const prog = items.length > 0 ? h("div", null,
+    h("div", { className:"progress-row" }, h("span", null, `${checkedCount} / ${items.length} 完了`), h("span", null, `${progress}%`)),
+    h("div", { className:"prog-bg" }, h("div", { className:"prog-bar", style:{ width:`${progress}%` } }))
+  ) : null;
+
+  const itemEls = items.length === 0
+    ? h("div", { className:"empty" }, h("div", { className:"empty-icon" }, tab==="packing"?"🎒":"✅"), h("div", { className:"empty-text" }, "まだ登録されていません"))
+    : items.map(item =>
+        h("div", { className:`item-card ${item.checked?"done":""}` },
+          h("button", { className:`check-btn ${item.checked?"on":""}`, onclick:()=>toggleCheck(tab,item.id) }, item.checked?"✓":""),
+          h("div", { className:`item-text ${item.checked?"done":""}` },
+            item.template ? h("span", { className:"tpl-dot" }) : null,
+            item.text
+          ),
+          h("button", { className:"icon-btn", onclick:()=>delCheck(tab,item.id) }, "🗑")
+        )
+      );
+
+  return h("div", { className:"content" }, inputRow, prog, ...(Array.isArray(itemEls)?itemEls:[itemEls]));
+}
+
+function renderPlaces(sel) {
+  const places = sel.places ?? [];
+  const mapEl  = showMap ? h("div", { id:"leaflet-map", style:{ width:"100%", height:"300px" } }) : null;
+  const hint   = showMap ? h("div", { className:"map-hint" }, "地図をタップしてピンを立てる、または下で場所名から追加") : null;
+
+  const form = h("div", { className:"section-box" },
+    h("div", { style:{ display:"flex", gap:"8px", marginBottom:"8px" } },
+      h("input", { className:"main-input", placeholder:"場所名・住所で検索", value: placeInput,
+        oninput: e => { placeInput = e.target.value; },
+        onkeydown: e => { if(e.key==="Enter") addPlace(); }
+      }),
+      h("button", { className:"add-btn", disabled: geocoding, onclick: addPlace }, geocoding ? "…" : "＋")
+    ),
+    h("input", { className:"main-input", placeholder:"メモ（任意）", value: placeMemo,
+      oninput: e => { placeMemo = e.target.value; }
+    })
+  );
+
+  const list = places.length === 0
+    ? h("div", { className:"empty" }, h("div", { className:"empty-icon" }, "📍"), h("div", { className:"empty-text" }, "スポットがありません\n場所名を入力して追加\nまたは🗺️で地図からピン"))
+    : places.map((p,i) =>
+        h("div", { className:"item-card", style:{ alignItems:"flex-start" } },
+          h("div", { className:"place-num" }, String(i+1)),
+          h("div", { style:{ flex:"1" } },
+            h("div", { style:{ fontSize:"15px", color:"var(--ink)" } }, p.name),
+            p.memo ? h("div", { style:{ fontSize:"12px", color:"var(--muted)", marginTop:"3px" } }, p.memo) : null,
+            h("div", { style:{ fontSize:"11px", color: p.lat?"var(--green)":"var(--muted)", marginTop:"3px" } }, p.lat?"📍 地図あり":"座標未取得")
+          ),
+          h("button", { className:"icon-btn", onclick:()=>delPlace(p.id) }, "🗑")
+        )
+      );
+
+  return h("div", null,
+    mapEl, hint,
+    h("div", { className:"content" }, form, ...(Array.isArray(list)?list:[list]))
+  );
+}
+
+function renderModal(content) {
+  const overlay = h("div", { className:"modal-overlay", onclick:e=>{ if(e.target===overlay){ showNewTrip=false; showShare=false; showPinModal=false; render(); } } },
+    h("div", { className:"modal", onclick:e=>e.stopPropagation() }, ...content)
+  );
+  return overlay;
+}
+
+function renderNewTripModal() {
+  return renderModal([
+    h("div", { className:"modal-handle" }),
+    h("div", { className:"modal-title" }, "✈️ 新しい旅行を登録"),
+    h("div", { className:"form-group" },
+      h("label", { className:"form-label" }, "旅行の種類"),
+      h("div", { style:{ display:"flex", gap:"8px" } },
+        ...["domestic","overseas"].map(t =>
+          h("button", { className: tripForm.type===t?"type-btn active":"type-btn", style:{flex:"1"}, onclick:()=>{ tripForm.type=t; render(); } },
+            t==="domestic"?"🏠 国内":"✈️ 海外")
+        )
+      )
+    ),
+    h("div", { className:"form-group" },
+      h("label", { className:"form-label" }, "旅行名 *"),
+      h("input", { className:"form-input", placeholder:"例：夏の韓国旅行", value: tripForm.name, autofocus:"true",
+        oninput: e => { tripForm.name = e.target.value; },
+        onkeydown: e => { if(e.key==="Enter") createTrip(); }
+      })
+    ),
+    h("div", { className:"form-group" },
+      h("label", { className:"form-label" }, "行き先"),
+      h("input", { className:"form-input", placeholder:"例：ソウル・釜山", value: tripForm.destination,
+        oninput: e => { tripForm.destination = e.target.value; }
+      })
+    ),
+    h("div", { className:"form-row" },
+      h("div", { className:"form-group", style:{ flex:"1" } },
+        h("label", { className:"form-label" }, "出発日"),
+        h("input", { className:"form-input", type:"date", value: tripForm.startDate,
+          oninput: e => { tripForm.startDate = e.target.value; }
+        })
+      ),
+      h("div", { className:"form-group", style:{ flex:"1" } },
+        h("label", { className:"form-label" }, "帰着日"),
+        h("input", { className:"form-input", type:"date", value: tripForm.endDate,
+          oninput: e => { tripForm.endDate = e.target.value; }
+        })
+      )
+    ),
+    h("div", { style:{ fontSize:"12px", color:"var(--muted)", marginBottom:"4px" } },
+      `📋 ${tripForm.type==="overseas"?"海外":"国内"}テンプレートが自動追加されます`),
+    h("div", { className:"modal-actions" },
+      h("button", { className:"btn-cancel", onclick:()=>{ showNewTrip=false; render(); } }, "キャンセル"),
+      h("button", { className:"btn-primary", disabled: saving, onclick: createTrip }, saving?"保存中…":"作成する ✈️")
+    )
+  ]);
+}
+
+function renderShareModal() {
+  const sel = getSel();
+  if (!sel) return h("div");
+  const memberRows = (sel.members??[]).map(m =>
+    h("div", { style:{ display:"flex", alignItems:"center", gap:"10px", padding:"8px 0", borderBottom:"1px solid var(--border)" } },
+      h("div", { style:{ width:"32px",height:"32px",borderRadius:"50%",background:"var(--accent)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"13px",fontWeight:"700",flexShrink:"0" } },
+        (m.name||m.email||"?")[0].toUpperCase()),
+      h("div", null,
+        h("div", { style:{ fontSize:"14px", fontWeight:"600" } }, m.name||m.email),
+        m.uid===sel.ownerId ? h("div", { style:{ fontSize:"11px", color:"var(--muted)" } }, "オーナー") : null
+      )
+    )
+  );
+  return renderModal([
+    h("div", { className:"modal-handle" }),
+    h("div", { className:"modal-title" }, "🔗 旅行を共有"),
+    h("div", { style:{ marginBottom:"16px" } },
+      h("div", { style:{ fontSize:"12px", fontWeight:"700", color:"var(--muted)", marginBottom:"8px" } }, "現在のメンバー"),
+      ...memberRows
+    ),
+    h("label", { className:"form-label" }, "メールアドレスで招待"),
+    h("div", { style:{ display:"flex", gap:"8px", marginBottom:"8px" } },
+      h("input", { className:"form-input", placeholder:"friend@gmail.com", value: shareEmail,
+        oninput: e => { shareEmail = e.target.value; },
+        onkeydown: e => { if(e.key==="Enter") shareTrip(); }
+      }),
+      h("button", { className:"add-btn", onclick: shareTrip }, "招待")
+    ),
+    h("div", { style:{ fontSize:"11px", color:"var(--muted)", marginBottom:"16px" } }, "※ 同じメールアドレスでGoogleログインすると旅行が表示されます"),
+    h("div", { className:"modal-actions" },
+      h("button", { className:"btn-cancel", style:{ flex:"1" }, onclick:()=>{ showShare=false; render(); } }, "閉じる")
+    )
+  ]);
+}
+
+function renderPinModal() {
+  return renderModal([
+    h("div", { className:"modal-handle" }),
+    h("div", { className:"modal-title" }, "📍 ピンを立てる"),
+    h("div", { className:"form-group" },
+      h("label", { className:"form-label" }, "場所の名前"),
+      h("input", { className:"form-input", placeholder:"例：景福宮", value: pinName, autofocus:"true",
+        oninput: e => { pinName = e.target.value; },
+        onkeydown: e => { if(e.key==="Enter") confirmPin(); }
+      })
+    ),
+    h("div", { className:"modal-actions" },
+      h("button", { className:"btn-cancel", onclick:()=>{ showPinModal=false; render(); } }, "キャンセル"),
+      h("button", { className:"btn-primary", onclick: confirmPin }, "追加")
+    )
+  ]);
+}
+
+// Initial render (loading state)
+render();
+</script>
+</body>
+</html>
