@@ -1,0 +1,1 @@
+exclude: ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']
