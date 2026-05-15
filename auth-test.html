@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
@@ -30,8 +29,17 @@ var FB_CONFIG = {
 
 firebase.initializeApp(FB_CONFIG);
 var auth = firebase.auth();
+
+// iOSのPWAでセッションを維持するためLOCAL永続化を明示
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(function() {
+  addLog('Firebase initialized (persistence: LOCAL)');
+}).catch(function(e) {
+  addLog('persistence error: ' + e.message);
+});
+
 addLog('Firebase initialized');
 
+// Redirectは使わないのでgetRedirectResultは念のため確認のみ
 auth.getRedirectResult().then(function(result) {
   if (result && result.user) {
     addLog('getRedirectResult: ' + result.user.email);
@@ -39,7 +47,7 @@ auth.getRedirectResult().then(function(result) {
     addLog('getRedirectResult: no user');
   }
 }).catch(function(e) {
-  addLog('getRedirectResult error: ' + e.code + ' ' + e.message);
+  addLog('getRedirectResult error: ' + e.code);
 });
 
 auth.onAuthStateChanged(function(u) {
@@ -61,9 +69,20 @@ auth.onAuthStateChanged(function(u) {
 function login() {
   var provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({prompt: 'select_account'});
-  addLog('signInWithRedirect 開始...');
-  auth.signInWithRedirect(provider).catch(function(e) {
-    addLog('redirect error: ' + e.message);
+  addLog('signInWithPopup 開始...');
+
+  auth.signInWithPopup(provider).then(function(result) {
+    addLog('popup success: ' + result.user.email);
+  }).catch(function(e) {
+    addLog('popup error: ' + e.code + ' / ' + e.message);
+
+    // popupがブロックされた場合のみredirectにフォールバック
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
+      addLog('fallback: signInWithRedirect に切り替え');
+      auth.signInWithRedirect(provider).catch(function(e2) {
+        addLog('redirect error: ' + e2.message);
+      });
+    }
   });
 }
 </script>
