@@ -675,7 +675,7 @@ function renderList(){
   trips.forEach(function(trip){
     var hasCover=!!trip.coverUrl;
     var card=ce("div","trip-card"+(hasCover?" has-cover":""),{onclick:function(){selId=trip.id;activeTab="itinerary";view="detail";showMap=false;render();}});
-    var covWrap=ce("div","trip-card-cover-wrap",{onclick:function(e){e.stopPropagation();}});
+    var covWrap=ce("div","trip-card-cover-wrap");
     if(hasCover){
       var covImg=document.createElement("img");covImg.className="trip-card-cover-img";covImg.src=trip.coverUrl;ap(covWrap,covImg);
     }else{
