@@ -720,7 +720,19 @@ function renderTemplates(){
 
 function renderDetail(){
   var sel=getSel();if(!sel)return ce("div","");var wrap=ce("div","");
-  var hero=ce("div","hero");var hm=ce("div","hero-meta");
+  var hero=ce("div","hero");
+  var covW=ce("div","hero-cover-wrap");
+  if(sel.coverUrl){
+    var cImg=document.createElement("img");cImg.className="hero-cover-img";cImg.src=sel.coverUrl;ap(covW,cImg);
+  }else{
+    var cPh=ce("div","hero-cover-placeholder");cPh.style.background=getTripColor(sel.id);ap(covW,cPh);
+  }
+  if(!isViewOnly&&!isGuest&&user&&sel.ownerId===user.uid){
+    var cBtn=ce("button","hero-cover-btn",{onclick:function(){var fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.onchange=function(ev){var f=ev.target.files[0];if(f)uploadCoverPhoto(f);};fi.click();}});
+    ap(cBtn,tx("📷 カバーを変更"));ap(covW,cBtn);
+  }
+  ap(hero,covW);
+  var hm=ce("div","hero-meta");
   if(sel.destination)ap(hm,ap(ce("span",""),tx(" "+sel.destination)));
   if(sel.startDate){ap(hm,ap(ce("span",""),tx(sel.startDate+(sel.endDate?" → "+sel.endDate:""))));ap(hm,ap(ce("span","pill"),tx(getDaysLeft(sel.startDate))));}
   if((sel.memberIds&&sel.memberIds.length||0)>1)ap(hm,ap(ce("span",""),tx("👥 "+(sel.memberIds.length)+"人で共有中")));
