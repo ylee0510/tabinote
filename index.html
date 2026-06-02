@@ -13,6 +13,29 @@
 :root{--bg:#ffffff;--paper:#ffffff;--ink:#1c1917;--muted:#78716c;--border:#e4e4e7;--accent:#2d3e5a;--green:#4a7c59;--stamp:#f4f4f5;}
 body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background:var(--bg);min-height:100vh;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;}
+@media(min-width:768px){
+  #app{max-width:1024px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .pc-layout{display:flex;flex:1;min-height:0;overflow:hidden;}
+  .sidebar{width:220px;min-width:220px;background:#2d3e5a;display:flex;flex-direction:column;overflow-y:auto;}
+  .sidebar::-webkit-scrollbar{display:none;}
+  .sidebar-hdr{padding:16px 12px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);}
+  .sidebar-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.45);}
+  .sidebar-add-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+  .sidebar-trips{flex:1;padding:8px 8px 0;}
+  .sidebar-trip{padding:9px 10px;border-radius:9px;cursor:pointer;margin-bottom:3px;}
+  .sidebar-trip:hover{background:rgba(255,255,255,0.08);}
+  .sidebar-trip.active{background:rgba(255,255,255,0.18);}
+  .sidebar-trip-name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sidebar-trip-dates{font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sidebar-footer{padding:10px 12px 16px;border-top:1px solid rgba(255,255,255,0.1);margin-top:auto;}
+  .sidebar-new-btn{width:100%;background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);padding:9px 12px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;}
+  .sidebar-new-btn:hover{background:rgba(255,255,255,0.18);}
+  .main-area{flex:1;min-width:0;overflow-y:auto;}
+  .welcome-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);gap:10px;}
+  .welcome-icon{font-size:44px;opacity:0.4;}
+  .welcome-text{font-size:14px;}
+  .pc-hide-back .back-btn{display:none;}
+}
 .page-login{background:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;}
 .page-loading{background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
 .google-btn{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#1c1917;border:1.5px solid #1c1917;border-radius:14px;padding:15px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;max-width:300px;}
@@ -377,18 +400,32 @@ function render(){
     return;
   }
   if(!user){ap(app,renderLogin());return;}
+  var isWide=window.innerWidth>=768;
   var wrap=ce("div","");
-  ap(wrap,renderHeader());
-  if(view==="list")ap(wrap,renderList());
-  else if(view==="templates")ap(wrap,renderTemplates());
-  else if(view==="detail")ap(wrap,renderDetail());
+  var hdr=renderHeader();
+  if(isWide&&view==="detail")hdr.classList.add("pc-hide-back");
+  ap(wrap,hdr);
+  if(isWide){
+    var layout=ce("div","pc-layout");
+    ap(layout,renderSidebar());
+    var main=ce("div","main-area");
+    if(view==="detail")ap(main,renderDetail());
+    else if(view==="templates")ap(main,renderTemplates());
+    else ap(main,renderWelcome());
+    ap(layout,main);
+    ap(wrap,layout);
+  }else{
+    if(view==="list")ap(wrap,renderList());
+    else if(view==="templates")ap(wrap,renderTemplates());
+    else if(view==="detail")ap(wrap,renderDetail());
+  }
   if(showNewTrip)ap(wrap,renderModal_newTrip());
   if(showShare)ap(wrap,renderModal_share());
   if(showPinModal)ap(wrap,renderModal_pin());
   if(showNewBudget)ap(wrap,renderModal_newBudget());
   if(showGuide)ap(wrap,renderModal_guide());
   if(showMyPage)ap(wrap,renderModal_mypage());
-  if(showMenu&&view==="list"){
+  if(showMenu){
     var ov=ce("div","menu-overlay",{onclick:function(){showMenu=false;render();}});
     var menu=ce("div","menu-dropdown");
     var m1=ce("button","menu-item",{onclick:function(){showMenu=false;showMyPage=true;render();}});ap(m1,tx("マイページ"));
@@ -430,6 +467,40 @@ function renderHeader(){
   }
   if(isViewOnly&&activeTab==="places")ap(r,ap(ce("button",showMap?"icon-btn2 on":"icon-btn2",{onclick:function(){showMap=!showMap;if(!showMap)destroyMap();render();}}),tx(showMap?"☰":"🗺")));
   ap(hdr,l,r);return hdr;
+}
+
+function renderSidebar(){
+  var d=ce("div","sidebar");
+  var sh=ce("div","sidebar-hdr");
+  ap(sh,ap(ce("div","sidebar-label"),tx("MY TRIPS")));
+  var ab=ce("button","sidebar-add-btn",{onclick:function(){showNewTrip=true;render();}});ap(ab,tx("+"));ap(sh,ab);
+  ap(d,sh);
+  var tl=ce("div","sidebar-trips");
+  if(trips.length===0){
+    var em=ce("div","",{style:{padding:"16px 10px",fontSize:"12px",color:"rgba(255,255,255,0.4)"}});ap(em,tx("旅行がありません"));ap(tl,em);
+  }else{
+    trips.forEach(function(trip){
+      var cls="sidebar-trip"+(trip.id===selId?" active":"");
+      var item=ce("div",cls,{onclick:function(){selId=trip.id;activeTab="itinerary";view="detail";showMap=false;render();}});
+      ap(item,ap(ce("div","sidebar-trip-name"),tx(trip.name)));
+      var s=trip.startDate?trip.startDate.replace(/-/g,"/"):"";var e=trip.endDate?trip.endDate.replace(/-/g,"/"):"";
+      var dateStr=s&&e?s+" 〜 "+e:s||"日付未設定";
+      ap(item,ap(ce("div","sidebar-trip-dates"),tx(dateStr)));
+      ap(tl,item);
+    });
+  }
+  ap(d,tl);
+  var ft=ce("div","sidebar-footer");
+  var nb=ce("button","sidebar-new-btn",{onclick:function(){showNewTrip=true;render();}});ap(nb,tx("＋ 新しい旅行"));ap(ft,nb);
+  ap(d,ft);
+  return d;
+}
+
+function renderWelcome(){
+  var d=ce("div","welcome-state");
+  ap(d,ap(ce("div","welcome-icon"),tx("🗺️")));
+  ap(d,ap(ce("div","welcome-text"),tx("左のリストから旅行を選んでください")));
+  return d;
 }
 
 function renderList(){
@@ -938,6 +1009,7 @@ auth.onAuthStateChanged(function(u){
   else{if(tripsUnsub){tripsUnsub();tripsUnsub=null;}if(tplUnsub){tplUnsub();tplUnsub=null;}trips=[];}
   render();
 });
+var resizeTm=null;window.addEventListener("resize",function(){clearTimeout(resizeTm);resizeTm=setTimeout(render,150);});
 </script>
 </body>
 </html>
