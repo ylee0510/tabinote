@@ -510,7 +510,7 @@ function render(){
     var main=ce("div","main-area");
     if(view==="detail")ap(main,renderDetail());
     else if(view==="templates")ap(main,renderTemplates());
-    else ap(main,renderWelcome());
+    else ap(main,renderList());
     ap(layout,main);
     ap(wrap,layout);
   }else{
@@ -553,13 +553,27 @@ function renderLogin(){
 
 function renderHeader(){
   var sel=getSel();var hdr=ce("div","hdr");var l=ce("div","hdr-l");
-  if(isViewOnly||view==="detail"||view==="templates"){var bb=ce("button","back-btn",{onclick:function(){if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;window.history.pushState({},"","https://ylee0510.github.io/tavy/");}destroyMap();showMap=false;view="list";render();}});ap(bb,tx("←"));ap(l,bb);}
+  var isWide=window.innerWidth>=768;
+  if(isViewOnly||(!isWide&&(view==="detail"||view==="templates"))){
+    var bb=ce("button","back-btn",{onclick:function(){if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;window.history.pushState({},"","https://ylee0510.github.io/tavy/");}destroyMap();showMap=false;view="list";render();}});
+    ap(bb,tx("←"));ap(l,bb);
+  }
   var ti=ce("div","");var ht=ce("div","hdr-title");
-  if(view==="list"&&!isViewOnly)ht.style.cssText="font-size:28px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917";
-  ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="list"?"Tavy":view==="templates"?"テンプレート":(sel?sel.name:"")));ap(ti,ht);
-  if(view==="list"&&!isViewOnly){var hs=ce("div","hdr-sub");ap(hs,tx(user?user.displayName||user.email:""));ap(ti,hs);}
-  ap(l,ti);var r=ce("div","hdr-r");
-  if(view==="list"&&!isViewOnly){
+  if(isWide){
+    ht.style.cssText="font-size:22px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917;cursor:pointer;";
+    ht.onclick=function(){destroyMap();showMap=false;selId=null;view="list";render();};
+    ap(ht,tx("Tavy"));
+  }else{
+    if(view==="list"&&!isViewOnly)ht.style.cssText="font-size:28px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917";
+    ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="list"?"Tavy":view==="templates"?"テンプレート":(sel?sel.name:"")));
+    if(view==="list"&&!isViewOnly){var hs=ce("div","hdr-sub");ap(hs,tx(user?user.displayName||user.email:""));ap(ti,hs);}
+  }
+  ap(ti,ht);ap(l,ti);var r=ce("div","hdr-r");
+  if(isWide&&!isViewOnly){
+    ap(r,ap(ce("button","icon-btn2",{onclick:function(){showGuide=true;render();}}),tx("?")));
+    ap(r,ap(ce("button","icon-btn2",{onclick:function(){showMenu=!showMenu;render();}}),tx("👤")));
+    ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
+  }else if(view==="list"&&!isViewOnly){
     ap(r,ap(ce("button","icon-btn2",{onclick:function(){showGuide=true;render();}}),tx("?")));
     ap(r,ap(ce("button","icon-btn2",{onclick:function(){showMenu=!showMenu;render();}}),tx("👤")));
     ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
