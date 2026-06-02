@@ -786,7 +786,7 @@ function renderItinerary(sel){
     if(itinForm.type===opt.value)o.selected=true;
     typeSelect.appendChild(o);
   });
-  var ti2=ce("input","inp",{placeholder:"例：仁川空港",value:itinForm.text,oninput:function(e){itinForm.text=e.target.value;},onkeydown:function(e){if(e.key==="Enter")isEditing?saveEditItin():addItin();}});
+  var ti2=ce("input","inp",{placeholder:"例：羽田空港発",value:itinForm.text,oninput:function(e){itinForm.text=e.target.value;},onkeydown:function(e){if(e.key==="Enter")isEditing?saveEditItin():addItin();}});
   var actionBtn=ce("button","plus-btn",{style:{background:isEditing?"#4a7c59":"var(--accent)"},onclick:function(){isEditing?saveEditItin():addItin();}});
   ap(actionBtn,tx(isEditing?"保存":"＋"));
   ap(r2,typeSelect,ti2,actionBtn);
