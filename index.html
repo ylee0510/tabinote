@@ -607,7 +607,7 @@ function renderHeader(){
   var ti=ce("div","");var ht=ce("div","hdr-title");
   if(isWide){
     ht.style.cssText="font-size:22px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917;cursor:pointer;";
-    ht.onclick=function(){destroyMap();showMap=false;selId=null;view="list";render();};
+    ht.onclick=function(){if(isGuest){isGuest=false;trips=[];selId=null;view="list";render();return;}destroyMap();showMap=false;selId=null;view="list";render();};
     ap(ht,tx("Tavy"));
   }else{
     if(view==="list"&&!isViewOnly)ht.style.cssText="font-size:28px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917";
@@ -687,7 +687,7 @@ function renderList(){
       ap(covBtn,tx("📷"));ap(covWrap,covBtn);
     }
     ap(card,covWrap);
-    if(trip.ownerId===user.uid){var delBtn=ce("button","",{style:{position:"absolute",top:"12px",right:"10px",background:"none",border:"none",fontSize:"18px",cursor:"pointer",color:"#bbb",lineHeight:"1",padding:"2px"},onclick:function(e){e.stopPropagation();deleteTrip(trip.id);}});ap(delBtn,tx("✕"));ap(card,delBtn);}
+    if(user&&trip.ownerId===user.uid){var delBtn=ce("button","",{style:{position:"absolute",top:"12px",right:"10px",background:"none",border:"none",fontSize:"18px",cursor:"pointer",color:"#bbb",lineHeight:"1",padding:"2px"},onclick:function(e){e.stopPropagation();deleteTrip(trip.id);}});ap(delBtn,tx("✕"));ap(card,delBtn);}
     var top=ce("div","",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"4px",flexWrap:"wrap"}});
     ap(top,ap(ce("div","trip-nm"),tx(trip.name)));
     ap(top,ap(ce("div","badge "+(trip.type==="overseas"?"badge-os":"badge-dm")),tx(trip.type==="overseas"?"海外":"国内")));
@@ -697,7 +697,7 @@ function renderList(){
     if(trip.destination)ap(meta,ap(ce("span",""),tx("📍 "+trip.destination)));
     if(trip.startDate){ap(meta,ap(ce("span","",{style:{fontSize:"12px",color:"var(--muted)"}}),tx(trip.startDate+(trip.endDate?" → "+trip.endDate:""))));ap(meta,ap(ce("span","pill"),tx(getDaysLeft(trip.startDate))));}
     ap(card,meta);
-    if(trip.ownerId===user.uid){
+    if(user&&trip.ownerId===user.uid){
       var dupRow=ce("div","",{style:{marginTop:"10px",paddingTop:"8px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"flex-end"}});
       ap(dupRow,ap(ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit"},onclick:function(e){e.stopPropagation();duplicateTrip(trip);}}),tx("📋 複製する")));
       ap(card,dupRow);
