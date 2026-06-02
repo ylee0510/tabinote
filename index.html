@@ -285,7 +285,7 @@ var DEMO_TRIPS=[{
     {id:"di1",date:"2026-06-12",time:"10:00",type:"出発",text:"成田空港発 → ダラス着（NH108便）"},
     {id:"di2",date:"2026-06-12",time:"20:00",type:"チェックイン",text:"ホテルチェックイン（Dallas Marriott）"},
     {id:"di3",date:"2026-06-13",time:"10:00",type:"観光",text:"ダラス市内観光・AT&Tスタジアム下見"},
-    {id:"di4",date:"2026-06-14",time:"15:00",type:"観光",text:"🇯🇵 vs 🇳🇱（AT&T Stadium, Dallas）"},
+    {id:"di4",date:"2026-06-14",time:"15:00",type:"開始",text:"🇯🇵 vs 🇳🇱（AT&T Stadium, Dallas）"},
     {id:"di5",date:"2026-06-15",time:"09:00",type:"移動",text:"ダラス → ラスベガス（国内線）"},
     {id:"di6",date:"2026-06-15",time:"14:00",type:"チェックイン",text:"ホテルチェックイン（Las Vegas）"},
     {id:"di7",date:"2026-06-16",time:"10:00",type:"観光",text:"ラスベガス観光"},
@@ -295,11 +295,11 @@ var DEMO_TRIPS=[{
     {id:"di11",date:"2026-06-18",time:"17:00",type:"移動",text:"グランドキャニオン → ラスベガス"},
     {id:"di12",date:"2026-06-19",time:"10:00",type:"移動",text:"ラスベガス → モンテレイ（国際線）"},
     {id:"di13",date:"2026-06-19",time:"18:00",type:"チェックイン",text:"ホテルチェックイン（Monterrey）"},
-    {id:"di14",date:"2026-06-20",time:"22:00",type:"観光",text:"🇯🇵 vs 🇹🇳（Estadio BBVA, Monterrey）"},
+    {id:"di14",date:"2026-06-20",time:"22:00",type:"開始",text:"🇯🇵 vs 🇹🇳（Estadio BBVA, Monterrey）"},
     {id:"di15",date:"2026-06-21",time:"10:00",type:"移動",text:"モンテレイ → ダラス（国内線）"},
     {id:"di16",date:"2026-06-21",time:"16:00",type:"チェックイン",text:"ホテルチェックイン（Dallas）"},
     {id:"di17",date:"2026-06-22",time:"10:00",type:"観光",text:"ダラス観光"},
-    {id:"di18",date:"2026-06-25",time:"18:00",type:"観光",text:"🇯🇵 vs 🇸🇪（AT&T Stadium, Dallas）"},
+    {id:"di18",date:"2026-06-25",time:"18:00",type:"開始",text:"🇯🇵 vs 🇸🇪（AT&T Stadium, Dallas）"},
     {id:"di19",date:"2026-06-26",time:"11:00",type:"出発",text:"ダラス発 → 帰国便（NH109便）"},
     {id:"di20",date:"2026-06-27",time:"16:00",type:"到着",text:"成田着"}
   ],
@@ -317,7 +317,24 @@ var DEMO_TRIPS=[{
     {id:"dp11",text:"日焼け止め",checked:false,memo:""}
   ],
   todo:[],
-  places:[],
+  places:[
+    {id:"dp1",name:"成田国際空港",memo:"第1ターミナル出発",lat:35.7719,lng:140.3929},
+    {id:"dp2",name:"Dallas Fort Worth International Airport",memo:"Terminal D",lat:32.8998,lng:-97.0403},
+    {id:"dp3",name:"Dallas Marriott City Center",memo:"ダラス滞在ホテル",lat:32.7838,lng:-96.8016},
+    {id:"dp4",name:"AT&T Stadium",memo:"🇯🇵 vs 🇳🇱 / 🇯🇵 vs 🇸🇪 会場",lat:32.7479,lng:-97.0929},
+    {id:"dp5",name:"Harry Reid International Airport",memo:"ラスベガス空港",lat:36.0840,lng:-115.1537},
+    {id:"dp6",name:"The Venetian Resort Las Vegas",memo:"ラスベガス滞在ホテル",lat:36.1210,lng:-115.1698},
+    {id:"dp7",name:"Grand Canyon South Rim",memo:"サウスリム展望台",lat:36.0544,lng:-112.1401},
+    {id:"dp8",name:"General Mariano Escobedo International Airport",memo:"モンテレイ空港",lat:25.7749,lng:-100.1067},
+    {id:"dp9",name:"Fiesta Americana Monterrey",memo:"モンテレイ滞在ホテル",lat:25.6654,lng:-100.3095},
+    {id:"dp10",name:"Estadio BBVA",memo:"🇯🇵 vs 🇹🇳 会場",lat:25.6693,lng:-100.2396}
+  ],
+  weatherCities:[
+    {name:"成田",lat:35.7769,lng:140.3181},
+    {name:"ダラス",lat:32.7767,lng:-96.7970},
+    {name:"ラスベガス",lat:36.1699,lng:-115.1398},
+    {name:"モンテレイ",lat:25.6866,lng:-100.3161}
+  ],
   budget:[
     {id:"db1",icon:"✈️",name:"航空券",budget_A:400000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db2",icon:"🏨",name:"宿泊費",budget_A:200000,actual_A:0,budget_B:0,actual_B:0},
