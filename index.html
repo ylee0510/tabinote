@@ -480,6 +480,42 @@ async function removeWeatherCity(tripId,cities,idx){await db.collection("trips")
 function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((a.createdAt&&a.createdAt.seconds)||0)-((b.createdAt&&b.createdAt.seconds)||0);});syncMarkers();render();},function(err){console.warn("trips err:",err);});}
 var MAX_FILE_SIZE=3*1024*1024;
 async function uploadAttachment(category,file){if(!file)return null;if(file.size>MAX_FILE_SIZE){toast("ファイルサイズは3MB以内にしてください");return null;}var ext=file.name.split(".").pop();var path="users/"+user.uid+"/"+category+"/"+Date.now()+"."+ext;var ref=storage.ref(path);await ref.put(file);var url=await ref.getDownloadURL();return{name:file.name,url:url,path:path,type:file.type,uploadedAt:new Date().toISOString()};}
+var COVER_COLORS=["#2d3e5a","#4a7c59","#7c4a6b","#7c5a2d","#2d6b7c","#5a2d7c","#7c2d2d","#4a4a7c"];
+function getTripColor(id){var h=0;for(var i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))&0xffffffff;return COVER_COLORS[Math.abs(h)%COVER_COLORS.length];}
+
+function resizeCoverImage(file){
+  return new Promise(function(resolve){
+    if(file.size>5*1024*1024){toast("写真は5MB以内にしてください");resolve(null);return;}
+    var img=new Image();var url=URL.createObjectURL(file);
+    img.onload=function(){
+      var MW=1200,MH=630,w=img.width,h=img.height;
+      if(w>MW){h=Math.round(h*MW/w);w=MW;}
+      if(h>MH){w=Math.round(w*MH/h);h=MH;}
+      var canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function(blob){resolve(blob);},"image/jpeg",0.8);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);resolve(null);};
+    img.src=url;
+  });
+}
+
+async function uploadCoverPhoto(file){
+  if(isGuest){toast("💡 保存するにはログインが必要です");return;}
+  if(!storage){toast("ストレージが利用できません");return;}
+  var blob=await resizeCoverImage(file);if(!blob)return;
+  var sel=getSel();if(!sel)return;
+  toast("アップロード中...");
+  try{
+    var path="users/"+user.uid+"/covers/"+sel.id+".jpg";
+    var ref=storage.ref(path);
+    await ref.put(blob,{contentType:"image/jpeg"});
+    var url=await ref.getDownloadURL();
+    await upd({coverUrl:url});
+    toast("カバー写真を設定しました");
+  }catch(e){toast("アップロード失敗: "+e.message);}
+}
 async function deleteAttachment(category,idx){var profile=window._tavyProfile||{};var attachments=profile["attachments_"+category]||[];var item=attachments[idx];if(!item)return;try{await storage.ref(item.path).delete();}catch(e){}attachments.splice(idx,1);profile["attachments_"+category]=attachments;window._tavyProfile=profile;await db.collection("users").doc(user.uid).collection("settings").doc("profile").set(profile);render();}
 function loadProfile(){db.collection("users").doc(user.uid).collection("settings").doc("profile").get().then(function(doc){window._tavyProfile=doc.exists?doc.data():{};}).catch(function(){window._tavyProfile={};});}
 function subscribeTemplates(){if(tplUnsub){tplUnsub();tplUnsub=null;}tplUnsub=db.collection("users").doc(user.uid).collection("settings").doc("templates").onSnapshot(function(snap){if(snap.exists){templates=snap.data();render();}},function(){});}
