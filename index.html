@@ -712,7 +712,7 @@ function renderTemplates(){
   var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(tplTab===t?" on":""),{onclick:function(){tplTab=t;render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});ap(d,tr);
   ["packing","todo"].forEach(function(tab){
     var sec=ce("div","",{style:{marginBottom:"22px"}});ap(sec,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",letterSpacing:"1px",textTransform:"uppercase"}}),tx(tab==="packing"?"🎒 持ち物":"✅ ToDo")));
-    var row=ce("div","row");var inp=ce("input","inp",{placeholder:"項目を追加",value:tplInput[tab],oninput:function(e){tplInput[tab]=e.target.value;},onkeydown:function(e){if(e.key==="Enter")addTplItem(tab);}});ap(row,inp,ap(ce("button","plus-btn",{onclick:function(){addTplItem(tab);}}),tx("＋")));ap(sec,row);
+    var row=ce("div","row");var inp=ce("input","inp",{placeholder:"項目を追加",value:tplInput[tab],oninput:function(e){tplInput[tab]=e.target.value;},onkeydown:function(e){if(e.key==="Enter"&&!e.isComposing)addTplItem(tab);}});ap(row,inp,ap(ce("button","plus-btn",{onclick:function(){addTplItem(tab);}}),tx("＋")));ap(sec,row);
     (templates[tplTab]?templates[tplTab][tab]||[]:[] ).forEach(function(item,idx){var it=ce("div","item");ap(it,ce("div","",{style:{width:"8px",height:"8px",borderRadius:"50%",background:"var(--accent)",opacity:"0.4",flexShrink:"0"}}),ap(ce("div","item-txt"),tx(item)),ap(ce("button","del-btn",{onclick:function(){delTplItem(tab,idx);}}),tx("🗑")));ap(sec,it);});
     ap(d,sec);
   });
@@ -786,7 +786,7 @@ function renderItinerary(sel){
     if(itinForm.type===opt.value)o.selected=true;
     typeSelect.appendChild(o);
   });
-  var ti2=ce("input","inp",{placeholder:"例：羽田空港発",value:itinForm.text,oninput:function(e){itinForm.text=e.target.value;},onkeydown:function(e){if(e.key==="Enter")isEditing?saveEditItin():addItin();}});
+  var ti2=ce("input","inp",{placeholder:"例：羽田空港発",value:itinForm.text,oninput:function(e){itinForm.text=e.target.value;},onkeydown:function(e){if(e.key==="Enter"&&!e.isComposing)isEditing?saveEditItin():addItin();}});
   var actionBtn=ce("button","plus-btn",{style:{background:isEditing?"#4a7c59":"var(--accent)"},onclick:function(){isEditing?saveEditItin():addItin();}});
   ap(actionBtn,tx(isEditing?"保存":"＋"));
   ap(r2,typeSelect,ti2,actionBtn);
@@ -830,7 +830,7 @@ function renderItinerary(sel){
 function renderCheckList(sel,tab){
   var items=sel[tab]||[];var checked=items.filter(function(i){return i.checked;}).length;var prog=items.length?Math.round(checked/items.length*100):0;
   var d=ce("div","content");
-  var row=ce("div","row");var inp=ce("input","inp",{placeholder:tab==="packing"?"例：パスポート":"例：ホテルの予約確認",value:checkInput,oninput:function(e){checkInput=e.target.value;},onkeydown:function(e){if(e.key==="Enter")addCheck(tab);}});ap(row,inp,ap(ce("button","plus-btn",{onclick:function(){addCheck(tab);}}),tx("＋")));ap(d,row);
+  var row=ce("div","row");var inp=ce("input","inp",{placeholder:tab==="packing"?"例：パスポート":"例：ホテルの予約確認",value:checkInput,oninput:function(e){checkInput=e.target.value;},onkeydown:function(e){if(e.key==="Enter"&&!e.isComposing)addCheck(tab);}});ap(row,inp,ap(ce("button","plus-btn",{onclick:function(){addCheck(tab);}}),tx("＋")));ap(d,row);
   if(items.length>0)ap(d,ap(ce("div","prog-row"),ap(ce("span",""),tx(checked+" / "+items.length+" 完了")),ap(ce("span",""),tx(prog+"%"))),ap(ce("div","prog-bg"),ap(ce("div","prog-fill",{style:{width:prog+"%"}}))));
   if(items.length===0){ap(d,ap(ce("div","empty"),ap(ce("div","empty-ic"),tx(tab==="packing"?"🎒":"✅")),ap(ce("div","empty-tx"),tx("まだ登録されていません"))));return d;}
   items.forEach(function(it){
@@ -862,7 +862,7 @@ function renderPlaces(sel){
   if(showMap){ap(wrap,ce("div","",{id:"leaflet-map",style:{width:"100%",height:"300px"}}),ap(ce("div","map-hint"),tx("地図をタップしてピンを立てる、または下で場所名から追加")));}
   var d=ce("div","content");
   var fb=ce("div","form-box");var r1=ce("div","row");
-  var inp=ce("input","inp",{placeholder:"場所名・住所で検索",value:placeInput,oninput:function(e){placeInput=e.target.value;},onkeydown:function(e){if(e.key==="Enter")addPlace();}});
+  var inp=ce("input","inp",{placeholder:"場所名・住所で検索",value:placeInput,oninput:function(e){placeInput=e.target.value;},onkeydown:function(e){if(e.key==="Enter"&&!e.isComposing)addPlace();}});
   var btn=ce("button","plus-btn",{onclick:addPlace});if(geocoding)btn.disabled=true;ap(btn,tx(geocoding?"…":"＋"));
   ap(r1,inp,btn);ap(fb,r1,ce("input","inp",{placeholder:"メモ（任意）",value:placeMemo,oninput:function(e){placeMemo=e.target.value;}}));ap(d,fb);
   if(places.length===0){ap(d,ap(ce("div","empty"),ap(ce("div","empty-ic"),tx("📍")),ap(ce("div","empty-tx"),tx("スポットがありません\n場所名を入力して追加"))));ap(wrap,d);return wrap;}
@@ -915,7 +915,7 @@ function renderModal_share(){
     ap(row,av,info);ap(m.modal,row);
   });
   ap(m.modal,ap(ce("label","lbl",{style:{marginTop:"12px",display:"block"}}),tx("メールアドレスで招待")));
-  var row=ce("div","row",{style:{marginBottom:"4px"}});var inp=ce("input","finp",{placeholder:"friend@gmail.com",value:shareEmail,oninput:function(e){shareEmail=e.target.value;},onkeydown:function(e){if(e.key==="Enter")shareTrip();}});ap(row,inp,ap(ce("button","plus-btn",{onclick:shareTrip}),tx("招待")));ap(m.modal,row);
+  var row=ce("div","row",{style:{marginBottom:"4px"}});var inp=ce("input","finp",{placeholder:"friend@gmail.com",value:shareEmail,oninput:function(e){shareEmail=e.target.value;},onkeydown:function(e){if(e.key==="Enter"&&!e.isComposing)shareTrip();}});ap(row,inp,ap(ce("button","plus-btn",{onclick:shareTrip}),tx("招待")));ap(m.modal,row);
   ap(m.modal,ap(ce("div","",{style:{fontSize:"11px",color:"var(--muted)"}}),tx("※ 同じメールアドレスでGoogleログインすると表示されます")));
   ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{style:{flex:"1"},onclick:function(){showShare=false;render();}}),tx("閉じる"))));
   return m.ov;
@@ -923,7 +923,7 @@ function renderModal_share(){
 
 function renderModal_pin(){
   var m=mkOverlay(function(){showPinModal=false;render();});ap(m.modal,ap(ce("div","modal-title"),tx("📍 ピンを立てる")));
-  ap(m.modal,ap(ce("div","fg"),ap(ce("label","lbl"),tx("場所の名前")),ce("input","finp",{placeholder:"例：景福宮",value:pinName,autofocus:"true",oninput:function(e){pinName=e.target.value;},onkeydown:function(e){if(e.key==="Enter")confirmPin();}})));
+  ap(m.modal,ap(ce("div","fg"),ap(ce("label","lbl"),tx("場所の名前")),ce("input","finp",{placeholder:"例：景福宮",value:pinName,autofocus:"true",oninput:function(e){pinName=e.target.value;},onkeydown:function(e){if(e.key==="Enter"&&!e.isComposing)confirmPin();}})));
   ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{onclick:function(){showPinModal=false;render();}}),tx("キャンセル")),ap(ce("button","btn-ok",{onclick:confirmPin}),tx("追加"))));
   return m.ov;
 }
@@ -931,7 +931,7 @@ function renderModal_pin(){
 function renderWeather(sel){
   var cities=sel.weatherCities||[];var d=ce("div","weather-section");
   var addRow=ce("div","weather-city-row");
-  var inp=ce("input","inp",{placeholder:"都市名を入力（例：ソウル）",value:weatherCityInput,oninput:function(e){weatherCityInput=e.target.value;},onkeydown:function(e){if(e.key==="Enter")addWeatherCity(sel.id,cities);}});
+  var inp=ce("input","inp",{placeholder:"都市名を入力（例：ソウル）",value:weatherCityInput,oninput:function(e){weatherCityInput=e.target.value;},onkeydown:function(e){if(e.key==="Enter"&&!e.isComposing)addWeatherCity(sel.id,cities);}});
   ap(addRow,inp,ap(ce("button","plus-btn",{onclick:function(){addWeatherCity(sel.id,cities);}}),tx("＋")));ap(d,addRow);
   if(cities.length===0){ap(d,ap(ce("div","weather-loading"),tx("都市を追加すると天気予報が表示されます")));return d;}
   cities.forEach(function(city,idx){
