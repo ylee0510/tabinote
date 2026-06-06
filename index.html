@@ -270,8 +270,8 @@ async function getRate(code){
 }
 
 var DEFAULT_BUDGET={
-  domestic:[{id:"b1",icon:"🚃",name:"交通費",budget:0,actual:0},{id:"b2",icon:"🏨",name:"宿泊費",budget:0,actual:0},{id:"b3",icon:"🍜",name:"食費",budget:0,actual:0},{id:"b4",icon:"🎡",name:"観光・体験",budget:0,actual:0},{id:"b5",icon:"🛍",name:"お土産",budget:0,actual:0},{id:"b6",icon:"💊",name:"その他",budget:0,actual:0}],
-  overseas:[{id:"b1",icon:"✈️",name:"航空券",budget:0,actual:0},{id:"b2",icon:"🏨",name:"宿泊費",budget:0,actual:0},{id:"b3",icon:"🚇",name:"現地交通費",budget:0,actual:0},{id:"b4",icon:"🍜",name:"食費",budget:0,actual:0},{id:"b5",icon:"🎡",name:"観光・体験",budget:0,actual:0},{id:"b6",icon:"🛍",name:"お土産",budget:0,actual:0},{id:"b7",icon:"💊",name:"保険・その他",budget:0,actual:0}]
+  domestic:[{id:"b1",icon:"🚃",name:"交通費",budget:0,actual:0},{id:"b2",icon:"🏨",name:"宿泊費",budget:0,actual:0},{id:"b3",icon:"🍜",name:"食費",budget:0,actual:0},{id:"b4",icon:"🏝️",name:"観光・レジャー",budget:0,actual:0},{id:"b5",icon:"🛍",name:"お土産",budget:0,actual:0},{id:"b6",icon:"💊",name:"その他",budget:0,actual:0}],
+  overseas:[{id:"b1",icon:"✈️",name:"航空券",budget:0,actual:0},{id:"b2",icon:"🏨",name:"宿泊費",budget:0,actual:0},{id:"b3",icon:"🚇",name:"現地交通費",budget:0,actual:0},{id:"b4",icon:"🍜",name:"食費",budget:0,actual:0},{id:"b5",icon:"🏝️",name:"観光・レジャー",budget:0,actual:0},{id:"b6",icon:"🛍",name:"お土産",budget:0,actual:0},{id:"b7",icon:"💊",name:"保険・その他",budget:0,actual:0}]
 };
 var DEFAULT_TEMPLATES={
   domestic:{packing:["財布・現金","スマートフォン","充電器","常備薬","着替え","タオル"],todo:["宿泊先の予約確認","交通手段の確認","天気予報チェック"]},
@@ -355,7 +355,7 @@ var DEMO_TRIPS=[{
     {id:"db2",icon:"🏨",name:"宿泊費",budget_A:200000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db3",icon:"🚇",name:"現地交通費",budget_A:50000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db4",icon:"🍜",name:"食費",budget_A:80000,actual_A:0,budget_B:0,actual_B:0},
-    {id:"db5",icon:"🎡",name:"観光・体験",budget_A:50000,actual_A:0,budget_B:0,actual_B:0},
+    {id:"db5",icon:"🏝️",name:"観光・レジャー",budget_A:50000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db6",icon:"🎟",name:"観戦チケット",budget_A:150000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db7",icon:"🛍",name:"お土産",budget_A:30000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db8",icon:"💊",name:"保険・その他",budget_A:40000,actual_A:0,budget_B:0,actual_B:0}
@@ -1172,7 +1172,7 @@ function renderModal_newBudget(){
   var m=mkOverlay(function(){showNewBudget=false;render();});ap(m.modal,ap(ce("div","modal-title"),tx("カテゴリを追加")));
   var g1=ce("div","fg");ap(g1,ap(ce("label","lbl"),tx("アイコン")));
   var iconRow=ce("div","",{style:{display:"flex",flexWrap:"wrap",gap:"8px",marginBottom:"4px"}});
-  ["🚃","✈️","🏨","🍜","🎡","🛍","💊","🚕","☕","🎭","🏖","💰"].forEach(function(ic){ap(iconRow,ap(ce("button","",{style:{fontSize:"22px",padding:"6px",borderRadius:"8px",border:"2px solid "+(newBudget.icon===ic?"var(--accent)":"var(--border)"),background:"var(--paper)",cursor:"pointer"},onclick:function(){newBudget.icon=ic;render();}}),tx(ic)));});
+  ["🚃","✈️","🏨","🍜","🏝️","🛍","💊","🚕","☕","🎭","🏖","💰"].forEach(function(ic){ap(iconRow,ap(ce("button","",{style:{fontSize:"22px",padding:"6px",borderRadius:"8px",border:"2px solid "+(newBudget.icon===ic?"var(--accent)":"var(--border)"),background:"var(--paper)",cursor:"pointer"},onclick:function(){newBudget.icon=ic;render();}}),tx(ic)));});
   ap(g1,iconRow);ap(m.modal,g1);
   ap(m.modal,ap(ce("div","fg"),ap(ce("label","lbl"),tx("カテゴリ名")),ce("input","finp",{placeholder:"例：観光費",value:newBudget.name,oninput:function(e){newBudget.name=e.target.value;}})));
   ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{onclick:function(){showNewBudget=false;render();}}),tx("キャンセル")),ap(ce("button","btn-ok",{onclick:addBudgetItem}),tx("追加"))));
