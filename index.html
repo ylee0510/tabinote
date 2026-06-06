@@ -435,6 +435,7 @@ async function saveEditItin(){
 async function addCheck(tab){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!checkInput.trim())return;var sel=getSel();if(!sel)return;await upd({[tab]:(sel[tab]||[]).concat([{id:mkId(),text:checkInput.trim(),checked:false,memo:""}])});checkInput="";render();}
 async function updateMemo(tab,id,val){var sel=getSel();if(!sel)return;await upd({[tab]:(sel[tab]||[]).map(function(i){return i.id===id?Object.assign({},i,{memo:val}):i;})});}
 async function toggleCheck(tab,id){var sel=getSel();if(!sel)return;await upd({[tab]:(sel[tab]||[]).map(function(i){return i.id===id?Object.assign({},i,{checked:!i.checked}):i;})});}
+function evalExpr(str){var s=String(str).replace(/[,\s]/g,'');if(!s)return 0;if(!/^[\d.+\-*/()]+$/.test(s))return parseFloat(s)||0;try{var r=Function('"use strict";return('+s+')')();if(typeof r==='number'&&isFinite(r))return Math.round(r*100)/100;}catch(e){}return parseFloat(s)||0;}
 function onEnterTwice(fn){return function(e){if(e.isComposing)return;if(e.key!=="Enter"){e.target._ep=false;return;}if(e.target._ep){e.target._ep=false;fn();}else{e.target._ep=true;}};}
 async function delCheck(tab,id){var sel=getSel();if(!sel)return;await upd({[tab]:(sel[tab]||[]).filter(function(i){return i.id!==id;})});}
 async function addPlace(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var name=placeInput.trim();if(!name)return;geocoding=true;render();try{var geo=await geocode(name);var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).concat([{id:mkId(),name:name,memo:placeMemo.trim(),lat:geo?geo.lat:null,lng:geo?geo.lng:null}])});placeInput="";placeMemo="";}finally{geocoding=false;render();}}
@@ -456,7 +457,7 @@ async function getRate2(from,to){
 async function updateBudgetField(idx,field,val){
   var sel=getSel();if(!sel)return;
   var b=JSON.parse(JSON.stringify(sel.budget||[]));if(!b[idx])return;
-  var num=parseFloat(val)||0;b[idx][field]=num;
+  var num=evalExpr(val);b[idx][field]=num;
   var curs=sel.currencies||{A:"JPY",B:"USD"};
   var isA=field.endsWith("_A");
   var mirror=field.replace(isA?"_A":"_B",isA?"_B":"_A");
@@ -1055,10 +1056,10 @@ function renderBudget(sel){
     // 予算入力（A/B）
     var bRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"10px"}});
     var bwA=ce("div","budget-inp-wrap");ap(bwA,ap(ce("div","budget-inp-label"),tx("予算 "+symA)));
-    var biA=ce("input","budget-inp",{type:"number",value:item.budget_A||item.budget||"",placeholder:"0"});
+    var biA=ce("input","budget-inp",{type:"text",inputmode:"decimal",value:item.budget_A||item.budget||"",placeholder:"0"});
     biA.onblur=function(e){updateBudgetField(idx,"budget_A",e.target.value);};ap(bwA,biA);
     var bwB=ce("div","budget-inp-wrap");ap(bwB,ap(ce("div","budget-inp-label"),tx("予算 "+symB)));
-    var biB=ce("input","budget-inp",{type:"number",value:item.budget_B||"",placeholder:"0"});
+    var biB=ce("input","budget-inp",{type:"text",inputmode:"decimal",value:item.budget_B||"",placeholder:"0"});
     biB.onblur=function(e){updateBudgetField(idx,"budget_B",e.target.value);};ap(bwB,biB);
     ap(bRow,bwA,bwB);ap(card,bRow);
 
@@ -1090,19 +1091,21 @@ function renderBudget(sel){
     var addForm=ce("div","",{id:addId,style:{marginTop:"8px",display:"none"}});
     var fMemo=ce("input","budget-inp",{placeholder:"メモ（任意）",style:{width:"100%",textAlign:"left",marginBottom:"5px"}});
     var fRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:"6px",alignItems:"center"}});
-    var fA=ce("input","budget-inp",{type:"number",placeholder:symA,style:{}});
-    var fB=ce("input","budget-inp",{type:"number",placeholder:symB,style:{}});
+    var fA=ce("input","budget-inp",{type:"text",inputmode:"decimal",placeholder:symA,style:{}});
+    var fB=ce("input","budget-inp",{type:"text",inputmode:"decimal",placeholder:symB,style:{}});
     // A入力→B自動換算
-    fA.oninput=function(){
-      if(curs.A===curs.B){fB.value=fA.value;return;}
-      getRate2(curs.A,curs.B).then(function(r){if(r&&fA.value)fB.value=parseFloat((parseFloat(fA.value)*r).toFixed(2));});
+    fA.onblur=function(){
+      var v=evalExpr(fA.value);if(!v)return;
+      if(curs.A===curs.B){fB.value=v;return;}
+      getRate2(curs.A,curs.B).then(function(r){if(r)fB.value=parseFloat((v*r).toFixed(2));});
     };
-    fB.oninput=function(){
-      if(curs.A===curs.B){fA.value=fB.value;return;}
-      getRate2(curs.B,curs.A).then(function(r){if(r&&fB.value)fA.value=parseFloat((parseFloat(fB.value)*r).toFixed(2));});
+    fB.onblur=function(){
+      var v=evalExpr(fB.value);if(!v)return;
+      if(curs.A===curs.B){fA.value=v;return;}
+      getRate2(curs.B,curs.A).then(function(r){if(r)fA.value=parseFloat((v*r).toFixed(2));});
     };
     var fAdd=ce("button","",{style:{padding:"8px 10px",background:"var(--accent)",color:"#fff",border:"none",borderRadius:"8px",fontSize:"13px",cursor:"pointer",flexShrink:"0"},onclick:async function(){
-      var a=parseFloat(fA.value)||0;var b=parseFloat(fB.value)||0;
+      var a=evalExpr(fA.value);var b=evalExpr(fB.value);
       if(!a&&!b)return;
       await addBudgetEntry(idx,{id:mkId(),memo:fMemo.value.trim(),amtA:a,amtB:b});
       fMemo.value="";fA.value="";fB.value="";
