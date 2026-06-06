@@ -376,6 +376,7 @@ var weatherCityInput="",weatherCache={};
 var isViewOnly=false,viewOnlyTrip=null;
 var isGuest=false;
 var newBudget={icon:"💰",name:""};
+var budgetExpandedEntry=null;
 var geocoding=false,saving=false,pendingPin=null;
 var tripsUnsub=null,tplUnsub=null,mapInst=null,mapMarkers=[];
 var auth=null,db=null,storage=null;
@@ -983,6 +984,17 @@ async function delBudgetEntry(itemIdx,entryIdx){
   b[itemIdx].actual_A=b[itemIdx].entries.reduce(function(s,e){return s+(parseFloat(e.amtA)||0);},0);
   b[itemIdx].actual_B=b[itemIdx].entries.reduce(function(s,e){return s+(parseFloat(e.amtB)||0);},0);
   await upd({budget:b});
+  if(budgetExpandedEntry&&budgetExpandedEntry.iIdx===itemIdx&&budgetExpandedEntry.eIdx===entryIdx)budgetExpandedEntry=null;
+}
+async function editBudgetEntry(itemIdx,entryIdx,patch){
+  var sel=getSel();if(!sel)return;
+  var b=JSON.parse(JSON.stringify(sel.budget||[]));
+  if(!b[itemIdx]||!b[itemIdx].entries||b[itemIdx].entries[entryIdx]===undefined)return;
+  Object.assign(b[itemIdx].entries[entryIdx],patch);
+  b[itemIdx].actual_A=b[itemIdx].entries.reduce(function(s,e){return s+(parseFloat(e.amtA)||0);},0);
+  b[itemIdx].actual_B=b[itemIdx].entries.reduce(function(s,e){return s+(parseFloat(e.amtB)||0);},0);
+  await upd({budget:b});
+  budgetExpandedEntry=null;
 }
 
 function renderBudget(sel){
@@ -1069,20 +1081,39 @@ function renderBudget(sel){
 
     // 既存明細リスト
     entries.forEach(function(ent,ei){
-      var row=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 88px 80px 18px",alignItems:"center",gap:"6px",marginBottom:"5px"}});
-      var memo=ce("div","",{style:{fontSize:"12px",color:"var(--ink)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}});
-      ap(memo,tx(ent.memo||"—"));
-      var amtA2=ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--ink)",textAlign:"right"}});ap(amtA2,tx(fmtAmt(curs.A,parseFloat(ent.amtA)||0)));
-      var amtB2=ce("div","",{style:{fontSize:"11px",color:"var(--muted)",textAlign:"right"}});ap(amtB2,tx(fmtAmt(curs.B,parseFloat(ent.amtB)||0)));
-      var db2=ce("button","",{style:{background:"none",border:"none",color:"#ccc",fontSize:"13px",cursor:"pointer",padding:"0",textAlign:"center"},onclick:function(){delBudgetEntry(idx,ei);}});ap(db2,tx("✕"));
-      ap(row,memo,amtA2,amtB2,db2);ap(entSec,row);
+      var isExp=budgetExpandedEntry&&budgetExpandedEntry.iIdx===idx&&budgetExpandedEntry.eIdx===ei;
+      if(isExp){
+        var expBox=ce("div","",{style:{background:"var(--stamp)",borderRadius:"10px",padding:"10px",marginBottom:"6px"}});
+        var mInp=ce("input","budget-inp",{value:ent.memo||"",placeholder:"メモ（任意）",style:{width:"100%",textAlign:"left",marginBottom:"6px",fontSize:"12px",boxSizing:"border-box"}});
+        var aRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px",marginBottom:"8px"}});
+        var aA=ce("input","budget-inp",{value:ent.amtA||"",placeholder:symA,type:"text",inputmode:"decimal"});
+        var aB=ce("input","budget-inp",{value:ent.amtB||"",placeholder:symB,type:"text",inputmode:"decimal"});
+        aA.onblur=function(){var v=evalExpr(aA.value);if(!v)return;if(curs.A===curs.B){aB.value=v;return;}getRate2(curs.A,curs.B).then(function(r){if(r)aB.value=parseFloat((v*r).toFixed(2));});};
+        aB.onblur=function(){var v=evalExpr(aB.value);if(!v)return;if(curs.A===curs.B){aA.value=v;return;}getRate2(curs.B,curs.A).then(function(r){if(r)aA.value=parseFloat((v*r).toFixed(2));});};
+        ap(aRow,aA,aB);
+        var btnRow=ce("div","",{style:{display:"flex",gap:"6px",justifyContent:"flex-end"}});
+        var cancelBtn=ce("button","btn-cancel",{style:{padding:"6px 12px",fontSize:"12px"},onclick:function(){budgetExpandedEntry=null;render();}});ap(cancelBtn,tx("キャンセル"));
+        var saveBtn=ce("button","btn-ok",{style:{padding:"6px 14px",fontSize:"12px",fontWeight:"700"},onclick:async function(){await editBudgetEntry(idx,ei,{memo:mInp.value.trim(),amtA:evalExpr(aA.value),amtB:evalExpr(aB.value)});}});ap(saveBtn,tx("保存"));
+        ap(btnRow,cancelBtn,saveBtn);ap(expBox,mInp,aRow,btnRow);ap(entSec,expBox);
+      }else{
+        var row=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 88px 80px 18px",alignItems:"center",gap:"6px",marginBottom:"5px",cursor:"pointer"}});
+        row.onclick=function(){budgetExpandedEntry={iIdx:idx,eIdx:ei};render();};
+        var memo=ce("div","",{style:{fontSize:"12px",color:"var(--ink)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}});
+        ap(memo,tx(ent.memo||"—"));
+        var amtA2=ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--ink)",textAlign:"right"}});ap(amtA2,tx(fmtAmt(curs.A,parseFloat(ent.amtA)||0)));
+        var amtB2=ce("div","",{style:{fontSize:"11px",color:"var(--muted)",textAlign:"right"}});ap(amtB2,tx(fmtAmt(curs.B,parseFloat(ent.amtB)||0)));
+        var db2=ce("button","",{style:{background:"none",border:"none",color:"#ccc",fontSize:"13px",cursor:"pointer",padding:"0",textAlign:"center"},onclick:function(e){e.stopPropagation();delBudgetEntry(idx,ei);}});ap(db2,tx("✕"));
+        ap(row,memo,amtA2,amtB2,db2);ap(entSec,row);
+      }
     });
 
-    // 合計表示
+    // 合計表示（グリッド揃え）
     if(entries.length>1){
-      var totRow=ce("div","",{style:{display:"flex",justifyContent:"flex-end",gap:"10px",marginTop:"4px",paddingTop:"4px",borderTop:"1px dashed var(--border)"}});
-      ap(totRow,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--ink)"}}),tx("合計 "+fmtAmt(curs.A,actualA))));
-      ap(totRow,ap(ce("div","",{style:{fontSize:"11px",color:"var(--muted)"}}),tx(fmtAmt(curs.B,actualB))));
+      var totRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 88px 80px 18px",gap:"6px",marginTop:"4px",paddingTop:"4px",borderTop:"1px dashed var(--border)"}});
+      ap(totRow,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",textAlign:"right"}}),tx("合計")));
+      ap(totRow,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--ink)",textAlign:"right"}}),tx(fmtAmt(curs.A,actualA))));
+      ap(totRow,ap(ce("div","",{style:{fontSize:"11px",color:"var(--muted)",textAlign:"right"}}),tx(fmtAmt(curs.B,actualB))));
+      ap(totRow,ce("div",""));
       ap(entSec,totRow);
     }
 
