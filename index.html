@@ -529,7 +529,11 @@ function tx(t){return document.createTextNode(String(t));}
 function ap(el){var args=Array.prototype.slice.call(arguments,1);args.forEach(function(c){if(c==null||c===false)return;el.appendChild(typeof c==="string"?tx(c):c);});return el;}
 
 function render(){
-  var app=document.getElementById("app");app.innerHTML="";
+  var app=document.getElementById("app");
+  var _winScroll=window.scrollY;
+  var _mainEl=document.querySelector(".main-area");
+  var _mainScroll=_mainEl?_mainEl.scrollTop:0;
+  app.innerHTML="";
   if(isViewOnly){
     var bar=ce("div","",{style:{background:"#f59e0b",color:"#fff",textAlign:"center",padding:"8px 16px",fontSize:"12px",fontWeight:"700",position:"sticky",top:"0",zIndex:"60"}});
     ap(bar,tx("👀 閲覧モード（編集にはログインが必要です）"));
@@ -582,6 +586,8 @@ function render(){
   }
   ap(app,wrap);
   if(view==="detail"&&activeTab==="places"&&showMap){setTimeout(function(){if(!mapInst)initMap();else syncMarkers();},80);}
+  window.scrollTo(0,_winScroll);
+  var _newMain=document.querySelector(".main-area");if(_newMain)_newMain.scrollTop=_mainScroll;
 }
 
 function renderLogin(){
