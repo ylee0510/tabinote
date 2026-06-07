@@ -1078,11 +1078,15 @@ function renderBudget(sel){
     // 予算入力（A/B）
     var bRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"10px"}});
     var bwA=ce("div","budget-inp-wrap");ap(bwA,ap(ce("div","budget-inp-label"),tx("予算 "+symA)));
-    var biA=ce("input","budget-inp-ghost ghost-a",{type:"text",inputmode:"decimal",value:item.budget_A||item.budget||"",placeholder:"0"});
-    biA.onblur=function(e){updateBudgetField(idx,"budget_A",e.target.value);};ap(bwA,biA);
+    var rawA=parseFloat(item.budget_A||item.budget)||0;
+    var biA=ce("input","budget-inp-ghost ghost-a",{type:"text",inputmode:"decimal",value:rawA?fmtAmt(curs.A,rawA):"",placeholder:"0"});
+    biA.onfocus=function(e){e.target.value=String(e.target.value).replace(/[^0-9.]/g,"");};
+    biA.onblur=function(e){var v=evalExpr(e.target.value);updateBudgetField(idx,"budget_A",String(v||0));if(v)e.target.value=fmtAmt(curs.A,v);};ap(bwA,biA);
     var bwB=ce("div","budget-inp-wrap");ap(bwB,ap(ce("div","budget-inp-label"),tx("予算 "+symB)));
-    var biB=ce("input","budget-inp-ghost ghost-b",{type:"text",inputmode:"decimal",value:item.budget_B||"",placeholder:"0"});
-    biB.onblur=function(e){updateBudgetField(idx,"budget_B",e.target.value);};ap(bwB,biB);
+    var rawB=parseFloat(item.budget_B)||0;
+    var biB=ce("input","budget-inp-ghost ghost-b",{type:"text",inputmode:"decimal",value:rawB?fmtAmt(curs.B,rawB):"",placeholder:"0"});
+    biB.onfocus=function(e){e.target.value=String(e.target.value).replace(/[^0-9.]/g,"");};
+    biB.onblur=function(e){var v=evalExpr(e.target.value);updateBudgetField(idx,"budget_B",String(v||0));if(v)e.target.value=fmtAmt(curs.B,v);};ap(bwB,biB);
     ap(bRow,bwA,bwB);ap(card,bRow);
 
     // 明細セクション
