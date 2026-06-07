@@ -31,6 +31,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
   .sidebar-new-btn{width:100%;background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);padding:9px 12px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;}
   .sidebar-new-btn:hover{background:rgba(255,255,255,0.18);}
   .app-wrap{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+  .trip-list{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;align-items:start;}
   .main-area{flex:1;min-width:0;overflow-y:auto;}
   .welcome-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);gap:10px;}
   .welcome-icon{font-size:44px;opacity:0.4;}
@@ -485,7 +486,7 @@ function getWeatherIcon(code){if(code<=1)return"☀️";if(code<=3)return"⛅";i
 async function fetchWeather(lat,lng,startDate,endDate){var cacheKey=lat+","+lng+","+startDate+","+endDate;if(weatherCache[cacheKey])return weatherCache[cacheKey];try{var start=startDate||new Date().toISOString().slice(0,10);var end=endDate||start;var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&start_date="+start+"&end_date="+end;var r=await fetch(url);var d=await r.json();if(d.daily){weatherCache[cacheKey]=d.daily;return d.daily;}}catch(e){}return null;}
 async function addWeatherCity(tripId,cities){var name=weatherCityInput.trim();if(!name)return;var geo=await geocode(name);if(!geo){toast("都市が見つかりませんでした");return;}await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).concat([{name:name,lat:geo.lat,lng:geo.lng}])});weatherCityInput="";render();}
 async function removeWeatherCity(tripId,cities,idx){await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).filter(function(_,i){return i!==idx;})});}
-function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((a.createdAt&&a.createdAt.seconds)||0)-((b.createdAt&&b.createdAt.seconds)||0);});syncMarkers();render();},function(err){console.warn("trips err:",err);});}
+function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0);});syncMarkers();render();},function(err){console.warn("trips err:",err);});}
 var MAX_FILE_SIZE=3*1024*1024;
 async function uploadAttachment(category,file){if(!file)return null;if(file.size>MAX_FILE_SIZE){toast("ファイルサイズは3MB以内にしてください");return null;}var ext=file.name.split(".").pop();var path="users/"+user.uid+"/"+category+"/"+Date.now()+"."+ext;var ref=storage.ref(path);await ref.put(file);var url=await ref.getDownloadURL();return{name:file.name,url:url,path:path,type:file.type,uploadedAt:new Date().toISOString()};}
 var COVER_COLORS=["#2d3e5a","#4a7c59","#7c4a6b","#7c5a2d","#2d6b7c","#5a2d7c","#7c2d2d","#4a4a7c"];
