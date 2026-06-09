@@ -858,8 +858,7 @@ function renderItinerary(sel){
         ap(badge,tx(it.type));ap(txWrap,badge);
       }
       ap(txWrap,tx(it.text));
-      var delBtn=ce("button","",{style:{background:"none",border:"none",color:"#ccc",fontSize:"15px",cursor:"pointer",padding:"0 2px",flexShrink:"0",lineHeight:"1"},onclick:function(e){e.stopPropagation();delItin(it.id);}});
-      ap(delBtn,tx("✕"));
+      var delBtn=mkDelBtn(function(){delItin(it.id);});
       ap(row,
         ap(ce("div","itin-time"),tx(it.time||"--:--")),
         ap(ce("div","itin-tl"),ce("div","itin-dot"),ce("div","itin-line")),
@@ -884,7 +883,7 @@ function renderCheckList(sel,tab){
     var card=ce("div","item"+(it.checked?" done":""),{style:{marginBottom:"0",flexWrap:"wrap"}});
     var chk=ce("button","chk"+(it.checked?" on":""),{onclick:function(){toggleCheck(tab,it.id);}});ap(chk,tx(it.checked?"✓":""));
     var t=ce("div","item-txt"+(it.checked?" done":""));if(it.template)ap(t,ce("span","tpl-dot"));ap(t,tx(it.text));
-    ap(card,chk,t,ap(ce("button","del-btn",{onclick:function(){delCheck(tab,it.id);}}),tx("🗑")));ap(wrap,card);
+    ap(card,chk,t,mkDelBtn(function(){delCheck(tab,it.id);}));ap(wrap,card);
     if(tab==="todo"){
       var memoVal=it.memo||"";var memoId="memo-"+it.id;
       if(memoVal){
@@ -917,12 +916,14 @@ function renderPlaces(sel){
     var info=ce("div","",{style:{flex:"1"}});ap(info,ap(ce("div","item-txt"),tx(p.name)));
     if(p.memo)ap(info,ap(ce("div","",{style:{fontSize:"12px",color:"var(--muted)",marginTop:"3px"}}),tx(p.memo)));
     ap(info,ap(ce("div","",{style:{fontSize:"11px",color:p.lat?"var(--green)":"var(--muted)",marginTop:"3px"}}),tx(p.lat?"📍 地図あり":"座標未取得")));
-    ap(card,num,info,ap(ce("button","del-btn",{onclick:function(){delPlace(p.id);}}),tx("🗑")));ap(d,card);
+    ap(card,num,info,mkDelBtn(function(){delPlace(p.id);}));ap(d,card);
   });
   ap(wrap,d);return wrap;
 }
 
 function mkOverlay(closeF){var ov=ce("div","overlay",{onclick:function(e){if(e.target===ov)closeF();}});var modal=ce("div","modal",{onclick:function(e){e.stopPropagation();}});ap(modal,ce("div","modal-bar"));ap(ov,modal);return{ov:ov,modal:modal};}
+// 行程・持ち物・ToDo・スポット共通の削除ボタン（枠なし✕／色は天気タブと同じ濃さ）
+function mkDelBtn(fn){var b=ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"15px",cursor:"pointer",padding:"0 2px",flexShrink:"0",lineHeight:"1"},onclick:function(e){e.stopPropagation();fn();}});ap(b,tx("✕"));return b;}
 
 function renderModal_newTrip(){
   var m=mkOverlay(function(){showNewTrip=false;render();});ap(m.modal,ap(ce("div","modal-title"),tx("✈️ 新しい旅行を登録")));
