@@ -6,7 +6,7 @@
 <title>Tavy</title>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Tavy"/>
-<link rel="apple-touch-icon" href="https://ylee0510.github.io/tavy/icon.png"/>
+<link rel="apple-touch-icon" href="https://gotavy.com/icon.png"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -195,7 +195,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 <body>
 <div id="app"><div class="page-loading">
   <div style="text-align:center;user-select:none;">
-    <img src="https://ylee0510.github.io/tavy/icon.png" width="96" height="96" style="border-radius:22px;display:block;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,0,0,0.12)"/>
+    <img src="https://gotavy.com/icon.png" width="96" height="96" style="border-radius:22px;display:block;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,0,0,0.12)"/>
     <div style="font-size:42px;font-weight:900;color:#1c1917;letter-spacing:-2px;margin-bottom:4px;font-family:Georgia,serif">Tavy</div>
     <div style="font-size:11px;color:#a8a29e;letter-spacing:3px;text-transform:uppercase">Travel Memo</div>
   </div>
@@ -364,7 +364,7 @@ var DEMO_TRIPS=[{
     {id:"db8",icon:"💊",name:"保険・その他",budget_A:40000,actual_A:0,budget_B:0,actual_B:0}
   ],
   currencies:{A:"JPY",B:"USD"},
-  coverUrl:"https://ylee0510.github.io/tavy/wc2026-cover.jpg"
+  coverUrl:"https://gotavy.com/wc2026-cover.jpg"
 }];
 
 var user=null,trips=[],templates=DEFAULT_TEMPLATES;
@@ -386,7 +386,7 @@ var auth=null,db=null,storage=null;
 
 function mkId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function getSel(){return isViewOnly?viewOnlyTrip:(trips.find(function(t){return t.id===selId;}));}
-function getShareUrl(id){return "https://ylee0510.github.io/tavy/?share="+id;}
+function getShareUrl(id){return "https://gotavy.com/?share="+id;}
 function getSharedId(){return new URLSearchParams(window.location.search).get("share");}
 function getDaysLeft(d){if(!d)return null;var diff=Math.ceil((new Date(d)-new Date())/86400000);if(diff>0)return"あと"+diff+"日";if(diff===0)return"今日出発！";return Math.abs(diff)+"日前";}
 function fmtDate(d){if(!d)return"日付未設定";var dt=new Date(d+"T00:00:00");return(dt.getMonth()+1)+"月"+dt.getDate()+"日（"+"日月火水木金土"[dt.getDay()]+"）";}
@@ -597,7 +597,7 @@ function render(){
 function renderLogin(){
   var d=ce("div","page-login");
   var logo=ce("div","",{style:{textAlign:"center",marginBottom:"40px"}});
-  var imgEl=document.createElement("img");imgEl.src="https://ylee0510.github.io/tavy/icon.png";imgEl.width=96;imgEl.height=96;imgEl.style.cssText="border-radius:22px;display:block;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,0,0,0.12)";
+  var imgEl=document.createElement("img");imgEl.src="https://gotavy.com/icon.png";imgEl.width=96;imgEl.height=96;imgEl.style.cssText="border-radius:22px;display:block;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,0,0,0.12)";
   ap(logo,imgEl,ap(ce("div","",{style:{fontSize:"42px",fontWeight:"900",color:"#1c1917",letterSpacing:"-2px",marginBottom:"4px",fontFamily:"Georgia,serif"}}),tx("Tavy")),ap(ce("div","",{style:{fontSize:"11px",color:"#a8a29e",letterSpacing:"3px",textTransform:"uppercase"}}),tx("Travel Memo")));
   ap(d,logo,ap(ce("div","",{style:{fontSize:"14px",color:"#78716c",marginBottom:"36px",lineHeight:"1.8",textAlign:"center",whiteSpace:"pre-line"}}),tx("旅行の行程・持ち物・予算を管理\n友人やパートナーと旅行を共有できます")));
   var gb=ce("button","google-btn",{onclick:loginGoogle});
@@ -614,7 +614,7 @@ function renderHeader(){
   var sel=getSel();var hdr=ce("div","hdr");var l=ce("div","hdr-l");
   var isWide=window.innerWidth>=768;
   if(isViewOnly||(!isWide&&(view==="detail"||view==="templates"))){
-    var bb=ce("button","back-btn",{onclick:function(){if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;window.history.pushState({},"","https://ylee0510.github.io/tavy/");}destroyMap();showMap=false;view="list";render();}});
+    var bb=ce("button","back-btn",{onclick:function(){if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";render();}});
     ap(bb,tx("←"));ap(l,bb);
   }
   var ti=ce("div","");var ht=ce("div","hdr-title");
