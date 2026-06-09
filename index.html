@@ -540,6 +540,18 @@ async function uploadCoverPhoto(file){
 }
 async function deleteAttachment(category,idx){var profile=window._tavyProfile||{};var attachments=profile["attachments_"+category]||[];var item=attachments[idx];if(!item)return;try{await storage.ref(item.path).delete();}catch(e){}attachments.splice(idx,1);profile["attachments_"+category]=attachments;window._tavyProfile=profile;await db.collection("users").doc(user.uid).collection("settings").doc("profile").set(profile);render();}
 function loadProfile(){db.collection("users").doc(user.uid).collection("settings").doc("profile").get().then(function(doc){window._tavyProfile=doc.exists?doc.data():{};}).catch(function(){window._tavyProfile={};});}
+function saveProfile(){if(!user)return Promise.resolve();return db.collection("users").doc(user.uid).collection("settings").doc("profile").set(window._tavyProfile||{}).catch(function(){});}
+// 旧固定フィールドを汎用メモ/記録に移行し、機微なレガシーキー（緊急連絡先・医療情報含む）を削除
+function migrateProfile(p){p=p||{};var changed=false;
+  if(!Array.isArray(p.memos)){var mm=[];[["passport_no","パスポート番号"],["passport_exp","有効期限"],["nationality","国籍"],["esta_no","ESTA申請番号"],["esta_exp","ESTA有効期限"],["visa_note","その他ビザ情報"]].forEach(function(pr){if(p[pr[0]])mm.push({label:pr[1],value:String(p[pr[0]])});});p.memos=mm;changed=true;}
+  if(!Array.isArray(p.records)){var rr=[];[["attachments_passport","パスポート写真・コピー"],["attachments_esta","ESTA・ビザなど"],["attachments_visa2","その他ビザ・Eチケットなど"],["attachments_visa3","その他書類"]].forEach(function(pr){var a=p[pr[0]];if(a&&a.length)rr.push({id:mkId(),label:pr[1],attachments:a});});p.records=rr;changed=true;}
+  ["passport_no","passport_exp","nationality","esta_no","esta_exp","visa_note","emergency_name","emergency_tel","emergency_rel","blood_type","allergy","medicine","attachments_passport","attachments_esta","attachments_visa2","attachments_visa3"].forEach(function(k){if(k in p){delete p[k];changed=true;}});
+  p.records.forEach(function(r){if(!r.id){r.id=mkId();changed=true;}});
+  return {profile:p,changed:changed};}
+function delMemoRow(idx){if(!window._tavyProfile.memos)return;window._tavyProfile.memos.splice(idx,1);saveProfile();render();}
+async function addRecordFile(idx,file,prog){var rec=window._tavyProfile.records[idx];if(!rec)return;if(prog)prog.textContent="アップロード中...";var cat="rec_"+(rec.id||(rec.id=mkId()));var result=await uploadAttachment(cat,file);if(result){rec.attachments=rec.attachments||[];rec.attachments.push(result);await saveProfile();}if(prog)prog.textContent="";render();}
+async function delRecordFile(idx,aidx){var rec=window._tavyProfile.records[idx];if(!rec)return;var item=(rec.attachments||[])[aidx];if(!item)return;try{await storage.ref(item.path).delete();}catch(e){}rec.attachments.splice(aidx,1);await saveProfile();render();}
+async function delRecordRow(idx){var rec=window._tavyProfile.records[idx];if(!rec)return;if(!confirm("この記録を削除しますか？"))return;var atts=rec.attachments||[];for(var i=0;i<atts.length;i++){try{await storage.ref(atts[i].path).delete();}catch(e){}}window._tavyProfile.records.splice(idx,1);await saveProfile();render();}
 function subscribeTemplates(){if(tplUnsub){tplUnsub();tplUnsub=null;}tplUnsub=db.collection("users").doc(user.uid).collection("settings").doc("templates").onSnapshot(function(snap){if(snap.exists){templates=snap.data();render();}},function(){});}
 
 function ce(tag,cls,attrs){var el=document.createElement(tag);if(cls)el.className=cls;if(attrs)Object.keys(attrs).forEach(function(k){if(k==="style"&&typeof attrs[k]==="object"){Object.assign(el.style,attrs[k]);}else if(k.startsWith("on")){el[k]=attrs[k];}else{el.setAttribute(k,attrs[k]);}});return el;}
@@ -1247,7 +1259,7 @@ function renderModal_guide(){
    {title:"予算を管理する",desc:"39カ国の通貨に対応。リアルタイム為替レートで円換算も自動表示されます。金額欄では「15000+3000」のような四則演算も入力できます。"},
    {title:"天気を確認する",desc:"天気タブで都市を追加すると、旅行期間中の天気予報と最高・最低気温が表示されます。"},
    {title:"旅行を共有する",desc:"🔗ボタンから閲覧リンクを発行（ログイン不要）、またはメールアドレスで編集メンバーを招待できます。"},
-   {title:"マイページ・持ち物リストを活用する",desc:"右上の👤メニューからマイページ（パスポート・ESTA）や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。"}
+   {title:"マイページ・持ち物リストを活用する",desc:"右上の👤メニューからマイページ（旅行情報メモ・旅行用記録）や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。"}
   ].forEach(function(s,i){
     var step=ce("div","guide-step");var num=ce("div","guide-step-num");ap(num,tx(String(i+1)));
     var body=ce("div","");ap(body,ap(ce("div","guide-step-title"),tx(s.title)),ap(ce("div","guide-step-desc"),tx(s.desc)));
@@ -1260,22 +1272,45 @@ function renderModal_guide(){
 
 function renderModal_mypage(){
   var m=mkOverlay(function(){showMyPage=false;render();});ap(m.modal,ap(ce("div","modal-title"),tx("👤 マイページ")));
-  var profile=window._tavyProfile||{};
-  function field(label,key,placeholder,type){var wrap=ce("div","mypage-field");ap(wrap,ap(ce("label","mypage-label"),tx(label)));var inp=ce("input","mypage-val",{type:type||"text",placeholder:placeholder||"",value:profile[key]||""});inp.onblur=function(e){profile[key]=e.target.value;};ap(wrap,inp);return wrap;}
-  var s1=ce("div","mypage-section");ap(s1,ap(ce("div","mypage-section-title"),tx("パスポート")),field("パスポート番号","passport_no","例：TK1234567"),field("有効期限","passport_exp","","date"),field("国籍","nationality","例：日本"));ap(m.modal,s1);
-  var s2=ce("div","mypage-section");ap(s2,ap(ce("div","mypage-section-title"),tx("ビザ・ESTA")),field("ESTA申請番号","esta_no","例：1234567890"),field("ESTA有効期限","esta_exp","","date"),field("その他ビザ情報","visa_note","例：韓国ETA 2025-12-31"));ap(m.modal,s2);
-  [{key:"passport",label:"パスポート写真・コピー"},{key:"esta",label:"ESTA・ビザなど"},{key:"visa2",label:"その他ビザ・Eチケットなど"},{key:"visa3",label:"その他書類"}].forEach(function(def){
-    var sec=ce("div","mypage-section");ap(sec,ap(ce("div","mypage-section-title"),tx(def.label)));
-    var attachments=(profile["attachments_"+def.key]||[]);var list=ce("div","attach-list");
-    attachments.forEach(function(att,idx){
-      var row=ce("div","attach-item");ap(row,ap(ce("span",""),tx(att.type&&att.type.includes("pdf")?"📄":"🖼")),ap(ce("div","attach-item-name"),tx(att.name)));
-      ap(row,ap(ce("button","attach-item-open",{onclick:function(){window.open(att.url,"_blank");}}),tx("開く")),ap(ce("button","attach-item-del",{onclick:function(){if(confirm("削除しますか？"))deleteAttachment(def.key,idx);}}),tx("✕")));ap(list,row);
-    });
-    var uploadRow=ce("div","attach-upload");var fileInput=ce("input","",{type:"file",accept:"image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.heic",style:{display:"none"}});var prog=ce("div","attach-progress");
-    if(attachments.length<3)ap(uploadRow,ap(ce("button","attach-upload-btn",{onclick:function(){fileInput.click();}}),tx("＋ ファイルを追加（3MB以内）")));
-    fileInput.onchange=async function(e){var file=e.target.files[0];if(!file)return;prog.textContent="アップロード中...";var result=await uploadAttachment(def.key,file);if(result){var p=profile["attachments_"+def.key]||[];p.push(result);profile["attachments_"+def.key]=p;window._tavyProfile=profile;await db.collection("users").doc(user.uid).collection("settings").doc("profile").set(profile);prog.textContent="";showMyPage=true;render();}else prog.textContent="";};
-    ap(sec,list,fileInput,uploadRow,prog);ap(m.modal,sec);
+  var note=ce("div","",{style:{fontSize:"11px",lineHeight:"1.5",color:"var(--muted)",background:"#f4f4f5",borderRadius:"8px",padding:"8px 11px",marginBottom:"16px"}});
+  ap(note,tx("⚠ 個人の特定につながるような情報の入力やデータ保存はお控えください。"));ap(m.modal,note);
+  var mig=migrateProfile(window._tavyProfile||{});var profile=mig.profile;window._tavyProfile=profile;
+  while(profile.memos.length<5)profile.memos.push({label:"",value:""});
+  while(profile.records.length<5)profile.records.push({id:mkId(),label:"",attachments:[]});
+  if(mig.changed)saveProfile();
+  var delBtn=function(fn){return ap(ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"15px",cursor:"pointer",flex:"0 0 auto",padding:"0 2px"},onclick:fn}),tx("✕"));};
+  // 旅行情報メモ（項目名は自由入力）
+  var memoSec=ce("div","mypage-section");ap(memoSec,ap(ce("div","mypage-section-title"),tx("旅行情報メモ")));
+  profile.memos.forEach(function(mo,idx){
+    var row=ce("div","",{style:{display:"flex",gap:"8px",marginBottom:"8px",alignItems:"center"}});
+    var labIn=ce("input","mypage-val",{placeholder:"項目名",value:mo.label||"",style:{flex:"0 0 38%",minWidth:"0"}});labIn.onblur=function(e){profile.memos[idx].label=e.target.value;saveProfile();};
+    var valIn=ce("input","mypage-val",{placeholder:"内容",value:mo.value||"",style:{flex:"1",minWidth:"0"}});valIn.onblur=function(e){profile.memos[idx].value=e.target.value;saveProfile();};
+    ap(row,labIn,valIn);
+    if(idx>=5)ap(row,delBtn(function(){delMemoRow(idx);}));
+    ap(memoSec,row);
   });
+  if(profile.memos.length<10)ap(memoSec,ap(ce("button","attach-upload-btn",{style:{marginTop:"2px"},onclick:function(){profile.memos.push({label:"",value:""});saveProfile();render();}}),tx("＋ 行を追加")));
+  ap(m.modal,memoSec);
+  // 旅行用記録（項目名は自由入力＋ファイル添付）
+  var recSec=ce("div","mypage-section");ap(recSec,ap(ce("div","mypage-section-title"),tx("旅行用記録")));
+  profile.records.forEach(function(rec,idx){
+    var box=ce("div","",{style:{marginBottom:"14px",paddingBottom:"12px",borderBottom:"1px solid var(--border)"}});
+    var head=ce("div","",{style:{display:"flex",gap:"8px",alignItems:"center",marginBottom:"6px"}});
+    var labIn=ce("input","mypage-val",{placeholder:"項目名",value:rec.label||"",style:{flex:"1",minWidth:"0"}});labIn.onblur=function(e){profile.records[idx].label=e.target.value;saveProfile();};
+    ap(head,labIn);if(idx>=5)ap(head,delBtn(function(){delRecordRow(idx);}));ap(box,head);
+    var list=ce("div","attach-list");
+    (rec.attachments||[]).forEach(function(att,aidx){
+      var r=ce("div","attach-item");ap(r,ap(ce("span",""),tx(att.type&&att.type.includes("pdf")?"📄":"🖼")),ap(ce("div","attach-item-name"),tx(att.name)));
+      ap(r,ap(ce("button","attach-item-open",{onclick:function(){window.open(att.url,"_blank");}}),tx("開く")),ap(ce("button","attach-item-del",{onclick:function(){if(confirm("削除しますか？"))delRecordFile(idx,aidx);}}),tx("✕")));ap(list,r);
+    });
+    var fileInput=ce("input","",{type:"file",accept:"image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.heic",style:{display:"none"}});var prog=ce("div","attach-progress");
+    var upRow=ce("div","attach-upload");
+    if((rec.attachments||[]).length<3)ap(upRow,ap(ce("button","attach-upload-btn",{onclick:function(){fileInput.click();}}),tx("＋ ファイルを追加（3MB以内）")));
+    fileInput.onchange=function(e){var f=e.target.files[0];if(f)addRecordFile(idx,f,prog);};
+    ap(box,list,fileInput,upRow,prog);ap(recSec,box);
+  });
+  if(profile.records.length<10)ap(recSec,ap(ce("button","attach-upload-btn",{style:{marginTop:"2px"},onclick:function(){profile.records.push({id:mkId(),label:"",attachments:[]});saveProfile();render();}}),tx("＋ 行を追加")));
+  ap(m.modal,recSec);
   ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-ok",{style:{flex:"1",border:"none"},onclick:function(){showMyPage=false;render();}}),tx("閉じる"))));
   return m.ov;
 }
