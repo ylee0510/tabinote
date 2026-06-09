@@ -412,6 +412,8 @@ async function geoSearch(q){q=(q||"").trim();if(q.length<2)return[];if(geoCache[
 function flagEmoji(cc){if(!cc||cc.length!==2)return"📍";try{return String.fromCodePoint.apply(null,cc.toUpperCase().split("").map(function(c){return 0x1F1E6+(c.charCodeAt(0)-65);}));}catch(e){return"📍";}}
 function initMap(){var el=document.getElementById("leaflet-map");if(!el||mapInst||!window.L)return;mapInst=L.map(el).setView([35.6762,139.6503],5);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(mapInst);mapInst.on("click",function(e){pendingPin=e.latlng;pinName="";showPinModal=true;render();});syncMarkers();}
 function destroyMap(){if(mapInst){mapInst.remove();mapInst=null;mapMarkers=[];}}
+// 各renderでDOMが作り直されるため、地図インスタンスが古いコンテナを指していたら作り直す
+function ensureMap(){var el=document.getElementById("leaflet-map");if(!el)return;if(mapInst&&!document.body.contains(mapInst.getContainer()))destroyMap();if(!mapInst)initMap();else{syncMarkers();mapInst.invalidateSize();}}
 function syncMarkers(){if(!mapInst||!window.L)return;var sel=getSel();var spots=sel?sel.places||[]:[];mapMarkers.forEach(function(m){m.remove();});mapMarkers=[];spots.forEach(function(s,i){if(!s.lat||!s.lng)return;var ic=L.divIcon({className:"",html:'<div style="background:#2d3e5a;color:#fff;border-radius:50% 50% 50% 0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg)"><span style="transform:rotate(45deg)">'+(i+1)+'</span></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-28]});var m=L.marker([s.lat,s.lng],{icon:ic}).addTo(mapInst);m.bindPopup("<b>"+(i+1)+". "+s.name+"</b>"+(s.memo?"<br><small>"+s.memo+"</small>":""));mapMarkers.push(m);});if(spots.some(function(s){return s.lat;})){var v=spots.filter(function(s){return s.lat;});mapInst.fitBounds(L.latLngBounds(v.map(function(s){return[s.lat,s.lng];})),{padding:[40,40],maxZoom:14});}}
 
 async function loginGoogle(){
@@ -570,7 +572,7 @@ function render(){
     var wrap=ce("div","");ap(wrap,bar,renderHeader(),renderDetail());
     if(showPinModal)ap(wrap,renderModal_pin());
     ap(app,wrap);
-    if(activeTab==="places"&&showMap){setTimeout(function(){if(!mapInst)initMap();else syncMarkers();},80);}
+    if(activeTab==="places"){setTimeout(ensureMap,80);}
     return;
   }
   if(!user&&!isGuest){ap(app,renderLogin());return;}
@@ -616,7 +618,7 @@ function render(){
     ap(menu,m1,mt,m2);ap(wrap,ov,menu);
   }
   ap(app,wrap);
-  if(view==="detail"&&activeTab==="places"&&showMap){setTimeout(function(){if(!mapInst)initMap();else syncMarkers();},80);}
+  if(view==="detail"&&activeTab==="places"){setTimeout(ensureMap,80);}
   window.scrollTo(0,_winScroll);
   var _newMain=document.querySelector(".main-area");if(_newMain)_newMain.scrollTop=_mainScroll;
 }
@@ -666,9 +668,7 @@ function renderHeader(){
   }
   if(view==="detail"&&!isViewOnly){
     if(sel&&user&&sel.ownerId===user.uid)ap(r,ap(ce("button","icon-btn2",{onclick:function(){showShare=true;render();}}),tx("🔗")));
-    if(activeTab==="places")ap(r,ap(ce("button",showMap?"icon-btn2 on":"icon-btn2",{onclick:function(){showMap=!showMap;if(!showMap)destroyMap();render();}}),tx(showMap?"☰":"🗺")));
   }
-  if(isViewOnly&&activeTab==="places")ap(r,ap(ce("button",showMap?"icon-btn2 on":"icon-btn2",{onclick:function(){showMap=!showMap;if(!showMap)destroyMap();render();}}),tx(showMap?"☰":"🗺")));
   ap(hdr,l,r);return hdr;
 }
 
@@ -905,7 +905,7 @@ function renderCheckList(sel,tab){
 
 function renderPlaces(sel){
   var places=sel.places||[];var wrap=ce("div","");
-  if(showMap){ap(wrap,ce("div","",{id:"leaflet-map",style:{width:"100%",height:"300px"}}),ap(ce("div","map-hint"),tx("地図をタップしてピンを立てる、または下で場所名から追加")));}
+  ap(wrap,ce("div","",{id:"leaflet-map",style:{width:"100%",height:"300px"}}),ap(ce("div","map-hint"),tx("地図をタップしてピンを立てる、または下で場所名から追加")));
   var d=ce("div","content");
   var fb=ce("div","form-box");var r1=ce("div","row");
   var inp=ce("input","inp",{placeholder:"場所名・住所で検索",value:placeInput,oninput:function(e){placeInput=e.target.value;},onkeydown:onEnterTwice(function(){addPlace();})});
