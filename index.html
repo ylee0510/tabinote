@@ -1271,7 +1271,12 @@ function renderModal_guide(){
 }
 
 function renderModal_mypage(){
-  var m=mkOverlay(function(){showMyPage=false;render();});ap(m.modal,ap(ce("div","modal-title"),tx("👤 マイページ")));
+  var m=mkOverlay(function(){showMyPage=false;render();});
+  m.modal.style.paddingTop="0";if(m.modal.firstChild)m.modal.removeChild(m.modal.firstChild);
+  var hd=ce("div","",{style:{position:"sticky",top:"0",zIndex:"5",background:"var(--paper)",display:"flex",alignItems:"center",justifyContent:"space-between",margin:"0 -18px 14px",padding:"16px 18px 12px",borderBottom:"1px solid var(--border)",borderRadius:"22px 22px 0 0"}});
+  ap(hd,ap(ce("div","modal-title",{style:{marginBottom:"0"}}),tx("👤 マイページ")));
+  ap(hd,ap(ce("button","",{style:{background:"#f4f4f5",border:"none",borderRadius:"50%",width:"32px",height:"32px",fontSize:"15px",lineHeight:"1",cursor:"pointer",color:"var(--muted)",flex:"0 0 auto"},onclick:function(){showMyPage=false;render();}}),tx("✕")));
+  ap(m.modal,hd);
   var note=ce("div","",{style:{fontSize:"11px",lineHeight:"1.5",color:"var(--muted)",background:"#f4f4f5",borderRadius:"8px",padding:"8px 11px",marginBottom:"16px"}});
   ap(note,tx("⚠ 個人の特定につながるような情報の入力やデータ保存はお控えください。"));ap(m.modal,note);
   var mig=migrateProfile(window._tavyProfile||{});var profile=mig.profile;window._tavyProfile=profile;
