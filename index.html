@@ -818,26 +818,26 @@ function renderItinerary(sel){
     var sec=ce("div","",{style:{marginBottom:"18px"}});
     ap(sec,ap(ce("div","date-hdr"),tx(date==="__"?"日付未設定":fmtDate(date))));
     groups[date].forEach(function(it){
-      var row=ce("div","itin-row");
+      var row=ce("div","itin-row",{style:{cursor:"pointer"}});
+      row.onclick=(function(item){return function(){
+        editingItinId=item.id;
+        itinForm={date:item.date||"",time:item.time||"",text:item.text||"",type:item.type||""};
+        render();
+        var fb=document.querySelector(".form-box");if(fb)fb.scrollIntoView({behavior:"smooth",block:"start"});
+      };})(it);
       var txWrap=ce("div","itin-tx");
       if(it.type){
         var badge=ce("span","itin-type-badge",{style:{background:getItinTypeColor(it.type)}});
         ap(badge,tx(it.type));ap(txWrap,badge);
       }
       ap(txWrap,tx(it.text));
-      var editBtn=ce("button","del-btn",{style:{background:"var(--stamp)",marginRight:"4px"},onclick:(function(item){return function(){
-        editingItinId=item.id;
-        itinForm={date:item.date||"",time:item.time||"",text:item.text||"",type:item.type||""};
-        render();
-        var fb=document.querySelector(".form-box");if(fb)fb.scrollIntoView({behavior:"smooth",block:"start"});
-      };})(it)});
-      ap(editBtn,tx("✏️"));
-      var delBtn2=ce("button","del-btn",{onclick:function(){delItin(it.id);}});ap(delBtn2,tx("🗑"));
+      var delBtn=ce("button","",{style:{background:"none",border:"none",color:"#ccc",fontSize:"15px",cursor:"pointer",padding:"0 2px",flexShrink:"0",lineHeight:"1"},onclick:function(e){e.stopPropagation();delItin(it.id);}});
+      ap(delBtn,tx("✕"));
       ap(row,
         ap(ce("div","itin-time"),tx(it.time||"--:--")),
         ap(ce("div","itin-tl"),ce("div","itin-dot"),ce("div","itin-line")),
         txWrap,
-        editBtn,delBtn2
+        delBtn
       );
       ap(sec,row);
     });
