@@ -667,7 +667,7 @@ function renderHeader(){
     ap(ht,tx("Tavy"));
   }else{
     if(view==="list"&&!isViewOnly)ht.style.cssText="font-size:28px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917";
-    ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="list"?"Tavy":view==="templates"?"テンプレート":(sel?sel.name:"")));
+    ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="list"?"Tavy":view==="templates"?"マイ持ち物リスト":(sel?sel.name:"")));
     if(view==="list"&&!isViewOnly){var hs=ce("div","hdr-sub");ap(hs,tx(user?user.displayName||user.email:""));ap(ti,hs);}
   }
   ap(ti,ht);ap(l,ti);var r=ce("div","hdr-r");
@@ -768,12 +768,12 @@ function renderList(){
 }
 
 function renderTemplates(){
-  var d=ce("div","content");ap(d,ap(ce("p","",{style:{fontSize:"13px",color:"var(--muted)",lineHeight:"1.6",marginBottom:"12px"}}),tx("新しい旅行作成時に自動追加されるテンプレートです。")));
+  var d=ce("div","content");ap(d,ap(ce("p","",{style:{fontSize:"13px",color:"var(--muted)",lineHeight:"1.6",marginBottom:"12px"}}),tx("新しい旅行作成時に自動追加される持ち物リストのテンプレートです。")));
   var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(tplTab===t?" on":""),{onclick:function(){tplTab=t;render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});ap(d,tr);
   ["packing","todo"].forEach(function(tab){
     var sec=ce("div","",{style:{marginBottom:"22px"}});ap(sec,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",letterSpacing:"1px",textTransform:"uppercase"}}),tx(tab==="packing"?"🎒 持ち物":"✅ ToDo")));
     var row=ce("div","row");var inp=ce("input","inp",{placeholder:"項目を追加",value:tplInput[tab],oninput:function(e){tplInput[tab]=e.target.value;},onkeydown:onEnterTwice(function(){addTplItem(tab);})});ap(row,inp,ap(ce("button","plus-btn",{onclick:function(){addTplItem(tab);}}),tx("＋")));ap(sec,row);
-    (templates[tplTab]?templates[tplTab][tab]||[]:[] ).forEach(function(item,idx){var it=ce("div","item");ap(it,ce("div","",{style:{width:"8px",height:"8px",borderRadius:"50%",background:"var(--accent)",opacity:"0.4",flexShrink:"0"}}),ap(ce("div","item-txt"),tx(item)),ap(ce("button","del-btn",{onclick:function(){delTplItem(tab,idx);}}),tx("🗑")));ap(sec,it);});
+    (templates[tplTab]?templates[tplTab][tab]||[]:[] ).forEach(function(item,idx){var it=ce("div","item");ap(it,ce("div","",{style:{width:"8px",height:"8px",borderRadius:"50%",background:"var(--accent)",opacity:"0.4",flexShrink:"0"}}),ap(ce("div","item-txt"),tx(item)),mkDelBtn(function(){delTplItem(tab,idx);}));ap(sec,it);});
     ap(d,sec);
   });
   return d;
