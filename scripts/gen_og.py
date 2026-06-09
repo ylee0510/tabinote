@@ -18,7 +18,7 @@ OG = "og.png"
 
 # og card layout (measured from the existing og.png)
 OG_W, OG_H = 1200, 630
-BG = (45, 62, 90, 255)      # flat navy card colour
+BG = (255, 255, 255, 255)   # flat white card colour
 CARD_RADIUS = 48            # outer card corner radius
 ICON_SIZE = 280             # icon size inside the card
 ICON_POS = (460, 135)       # top-left placement (horizontally centred, slightly high)
