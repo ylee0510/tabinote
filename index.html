@@ -1197,13 +1197,13 @@ function renderModal_guide(){
   var ov=ce("div","overlay",{onclick:function(e){if(e.target===ov){showGuide=false;render();}}});
   var modal=ce("div","guide-modal",{onclick:function(e){e.stopPropagation();}});
   ap(modal,ce("div","modal-bar"),ap(ce("div","",{style:{fontSize:"18px",fontWeight:"800",color:"#1c1917",marginBottom:"20px"}}),tx("Tavyの使い方")));
-  [{title:"旅行を作成する",desc:"右上の「＋ 追加」から旅行を登録。国内・海外を選ぶとテンプレートが自動で追加されます。"},
+  [{title:"旅行を作成する",desc:"右上の「＋ 追加」から旅行を登録。国内・海外を選ぶと持ち物・ToDoのテンプレートが自動で追加されます。旅行カードにはカバー写真も設定できます。"},
    {title:"各タブで旅を管理する",desc:"旅行カードをタップすると詳細画面へ。6つのタブで旅行情報を管理できます。",tabs:["🗓 行程","🎒 持ち物","✅ ToDo","📍 スポット","💰 予算","🌤 天気"]},
    {title:"行程を記録する",desc:"日付・時刻・種別（到着/出発/食事など）・内容を入力して旅程を登録。種別はカラーバッジで表示されます。"},
-   {title:"予算を管理する",desc:"39カ国の通貨に対応。リアルタイム為替レートで円換算も自動表示されます。"},
+   {title:"予算を管理する",desc:"39カ国の通貨に対応。リアルタイム為替レートで円換算も自動表示されます。金額欄では「15000+3000」のような四則演算も入力できます。"},
    {title:"天気を確認する",desc:"天気タブで都市を追加すると、旅行期間中の天気予報と最高・最低気温が表示されます。"},
    {title:"旅行を共有する",desc:"🔗ボタンから閲覧リンクを発行（ログイン不要）、またはメールアドレスで編集メンバーを招待できます。"},
-   {title:"マイページを活用する",desc:"右上の👤メニューからマイページを開くと、パスポート番号・有効期限・ESTA申請番号・緊急連絡先・医療情報を登録できます。"}
+   {title:"マイページ・持ち物リストを活用する",desc:"右上の👤メニューからマイページ（パスポート・ESTA・緊急連絡先・医療情報）や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。"}
   ].forEach(function(s,i){
     var step=ce("div","guide-step");var num=ce("div","guide-step-num");ap(num,tx(String(i+1)));
     var body=ce("div","");ap(body,ap(ce("div","guide-step-title"),tx(s.title)),ap(ce("div","guide-step-desc"),tx(s.desc)));
