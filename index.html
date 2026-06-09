@@ -365,8 +365,18 @@ var DEMO_TRIPS=[{
     {name:"モンテレイ",lat:25.6866,lng:-100.3161,country:"メキシコ",country_code:"MX",admin1:"ヌエボ・レオン州"}
   ],
   budget:[
-    {id:"db1",icon:"✈️",name:"航空券",budget_A:400000,actual_A:0,budget_B:0,actual_B:0},
-    {id:"db2",icon:"🏨",name:"宿泊費",budget_A:200000,actual_A:0,budget_B:0,actual_B:0},
+    {id:"db1",icon:"✈️",name:"航空券",budget_A:400000,actual_A:0,budget_B:2667,actual_B:0,entries:[
+      {memo:"ANA 成田⇄ダラス 往復（NH108/NH109）",amtA:285000,amtB:1900},
+      {memo:"ダラス→ラスベガス（AA 国内線）",amtA:21000,amtB:140},
+      {memo:"ラスベガス→モンテレイ（国際線）",amtA:31500,amtB:210},
+      {memo:"モンテレイ→ダラス（国際線）",amtA:27000,amtB:180}
+    ]},
+    {id:"db2",icon:"🏨",name:"宿泊費",budget_A:400000,actual_A:0,budget_B:2667,actual_B:0,entries:[
+      {memo:"Dallas Marriott City Center（6/12-15・3泊）",amtA:85500,amtB:570},
+      {memo:"The Venetian Las Vegas（6/15-19・3泊）",amtA:108000,amtB:720},
+      {memo:"Fiesta Americana Monterrey（6/19-21・2泊）",amtA:39000,amtB:260},
+      {memo:"Dallas Marriott City Center（6/21-26・5泊）",amtA:142500,amtB:950}
+    ]},
     {id:"db3",icon:"🚇",name:"現地交通費",budget_A:50000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db4",icon:"🍜",name:"食費",budget_A:80000,actual_A:0,budget_B:0,actual_B:0},
     {id:"db5",icon:"🏝️",name:"観光・レジャー",budget_A:50000,actual_A:0,budget_B:0,actual_B:0},
