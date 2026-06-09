@@ -1294,7 +1294,7 @@ function renderModal_mypage(){
     if(idx>=5)ap(row,delBtn(function(){delMemoRow(idx);}));
     ap(memoSec,row);
   });
-  if(profile.memos.length<10)ap(memoSec,ap(ce("button","attach-upload-btn",{style:{marginTop:"2px"},onclick:function(){profile.memos.push({label:"",value:""});saveProfile();render();}}),tx("＋ 行を追加")));
+  if(profile.memos.length<10)ap(memoSec,ap(ce("button","attach-upload-btn",{style:{marginTop:"2px"},onclick:function(){profile.memos.push({label:"",value:""});saveProfile();render();}}),tx("＋ メモを追加")));
   ap(m.modal,memoSec);
   // 旅行用記録（項目名は自由入力＋ファイル添付）
   var recSec=ce("div","mypage-section");ap(recSec,ap(ce("div","mypage-section-title"),tx("旅行用記録")));
@@ -1314,7 +1314,7 @@ function renderModal_mypage(){
     fileInput.onchange=function(e){var f=e.target.files[0];if(f)addRecordFile(idx,f,prog);};
     ap(box,list,fileInput,upRow,prog);ap(recSec,box);
   });
-  if(profile.records.length<10)ap(recSec,ap(ce("button","attach-upload-btn",{style:{marginTop:"2px"},onclick:function(){profile.records.push({id:mkId(),label:"",attachments:[]});saveProfile();render();}}),tx("＋ 行を追加")));
+  if(profile.records.length<10)ap(recSec,ap(ce("button","attach-upload-btn",{style:{marginTop:"2px"},onclick:function(){profile.records.push({id:mkId(),label:"",attachments:[]});saveProfile();render();}}),tx("＋ 記録を追加")));
   ap(m.modal,recSec);
   ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-ok",{style:{flex:"1",border:"none"},onclick:function(){showMyPage=false;render();}}),tx("閉じる"))));
   return m.ov;
