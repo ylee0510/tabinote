@@ -1247,7 +1247,7 @@ function renderModal_guide(){
    {title:"予算を管理する",desc:"39カ国の通貨に対応。リアルタイム為替レートで円換算も自動表示されます。金額欄では「15000+3000」のような四則演算も入力できます。"},
    {title:"天気を確認する",desc:"天気タブで都市を追加すると、旅行期間中の天気予報と最高・最低気温が表示されます。"},
    {title:"旅行を共有する",desc:"🔗ボタンから閲覧リンクを発行（ログイン不要）、またはメールアドレスで編集メンバーを招待できます。"},
-   {title:"マイページ・持ち物リストを活用する",desc:"右上の👤メニューからマイページ（パスポート・ESTA・緊急連絡先・医療情報）や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。"}
+   {title:"マイページ・持ち物リストを活用する",desc:"右上の👤メニューからマイページ（パスポート・ESTA）や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。"}
   ].forEach(function(s,i){
     var step=ce("div","guide-step");var num=ce("div","guide-step-num");ap(num,tx(String(i+1)));
     var body=ce("div","");ap(body,ap(ce("div","guide-step-title"),tx(s.title)),ap(ce("div","guide-step-desc"),tx(s.desc)));
@@ -1264,8 +1264,6 @@ function renderModal_mypage(){
   function field(label,key,placeholder,type){var wrap=ce("div","mypage-field");ap(wrap,ap(ce("label","mypage-label"),tx(label)));var inp=ce("input","mypage-val",{type:type||"text",placeholder:placeholder||"",value:profile[key]||""});inp.onblur=function(e){profile[key]=e.target.value;};ap(wrap,inp);return wrap;}
   var s1=ce("div","mypage-section");ap(s1,ap(ce("div","mypage-section-title"),tx("パスポート")),field("パスポート番号","passport_no","例：TK1234567"),field("有効期限","passport_exp","","date"),field("国籍","nationality","例：日本"));ap(m.modal,s1);
   var s2=ce("div","mypage-section");ap(s2,ap(ce("div","mypage-section-title"),tx("ビザ・ESTA")),field("ESTA申請番号","esta_no","例：1234567890"),field("ESTA有効期限","esta_exp","","date"),field("その他ビザ情報","visa_note","例：韓国ETA 2025-12-31"));ap(m.modal,s2);
-  var s3=ce("div","mypage-section");ap(s3,ap(ce("div","mypage-section-title"),tx("緊急連絡先")),field("氏名","emergency_name","例：山田 太郎"),field("電話番号","emergency_tel","例：090-1234-5678","tel"),field("続柄","emergency_rel","例：配偶者"));ap(m.modal,s3);
-  var s4=ce("div","mypage-section");ap(s4,ap(ce("div","mypage-section-title"),tx("医療情報")),field("血液型","blood_type","例：A型"),field("アレルギー","allergy","例：卵、ピーナッツ"),field("服用中の薬","medicine","例：なし"));ap(m.modal,s4);
   [{key:"passport",label:"パスポート写真・コピー"},{key:"esta",label:"ESTA・ビザなど"},{key:"visa2",label:"その他ビザ・Eチケットなど"},{key:"visa3",label:"その他書類"}].forEach(function(def){
     var sec=ce("div","mypage-section");ap(sec,ap(ce("div","mypage-section-title"),tx(def.label)));
     var attachments=(profile["attachments_"+def.key]||[]);var list=ce("div","attach-list");
