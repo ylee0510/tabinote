@@ -21,11 +21,13 @@ OG_W, OG_H = 1200, 630
 BG = (255, 255, 255, 255)   # flat white card colour
 CARD_RADIUS = 48            # outer card corner radius
 
-# brand
-NAVY = (45, 62, 90)         # --accent #2d3e5a
-MUTED = (120, 113, 108)     # --muted #78716c
-FONT_TITLE = ("/System/Library/Fonts/Avenir.ttc", 4)       # Avenir Heavy
-FONT_SUB = ("/System/Library/Fonts/Avenir Next.ttc", 5)    # Avenir Next Medium
+# brand — matched to the landing-page logo (index.html login screen):
+#   Tavy        font:Georgia weight:900 colour:#1c1917 letter-spacing:-2px@42px
+#   TRAVEL MEMO colour:#a8a29e letter-spacing:3px@11px uppercase
+INK = (28, 25, 23)          # --ink #1c1917
+SUB_GREY = (168, 162, 158)  # #a8a29e
+FONT_TITLE = ("/System/Library/Fonts/Supplemental/Georgia Bold.ttf", 0)  # Georgia Bold
+FONT_SUB = ("/System/Library/Fonts/Avenir Next.ttc", 5)                  # neutral sans
 
 # left-aligned icon + title block
 ICON_SIZE = 300
@@ -34,7 +36,8 @@ TITLE = "Tavy"
 SUBTITLE = "TRAVEL MEMO"
 TITLE_SIZE = 168
 SUB_SIZE = 44
-SUB_TRACKING = 10           # extra px between subtitle letters
+TITLE_TRACKING = -8         # -2px @ 42px, scaled to title size
+SUB_TRACKING = 12           # 3px @ 11px, scaled to subtitle size
 TITLE_SUB_GAP = 22          # vertical gap between title and subtitle
 
 
@@ -75,14 +78,14 @@ def rounded_mask(size, radius) -> Image.Image:
 
 
 def tracked_width(font, text, tracking):
-    return sum(font.getbbox(c)[2] for c in text) + tracking * (len(text) - 1)
+    return sum(font.getlength(c) for c in text) + tracking * (len(text) - 1)
 
 
 def draw_tracked(draw, xy, text, font, fill, tracking):
     x, y = xy
     for c in text:
         draw.text((x, y), c, font=font, fill=fill)
-        x += font.getbbox(c)[2] + tracking
+        x += font.getlength(c) + tracking
 
 
 def main():
@@ -100,7 +103,8 @@ def main():
 
     # measure text block
     t_box = title_font.getbbox(TITLE)
-    t_w, t_h = t_box[2] - t_box[0], t_box[3] - t_box[1]
+    t_w = tracked_width(title_font, TITLE, TITLE_TRACKING)
+    t_h = t_box[3] - t_box[1]
     s_w = tracked_width(sub_font, SUBTITLE, SUB_TRACKING)
     s_box = sub_font.getbbox(SUBTITLE)
     s_h = s_box[3] - s_box[1]
@@ -109,7 +113,7 @@ def main():
 
     # centre the whole [icon | gap | text] group horizontally
     total_w = ICON_SIZE + GAP + text_w
-    gx = (OG_W - total_w) // 2
+    gx = int((OG_W - total_w) // 2)
 
     icon_y = (OG_H - ICON_SIZE) // 2
     icon_s = icon.resize((ICON_SIZE, ICON_SIZE), Image.LANCZOS)
@@ -117,10 +121,11 @@ def main():
 
     text_x = gx + ICON_SIZE + GAP
     block_y = (OG_H - block_h) // 2
-    # title (subtract bbox top offset so it sits where we expect)
-    draw.text((text_x - t_box[0], block_y - t_box[1]), TITLE, font=title_font, fill=NAVY)
+    # title (subtract bbox offsets so the glyphs sit where we expect)
+    draw_tracked(draw, (text_x - t_box[0], block_y - t_box[1]),
+                 TITLE, title_font, INK, TITLE_TRACKING)
     sub_y = block_y + t_h + TITLE_SUB_GAP
-    draw_tracked(draw, (text_x, sub_y - s_box[1]), SUBTITLE, sub_font, MUTED, SUB_TRACKING)
+    draw_tracked(draw, (text_x, sub_y - s_box[1]), SUBTITLE, sub_font, SUB_GREY, SUB_TRACKING)
 
     card.save(OG)
     print(f"wrote {ICON} and {OG}")
