@@ -386,7 +386,7 @@ var editingItinId=null;
 var checkInput="",placeInput="",placeMemo="",shareEmail="",pinName="";
 var tplTab="domestic",tplInput={packing:"",todo:""};
 var showNewTrip=false,showShare=false,showPinModal=false,showMap=false,showNewBudget=false,showGuide=false,showMenu=false,showMyPage=false;
-var weatherCityInput="",weatherCache={};
+var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
 var isViewOnly=false,viewOnlyTrip=null;
 var isGuest=false;
 var newBudget={icon:"💰",name:""};
@@ -406,6 +406,10 @@ var toastTm=null;
 function toast(msg){var existing=document.getElementById("tavy-toast");if(existing)existing.remove();if(toastTm){clearTimeout(toastTm);toastTm=null;}var el=document.createElement("div");el.id="tavy-toast";el.className="toast";el.textContent=msg;document.body.appendChild(el);toastTm=setTimeout(function(){var t=document.getElementById("tavy-toast");if(t)t.remove();toastTm=null;},2500);}
 
 async function geocode(q){try{var r=await fetch("https://nominatim.openstreetmap.org/search?format=json&q="+encodeURIComponent(q)+"&limit=1",{headers:{"Accept-Language":"ja"}});var d=await r.json();if(d[0])return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};}catch(e){}return null;}
+// Open-Meteo Geocoding（天気と同一提供元）。同名都市の特定用に複数候補を返す。
+async function geoSearch(q){q=(q||"").trim();if(q.length<2)return[];if(geoCache[q])return geoCache[q];try{var r=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(q)+"&count=6&language=ja");var d=await r.json();var out=(d.results||[]).map(function(x){return{name:x.name,admin1:x.admin1||"",country:x.country||"",country_code:x.country_code||"",lat:x.latitude,lng:x.longitude};});geoCache[q]=out;return out;}catch(e){return[];}}
+// ISO-2 国コード → 国旗絵文字
+function flagEmoji(cc){if(!cc||cc.length!==2)return"📍";try{return String.fromCodePoint.apply(null,cc.toUpperCase().split("").map(function(c){return 0x1F1E6+(c.charCodeAt(0)-65);}));}catch(e){return"📍";}}
 function initMap(){var el=document.getElementById("leaflet-map");if(!el||mapInst||!window.L)return;mapInst=L.map(el).setView([35.6762,139.6503],5);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap"}).addTo(mapInst);mapInst.on("click",function(e){pendingPin=e.latlng;pinName="";showPinModal=true;render();});syncMarkers();}
 function destroyMap(){if(mapInst){mapInst.remove();mapInst=null;mapMarkers=[];}}
 function syncMarkers(){if(!mapInst||!window.L)return;var sel=getSel();var spots=sel?sel.places||[]:[];mapMarkers.forEach(function(m){m.remove();});mapMarkers=[];spots.forEach(function(s,i){if(!s.lat||!s.lng)return;var ic=L.divIcon({className:"",html:'<div style="background:#2d3e5a;color:#fff;border-radius:50% 50% 50% 0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg)"><span style="transform:rotate(45deg)">'+(i+1)+'</span></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-28]});var m=L.marker([s.lat,s.lng],{icon:ic}).addTo(mapInst);m.bindPopup("<b>"+(i+1)+". "+s.name+"</b>"+(s.memo?"<br><small>"+s.memo+"</small>":""));mapMarkers.push(m);});if(spots.some(function(s){return s.lat;})){var v=spots.filter(function(s){return s.lat;});mapInst.fitBounds(L.latLngBounds(v.map(function(s){return[s.lat,s.lng];})),{padding:[40,40],maxZoom:14});}}
@@ -493,7 +497,7 @@ async function loadSharedTrip(tripId){try{var doc=await db.collection("trips").d
 async function duplicateTrip(trip){try{await db.collection("trips").add({name:trip.name+" (コピー)",destination:trip.destination||"",startDate:"",endDate:"",type:trip.type||"overseas",ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],isPublic:false,currency:trip.currency||"JPY",itinerary:trip.itinerary||[],packing:(trip.packing||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),todo:(trip.todo||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),places:(trip.places||[]).map(function(i){return Object.assign({},i,{id:mkId()});}),budget:JSON.parse(JSON.stringify(trip.budget||[])),createdAt:firebase.firestore.FieldValue.serverTimestamp()});toast("旅行を複製しました！");}catch(e){console.error(e);toast("複製に失敗: "+e.message);}}
 function getWeatherIcon(code){if(code<=1)return"☀️";if(code<=3)return"⛅";if(code<=48)return"🌫";if(code<=67)return"🌧";if(code<=77)return"❄️";if(code<=82)return"🌧";if(code<=99)return"⛈";return"🌡";}
 async function fetchWeather(lat,lng,startDate,endDate){var cacheKey=lat+","+lng+","+startDate+","+endDate;if(weatherCache[cacheKey])return weatherCache[cacheKey];try{var start=startDate||new Date().toISOString().slice(0,10);var end=endDate||start;var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&start_date="+start+"&end_date="+end;var r=await fetch(url);var d=await r.json();if(d.daily){weatherCache[cacheKey]=d.daily;return d.daily;}}catch(e){}return null;}
-async function addWeatherCity(tripId,cities){var name=weatherCityInput.trim();if(!name)return;var geo=await geocode(name);if(!geo){toast("都市が見つかりませんでした");return;}await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).concat([{name:name,lat:geo.lat,lng:geo.lng}])});weatherCityInput="";render();}
+async function addWeatherCity(tripId,cities,cand){if(!cand||cand.lat==null)return;await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).concat([{name:cand.name,lat:cand.lat,lng:cand.lng,country:cand.country||"",country_code:cand.country_code||"",admin1:cand.admin1||""}])});weatherCityInput="";weatherSuggestions=[];if(weatherSearchTm){clearTimeout(weatherSearchTm);weatherSearchTm=null;}render();}
 async function removeWeatherCity(tripId,cities,idx){await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).filter(function(_,i){return i!==idx;})});}
 function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0);});syncMarkers();render();},function(err){console.warn("trips err:",err);});}
 var MAX_FILE_SIZE=3*1024*1024;
@@ -958,15 +962,44 @@ function renderModal_pin(){
   return m.ov;
 }
 
+// 候補ドロップダウンを描画（全再描画せずDOMを直接更新＝入力フォーカス維持）
+function fillSuggest(box){
+  box.innerHTML="";
+  var sel=getSel();if(!sel){box.style.display="none";return;}
+  var cities=sel.weatherCities||[];var q=weatherCityInput.trim();
+  if(!weatherSuggestions.length){
+    if(q.length>=2){box.style.display="block";var none=ce("div","",{style:{padding:"11px 13px",fontSize:"13px",color:"var(--muted)"}});ap(none,tx("該当する都市が見つかりません"));ap(box,none);}
+    else box.style.display="none";
+    return;
+  }
+  box.style.display="block";
+  weatherSuggestions.forEach(function(c,i){
+    var last=i===weatherSuggestions.length-1;
+    var row=ce("div","",{style:{padding:"10px 13px",cursor:"pointer",display:"flex",flexDirection:"column",gap:"1px",borderBottom:last?"none":"1px solid var(--border)"},onclick:function(){addWeatherCity(sel.id,cities,c);}});
+    var main=ce("div","",{style:{fontSize:"14px",fontWeight:"600",color:"var(--ink)"}});ap(main,tx(flagEmoji(c.country_code)+" "+c.name));
+    var sub=ce("div","",{style:{fontSize:"11px",color:"var(--muted)"}});ap(sub,tx([c.admin1,c.country].filter(Boolean).join(", ")));
+    ap(row,main,sub);ap(box,row);
+  });
+}
+function renderWeatherSuggest(){var box=document.getElementById("weather-suggest");if(box)fillSuggest(box);}
 function renderWeather(sel){
   var cities=sel.weatherCities||[];var d=ce("div","weather-section");
   var addRow=ce("div","weather-city-row");
-  var inp=ce("input","inp",{placeholder:"都市名を入力（例：ソウル）",value:weatherCityInput,oninput:function(e){weatherCityInput=e.target.value;},onkeydown:onEnterTwice(function(){addWeatherCity(sel.id,cities);})});
-  ap(addRow,inp,ap(ce("button","plus-btn",{onclick:function(){addWeatherCity(sel.id,cities);}}),tx("＋")));ap(d,addRow);
+  var pickFirst=function(){if(weatherSuggestions[0])addWeatherCity(sel.id,cities,weatherSuggestions[0]);};
+  var inp=ce("input","inp",{placeholder:"都市名を入力（例：ソウル）",value:weatherCityInput,oninput:function(e){
+    weatherCityInput=e.target.value;var q=weatherCityInput.trim();
+    if(weatherSearchTm){clearTimeout(weatherSearchTm);weatherSearchTm=null;}
+    if(q.length<2){weatherSuggestions=[];renderWeatherSuggest();return;}
+    weatherSearchTm=setTimeout(function(){geoSearch(q).then(function(res){if(weatherCityInput.trim()!==q)return;weatherSuggestions=res;renderWeatherSuggest();});},350);
+  },onkeydown:onEnterTwice(pickFirst)});
+  ap(addRow,inp,ap(ce("button","plus-btn",{onclick:pickFirst}),tx("＋")));ap(d,addRow);
+  var sugg=ce("div","",{id:"weather-suggest",style:{marginTop:"6px",border:"1px solid var(--border)",borderRadius:"10px",overflow:"hidden",background:"#fff",display:"none"}});
+  fillSuggest(sugg);ap(d,sugg);
   if(cities.length===0){ap(d,ap(ce("div","weather-loading"),tx("都市を追加すると天気予報が表示されます")));return d;}
   cities.forEach(function(city,idx){
     var card=ce("div","weather-card");var hdr=ce("div","weather-card-header");
-    ap(hdr,ap(ce("div","weather-city-name"),tx("📍 "+city.name)),ap(ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"13px",cursor:"pointer"},onclick:function(){removeWeatherCity(sel.id,cities,idx);}}),tx("✕")));
+    var cityLabel=city.country?(flagEmoji(city.country_code)+" "+city.name+", "+city.country):("📍 "+city.name);
+    ap(hdr,ap(ce("div","weather-city-name"),tx(cityLabel)),ap(ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"13px",cursor:"pointer"},onclick:function(){removeWeatherCity(sel.id,cities,idx);}}),tx("✕")));
     ap(card,hdr);var daysEl=ce("div","weather-days");ap(daysEl,ap(ce("div","weather-loading"),tx("取得中...")));ap(card,daysEl);ap(d,card);
     (function(cityObj,el,s,e){
       var today=new Date().toISOString().slice(0,10);var start=s||today;var end=e||start;
