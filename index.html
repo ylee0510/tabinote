@@ -394,6 +394,7 @@ var tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas"};
 var itinForm={date:"",time:"",text:"",type:""};
 var editingItinId=null;
 var checkInput="",placeInput="",placeMemo="",shareEmail="",pinName="";
+var placeSuggestions=[],placeSearchTm=null,geoPlaceCache={};
 var tplTab="domestic",tplInput={packing:"",todo:""};
 var showNewTrip=false,showShare=false,showPinModal=false,showMap=false,showNewBudget=false,showGuide=false,showMenu=false,showMyPage=false;
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
@@ -470,6 +471,9 @@ function evalExpr(str){var s=String(str).replace(/[,\s]/g,'');if(!s)return 0;if(
 function onEnterTwice(fn){return function(e){if(e.isComposing)return;if(e.key!=="Enter"){e.target._ep=false;return;}if(e.target._ep){e.target._ep=false;fn();}else{e.target._ep=true;}};}
 async function delCheck(tab,id){var sel=getSel();if(!sel)return;await upd({[tab]:(sel[tab]||[]).filter(function(i){return i.id!==id;})});}
 async function addPlace(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var name=placeInput.trim();if(!name)return;geocoding=true;render();try{var geo=await geocode(name);var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).concat([{id:mkId(),name:name,memo:placeMemo.trim(),lat:geo?geo.lat:null,lng:geo?geo.lng:null}])});placeInput="";placeMemo="";}finally{geocoding=false;render();}}
+// Photon（OSM・キー不要・オートコンプリート向け）。POI/住所も候補で返す。
+async function placeSearch(q){q=(q||"").trim();if(q.length<2)return[];if(geoPlaceCache[q])return geoPlaceCache[q];try{var r=await fetch("https://photon.komoot.io/api/?q="+encodeURIComponent(q)+"&limit=6&lang=default");var d=await r.json();var seen={};var out=[];(d.features||[]).forEach(function(f){var p=f.properties||{},c=(f.geometry||{}).coordinates;if(!c)return;var nm=p.name||p.street||"";var parts=[p.housenumber&&p.street?p.street+" "+p.housenumber:p.street,p.city||p.county,p.state,p.country].filter(Boolean).filter(function(x){return x!==nm;});var addr=parts.join(", ");if(!nm){nm=addr;}var key=nm+"|"+c[1].toFixed(4)+","+c[0].toFixed(4);if(seen[key])return;seen[key]=1;out.push({name:nm,addr:addr,lat:c[1],lng:c[0]});});geoPlaceCache[q]=out;return out;}catch(e){return[];}}
+async function addPlaceCand(cand){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!cand)return;var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).concat([{id:mkId(),name:cand.name,memo:placeMemo.trim(),lat:cand.lat,lng:cand.lng}])});placeInput="";placeMemo="";placeSuggestions=[];if(placeSearchTm){clearTimeout(placeSearchTm);placeSearchTm=null;}render();}
 async function delPlace(id){var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).filter(function(p){return p.id!==id;})});}
 async function confirmPin(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!pinName.trim()||!pendingPin)return;var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).concat([{id:mkId(),name:pinName.trim(),memo:"",lat:pendingPin.lat,lng:pendingPin.lng}])});showPinModal=false;pendingPin=null;pinName="";render();}
 async function saveTpl(next){if(isGuest){toast("💡 保存するにはログインが必要です");return;}templates=next;try{await db.collection("users").doc(user.uid).collection("settings").doc("templates").set(next);}catch(e){}}
@@ -912,14 +916,41 @@ function renderCheckList(sel,tab){
   return d;
 }
 
+// スポット検索の候補ドロップダウン（全再描画せずDOM直接更新＝入力フォーカス維持）
+function fillPlaceSuggest(box){
+  box.innerHTML="";var q=placeInput.trim();
+  if(!placeSuggestions.length){
+    if(q.length>=2){box.style.display="block";var none=ce("div","",{style:{padding:"11px 13px",fontSize:"13px",color:"var(--muted)"}});ap(none,tx("該当する場所が見つかりません"));ap(box,none);}
+    else box.style.display="none";
+    return;
+  }
+  box.style.display="block";
+  placeSuggestions.forEach(function(c,i){
+    var last=i===placeSuggestions.length-1;
+    var row=ce("div","",{style:{padding:"10px 13px",cursor:"pointer",display:"flex",flexDirection:"column",gap:"1px",borderBottom:last?"none":"1px solid var(--border)"},onclick:function(){addPlaceCand(c);}});
+    var main=ce("div","",{style:{fontSize:"14px",fontWeight:"600",color:"var(--ink)"}});ap(main,tx("📍 "+c.name));
+    ap(row,main);
+    if(c.addr){var sub=ce("div","",{style:{fontSize:"11px",color:"var(--muted)"}});ap(sub,tx(c.addr));ap(row,sub);}
+    ap(box,row);
+  });
+}
+function renderPlaceSuggest(){var box=document.getElementById("place-suggest");if(box)fillPlaceSuggest(box);}
 function renderPlaces(sel){
   var places=sel.places||[];var wrap=ce("div","");
   ap(wrap,ce("div","",{id:"leaflet-map",style:{width:"100%",height:"300px"}}),ap(ce("div","map-hint"),tx("地図をタップしてピンを立てる、または下で場所名から追加")));
   var d=ce("div","content");
   var fb=ce("div","form-box");var r1=ce("div","row");
-  var inp=ce("input","inp",{placeholder:"場所名・住所で検索",value:placeInput,oninput:function(e){placeInput=e.target.value;},onkeydown:onEnterTwice(function(){addPlace();})});
-  var btn=ce("button","plus-btn",{onclick:addPlace});if(geocoding)btn.disabled=true;ap(btn,tx(geocoding?"…":"＋"));
-  ap(r1,inp,btn);ap(fb,r1,ce("input","inp",{placeholder:"メモ（任意）",value:placeMemo,oninput:function(e){placeMemo=e.target.value;}}));ap(d,fb);
+  var pickFirstPlace=function(){if(placeSuggestions[0])addPlaceCand(placeSuggestions[0]);};
+  var inp=ce("input","inp",{placeholder:"場所名・住所で検索",value:placeInput,oninput:function(e){
+    placeInput=e.target.value;var q=placeInput.trim();
+    if(placeSearchTm){clearTimeout(placeSearchTm);placeSearchTm=null;}
+    if(q.length<2){placeSuggestions=[];renderPlaceSuggest();return;}
+    placeSearchTm=setTimeout(function(){placeSearch(q).then(function(res){if(placeInput.trim()!==q)return;placeSuggestions=res;renderPlaceSuggest();});},350);
+  },onkeydown:onEnterTwice(pickFirstPlace)});
+  var btn=ce("button","plus-btn",{onclick:pickFirstPlace});ap(btn,tx("＋"));
+  ap(r1,inp,btn);ap(fb,r1);
+  var psug=ce("div","",{id:"place-suggest",style:{marginTop:"6px",border:"1px solid var(--border)",borderRadius:"10px",overflow:"hidden",background:"#fff",display:"none"}});fillPlaceSuggest(psug);ap(fb,psug);
+  ap(fb,ce("input","inp",{placeholder:"メモ（任意）",value:placeMemo,oninput:function(e){placeMemo=e.target.value;}}));ap(d,fb);
   if(places.length===0){ap(d,ap(ce("div","empty"),ap(ce("div","empty-ic"),tx("📍")),ap(ce("div","empty-tx"),tx("スポットがありません\n場所名を入力して追加"))));ap(wrap,d);return wrap;}
   places.forEach(function(p,i){
     var card=ce("div","item",{style:{alignItems:"flex-start"}});var num=ce("div","place-num");ap(num,tx(String(i+1)));
