@@ -584,8 +584,9 @@ function render(){
     var ov=ce("div","menu-overlay",{onclick:function(){showMenu=false;render();}});
     var menu=ce("div","menu-dropdown");
     var m1=ce("button","menu-item",{onclick:function(){showMenu=false;showMyPage=true;render();}});ap(m1,tx("マイページ"));
+    var mt=ce("button","menu-item",{onclick:function(){showMenu=false;view="templates";render();}});ap(mt,tx("📋 持ち物テンプレート"));
     var m2=ce("button","menu-item",{onclick:function(){showMenu=false;logout();}});ap(m2,tx("ログアウト"));
-    ap(menu,m1,m2);ap(wrap,ov,menu);
+    ap(menu,m1,mt,m2);ap(wrap,ov,menu);
   }
   ap(app,wrap);
   if(view==="detail"&&activeTab==="places"&&showMap){setTimeout(function(){if(!mapInst)initMap();else syncMarkers();},80);}
