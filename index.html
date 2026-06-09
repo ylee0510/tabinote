@@ -610,7 +610,7 @@ function render(){
   if(showMenu){
     var ov=ce("div","menu-overlay",{onclick:function(){showMenu=false;render();}});
     var menu=ce("div","menu-dropdown");
-    var m1=ce("button","menu-item",{onclick:function(){showMenu=false;showMyPage=true;render();}});ap(m1,tx("マイページ"));
+    var m1=ce("button","menu-item",{onclick:function(){showMenu=false;showMyPage=true;render();}});ap(m1,tx("旅行情報メモ"));
     var mt=ce("button","menu-item",{onclick:function(){showMenu=false;view="templates";render();}});ap(mt,tx("マイ持ち物リスト"));
     var m2=ce("button","menu-item",{onclick:function(){showMenu=false;logout();}});ap(m2,tx("ログアウト"));
     ap(menu,m1,mt,m2);ap(wrap,ov,menu);
@@ -1252,20 +1252,27 @@ function renderModal_newBudget(){
 function renderModal_guide(){
   var ov=ce("div","overlay",{onclick:function(e){if(e.target===ov){showGuide=false;render();}}});
   var modal=ce("div","guide-modal",{onclick:function(e){e.stopPropagation();}});
-  ap(modal,ce("div","modal-bar"),ap(ce("div","",{style:{fontSize:"18px",fontWeight:"800",color:"#1c1917",marginBottom:"20px"}}),tx("Tavyの使い方")));
+  modal.style.paddingTop="0";
+  var ghd=ce("div","",{style:{position:"sticky",top:"0",zIndex:"5",background:"var(--paper)",display:"flex",alignItems:"center",justifyContent:"space-between",margin:"0 -18px 20px",padding:"16px 18px 12px",borderBottom:"1px solid var(--border)",borderRadius:"22px 22px 0 0"}});
+  ap(ghd,ap(ce("div","",{style:{fontSize:"18px",fontWeight:"800",color:"#1c1917"}}),tx("Tavyの使い方")));
+  ap(ghd,ap(ce("button","",{style:{background:"#f4f4f5",border:"none",borderRadius:"50%",width:"32px",height:"32px",fontSize:"15px",lineHeight:"1",cursor:"pointer",color:"var(--muted)",flex:"0 0 auto"},onclick:function(){showGuide=false;render();}}),tx("✕")));
+  ap(modal,ghd);
   [{title:"旅行を作成する",desc:"右上の「＋ 追加」から旅行を登録。国内・海外を選ぶと持ち物・ToDoのテンプレートが自動で追加されます。旅行カードにはカバー写真も設定できます。"},
    {title:"各タブで旅を管理する",desc:"旅行カードをタップすると詳細画面へ。6つのタブで旅行情報を管理できます。",tabs:["🗓 行程","🎒 持ち物","✅ ToDo","📍 スポット","💰 予算","🌤 天気"]},
    {title:"行程を記録する",desc:"日付・時刻・種別（到着/出発/食事/ミーティングなど）・内容を入力して旅程を登録。種別はカラーバッジで表示されます。登録済みの行程はタップで編集、×で削除できます。"},
    {title:"予算を管理する",desc:"39カ国の通貨に対応。リアルタイム為替レートで円換算も自動表示されます。金額欄では「15000+3000」のような四則演算も入力できます。"},
    {title:"天気を確認する",desc:"天気タブで都市名を入力すると、国名つきの候補が表示されます。同名の都市が世界に複数あっても、正しい場所を選んで追加できます。追加した都市は旅行期間中の天気予報と最高・最低気温が表示されます。"},
    {title:"旅行を共有する",desc:"🔗ボタンから閲覧リンクを発行（ログイン不要）、またはメールアドレスで編集メンバーを招待できます。"},
-   {title:"マイページ・持ち物リストを活用する",desc:"右上の👤メニューからマイページや、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。マイページの「旅行情報メモ」は項目名を自由に決めてメモでき、「旅行用記録」には書類やEチケットなどのファイルを添付できます。※個人の特定につながる情報の保存はお控えください。"}
+   {title:"旅行情報メモ・持ち物リストを活用する",desc:"右上の👤メニューから「旅行情報メモ」や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。「旅行情報メモ」では項目名を自由に決めてメモでき、「旅行用記録」には書類やEチケットなどのファイルを添付できます。※個人の特定につながる情報の保存はお控えください。"}
   ].forEach(function(s,i){
     var step=ce("div","guide-step");var num=ce("div","guide-step-num");ap(num,tx(String(i+1)));
     var body=ce("div","");ap(body,ap(ce("div","guide-step-title"),tx(s.title)),ap(ce("div","guide-step-desc"),tx(s.desc)));
     if(s.tabs){var tl=ce("div","guide-tab-list");s.tabs.forEach(function(t){ap(tl,ap(ce("div","guide-tab-item"),tx(t)));});ap(body,tl);}
     ap(step,num,body);ap(modal,step);
   });
+  var gfoot=ce("div","",{style:{fontSize:"11px",lineHeight:"1.6",color:"var(--muted)",marginTop:"8px",marginBottom:"16px"}});
+  ap(gfoot,tx("※本アプリの利用によるトラブル等について開発者は一切の責任を負いません。現地情報はご自身でもご確認ください。"));
+  ap(modal,gfoot);
   ap(modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none"},onclick:function(){showGuide=false;render();}}),tx("閉じる")));
   ap(ov,modal);return ov;
 }
@@ -1274,7 +1281,7 @@ function renderModal_mypage(){
   var m=mkOverlay(function(){showMyPage=false;render();});
   m.modal.style.paddingTop="0";if(m.modal.firstChild)m.modal.removeChild(m.modal.firstChild);
   var hd=ce("div","",{style:{position:"sticky",top:"0",zIndex:"5",background:"var(--paper)",display:"flex",alignItems:"center",justifyContent:"space-between",margin:"0 -18px 14px",padding:"16px 18px 12px",borderBottom:"1px solid var(--border)",borderRadius:"22px 22px 0 0"}});
-  ap(hd,ap(ce("div","modal-title",{style:{marginBottom:"0"}}),tx("👤 マイページ")));
+  ap(hd,ap(ce("div","modal-title",{style:{marginBottom:"0"}}),tx("📝 旅行情報メモ")));
   ap(hd,ap(ce("button","",{style:{background:"#f4f4f5",border:"none",borderRadius:"50%",width:"32px",height:"32px",fontSize:"15px",lineHeight:"1",cursor:"pointer",color:"var(--muted)",flex:"0 0 auto"},onclick:function(){showMyPage=false;render();}}),tx("✕")));
   ap(m.modal,hd);
   var note=ce("div","",{style:{fontSize:"11px",lineHeight:"1.5",color:"var(--muted)",background:"#f4f4f5",borderRadius:"8px",padding:"8px 11px",marginBottom:"16px"}});
@@ -1285,7 +1292,7 @@ function renderModal_mypage(){
   if(mig.changed)saveProfile();
   var delBtn=function(fn){return ap(ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"15px",cursor:"pointer",flex:"0 0 auto",padding:"0 2px"},onclick:fn}),tx("✕"));};
   // 旅行情報メモ（項目名は自由入力）
-  var memoSec=ce("div","mypage-section");ap(memoSec,ap(ce("div","mypage-section-title"),tx("旅行情報メモ")));
+  var memoSec=ce("div","mypage-section");
   profile.memos.forEach(function(mo,idx){
     var row=ce("div","",{style:{display:"flex",gap:"8px",marginBottom:"8px",alignItems:"center"}});
     var labIn=ce("input","mypage-val",{placeholder:"項目名",value:mo.label||"",style:{flex:"0 0 38%",minWidth:"0"}});labIn.onblur=function(e){profile.memos[idx].label=e.target.value;saveProfile();};
