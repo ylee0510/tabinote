@@ -387,6 +387,91 @@ var DEMO_TRIPS=[{
   ],
   currencies:{A:"JPY",B:"USD"},
   coverUrl:"https://gotavy.com/wc2026-cover.jpg"
+},{
+  id:"demo-kyoto",
+  name:"<サンプル> 京都・大阪 週末旅",
+  destination:"京都 / 大阪",
+  startDate:"2026-07-18",
+  endDate:"2026-07-20",
+  type:"domestic",
+  currency:"JPY",
+  ownerId:"guest",
+  ownerName:"ゲスト",
+  memberIds:["guest"],
+  members:[{uid:"guest",name:"ゲスト",email:""}],
+  itinerary:[
+    {id:"ki1",date:"2026-07-18",time:"07:30",type:"出発",text:"東京駅発 → 京都駅（のぞみ）"},
+    {id:"ki2",date:"2026-07-18",time:"09:50",type:"到着",text:"京都駅着・荷物をコインロッカーへ"},
+    {id:"ki3",date:"2026-07-18",time:"11:00",type:"観光",text:"伏見稲荷大社（千本鳥居）"},
+    {id:"ki4",date:"2026-07-18",time:"13:30",type:"食事",text:"錦市場で食べ歩きランチ"},
+    {id:"ki5",date:"2026-07-18",time:"15:30",type:"観光",text:"清水寺・二年坂／三年坂"},
+    {id:"ki6",date:"2026-07-18",time:"18:00",type:"チェックイン",text:"ホテルチェックイン（京都駅周辺）"},
+    {id:"ki7",date:"2026-07-18",time:"19:30",type:"食事",text:"祇園で夕食（京懐石）"},
+    {id:"ki8",date:"2026-07-19",time:"09:00",type:"観光",text:"嵐山・竹林の小径"},
+    {id:"ki9",date:"2026-07-19",time:"10:30",type:"観光",text:"天龍寺・渡月橋"},
+    {id:"ki10",date:"2026-07-19",time:"12:30",type:"食事",text:"嵐山で湯豆腐ランチ"},
+    {id:"ki11",date:"2026-07-19",time:"14:30",type:"観光",text:"金閣寺"},
+    {id:"ki12",date:"2026-07-19",time:"16:30",type:"移動",text:"京都 → 大阪（阪急電車）"},
+    {id:"ki13",date:"2026-07-19",time:"18:00",type:"チェックイン",text:"ホテルチェックイン（大阪・難波）"},
+    {id:"ki14",date:"2026-07-19",time:"19:30",type:"食事",text:"道頓堀でたこ焼き・お好み焼き"},
+    {id:"ki15",date:"2026-07-20",time:"09:30",type:"観光",text:"大阪城・天守閣"},
+    {id:"ki16",date:"2026-07-20",time:"12:00",type:"食事",text:"黒門市場で食べ歩き"},
+    {id:"ki17",date:"2026-07-20",time:"14:00",type:"観光",text:"海遊館"},
+    {id:"ki18",date:"2026-07-20",time:"17:12",type:"出発",text:"新大阪発 → 東京駅（のぞみ）"},
+    {id:"ki19",date:"2026-07-20",time:"19:33",type:"到着",text:"東京駅着"}
+  ],
+  packing:[
+    {id:"kp1",text:"財布・現金",checked:false,memo:""},
+    {id:"kp2",text:"スマートフォン・充電器",checked:false,memo:""},
+    {id:"kp3",text:"新幹線チケット（eチケット）",checked:false,memo:""},
+    {id:"kp4",text:"着替え（2泊分）",checked:false,memo:""},
+    {id:"kp5",text:"折りたたみ傘",checked:false,memo:""},
+    {id:"kp6",text:"常備薬",checked:false,memo:""},
+    {id:"kp7",text:"歩きやすい靴",checked:false,memo:""},
+    {id:"kp8",text:"日焼け止め",checked:false,memo:""},
+    {id:"kp9",text:"モバイルバッテリー",checked:false,memo:""},
+    {id:"kp10",text:"エコバッグ（お土産用）",checked:false,memo:""}
+  ],
+  todo:[
+    {id:"kt1",text:"新幹線（のぞみ）の予約",checked:false,memo:""},
+    {id:"kt2",text:"ホテル2件の予約確認",checked:false,memo:""},
+    {id:"kt3",text:"嵐山トロッコ列車の予約検討",checked:false,memo:""},
+    {id:"kt4",text:"天気予報チェック",checked:false,memo:""},
+    {id:"kt5",text:"お土産リスト作成",checked:false,memo:""},
+    {id:"kt6",text:"現金の引き出し",checked:false,memo:""}
+  ],
+  places:[
+    {id:"kpl1",name:"京都駅",memo:"発着・コインロッカー",lat:34.9858,lng:135.7588},
+    {id:"kpl2",name:"伏見稲荷大社",memo:"千本鳥居",lat:34.9671,lng:135.7727},
+    {id:"kpl3",name:"清水寺",memo:"二年坂・三年坂",lat:34.9949,lng:135.7850},
+    {id:"kpl4",name:"竹林の小径（嵐山）",memo:"嵐山エリア",lat:35.0170,lng:135.6717},
+    {id:"kpl5",name:"鹿苑寺（金閣寺）",memo:"金閣",lat:35.0394,lng:135.7292},
+    {id:"kpl6",name:"大阪城",memo:"天守閣",lat:34.6873,lng:135.5259},
+    {id:"kpl7",name:"道頓堀",memo:"グルメ・夜景",lat:34.6687,lng:135.5013},
+    {id:"kpl8",name:"海遊館",memo:"大阪・天保山",lat:34.6545,lng:135.4289},
+    {id:"kpl9",name:"新大阪駅",memo:"帰路の出発駅",lat:34.7332,lng:135.5003}
+  ],
+  weatherCities:[
+    {name:"東京",lat:35.6895,lng:139.6917,country:"日本",country_code:"JP",admin1:"東京都"},
+    {name:"京都",lat:35.0116,lng:135.7681,country:"日本",country_code:"JP",admin1:"京都府"},
+    {name:"大阪",lat:34.6937,lng:135.5023,country:"日本",country_code:"JP",admin1:"大阪府"}
+  ],
+  budget:[
+    {id:"kb1",icon:"🚃",name:"交通費",budget_A:62000,actual_A:0,budget_B:413,actual_B:0,entries:[
+      {memo:"のぞみ 東京⇄京都 往復（2名）",amtA:56000,amtB:373},
+      {memo:"市内交通（地下鉄・バス・阪急）",amtA:6000,amtB:40}
+    ]},
+    {id:"kb2",icon:"🏨",name:"宿泊費",budget_A:42000,actual_A:0,budget_B:280,actual_B:0,entries:[
+      {memo:"京都駅周辺ホテル（7/18・1泊2名）",amtA:22000,amtB:147},
+      {memo:"大阪・難波ホテル（7/19・1泊2名）",amtA:20000,amtB:133}
+    ]},
+    {id:"kb3",icon:"🍜",name:"食費",budget_A:40000,actual_A:0,budget_B:267,actual_B:0},
+    {id:"kb4",icon:"🏝️",name:"観光・レジャー",budget_A:15000,actual_A:0,budget_B:100,actual_B:0},
+    {id:"kb5",icon:"🛍",name:"お土産",budget_A:15000,actual_A:0,budget_B:100,actual_B:0},
+    {id:"kb6",icon:"💊",name:"その他",budget_A:8000,actual_A:0,budget_B:53,actual_B:0}
+  ],
+  currencies:{A:"JPY",B:"USD"},
+  coverUrl:"https://gotavy.com/kyoto-cover.jpg"
 }];
 
 var user=null,trips=[],templates=DEFAULT_TEMPLATES;
