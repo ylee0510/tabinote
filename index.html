@@ -56,7 +56,8 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .hdr-sub{font-size:10px;color:#a8a29e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
 .icon-btn2{background:#fff;border:none;color:#1c1917;width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .icon-btn2.on{background:var(--accent);color:#fff;}
-.add-btn2{background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;}
+.add-btn2{background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;}
+.menu-btn{background:#fff;border:1px solid var(--border);color:#1c1917;padding:8px 16px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1;}
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
 .trip-list{padding:16px;display:flex;flex-direction:column;gap:12px;}
 .trip-card{background:var(--paper);border-radius:16px;padding:0;border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;}
@@ -627,10 +628,11 @@ function render(){
   if(showMenu){
     var ov=ce("div","menu-overlay",{onclick:function(){showMenu=false;render();}});
     var menu=ce("div","menu-dropdown");
+    var mg=ce("button","menu-item",{onclick:function(){showMenu=false;showGuide=true;render();}});ap(mg,beginnerMark(),tx("利用ガイド"));
     var m1=ce("button","menu-item",{onclick:function(){showMenu=false;showMyPage=true;render();}});ap(m1,tx("旅行情報メモ"));
     var mt=ce("button","menu-item",{onclick:function(){showMenu=false;view="templates";render();}});ap(mt,tx("マイ持ち物リスト"));
     var m2=ce("button","menu-item",{onclick:function(){showMenu=false;logout();}});ap(m2,tx("ログアウト"));
-    ap(menu,m1,mt,m2);ap(wrap,ov,menu);
+    ap(menu,mg,m1,mt,m2);ap(wrap,ov,menu);
   }
   ap(app,wrap);
   if(view==="detail"&&activeTab==="places"){setTimeout(ensureMap,80);}
@@ -673,12 +675,10 @@ function renderHeader(){
   }
   ap(ti,ht);ap(l,ti);var r=ce("div","hdr-r");
   if(isWide&&!isViewOnly){
-    ap(r,ap(ce("button","icon-btn2",{title:"使い方",onclick:function(){showGuide=true;render();}}),beginnerMark()));
-    ap(r,ap(ce("button","icon-btn2",{onclick:function(){showMenu=!showMenu;render();}}),tx("👤")));
+    ap(r,ap(ce("button","menu-btn",{onclick:function(){showMenu=!showMenu;render();}}),tx("☰ Menu")));
     ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
   }else if(view==="list"&&!isViewOnly){
-    ap(r,ap(ce("button","icon-btn2",{title:"使い方",onclick:function(){showGuide=true;render();}}),beginnerMark()));
-    ap(r,ap(ce("button","icon-btn2",{onclick:function(){showMenu=!showMenu;render();}}),tx("👤")));
+    ap(r,ap(ce("button","menu-btn",{onclick:function(){showMenu=!showMenu;render();}}),tx("☰ Menu")));
     ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
   }
   if(view==="detail"&&!isViewOnly){
