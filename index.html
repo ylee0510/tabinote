@@ -515,7 +515,7 @@ function getWeatherIcon(code){if(code<=1)return"☀️";if(code<=3)return"⛅";i
 async function fetchWeather(lat,lng,startDate,endDate){var cacheKey=lat+","+lng+","+startDate+","+endDate;if(weatherCache[cacheKey])return weatherCache[cacheKey];try{var start=startDate||new Date().toISOString().slice(0,10);var end=endDate||start;var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&start_date="+start+"&end_date="+end;var r=await fetch(url);var d=await r.json();if(d.daily){weatherCache[cacheKey]=d.daily;return d.daily;}}catch(e){}return null;}
 async function addWeatherCity(tripId,cities,cand){if(!cand||cand.lat==null)return;await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).concat([{name:cand.name,lat:cand.lat,lng:cand.lng,country:cand.country||"",country_code:cand.country_code||"",admin1:cand.admin1||""}])});weatherCityInput="";weatherSuggestions=[];if(weatherSearchTm){clearTimeout(weatherSearchTm);weatherSearchTm=null;}render();}
 async function removeWeatherCity(tripId,cities,idx){await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).filter(function(_,i){return i!==idx;})});}
-function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0);});syncMarkers();render();},function(err){console.warn("trips err:",err);});}
+function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0);});if(trips.length===0&&user&&!showGuide){try{if(!localStorage.getItem("tavy_guide_seen")){showGuide=true;localStorage.setItem("tavy_guide_seen","1");}}catch(e){showGuide=true;}}syncMarkers();render();},function(err){console.warn("trips err:",err);});}
 var MAX_FILE_SIZE=3*1024*1024;
 async function uploadAttachment(category,file){if(!file)return null;if(file.size>MAX_FILE_SIZE){toast("ファイルサイズは3MB以内にしてください");return null;}var ext=file.name.split(".").pop();var path="users/"+user.uid+"/"+category+"/"+Date.now()+"."+ext;var ref=storage.ref(path);await ref.put(file);var url=await ref.getDownloadURL();return{name:file.name,url:url,path:path,type:file.type,uploadedAt:new Date().toISOString()};}
 var COVER_COLORS=["#2d3e5a","#4a7c59","#7c4a6b","#7c5a2d","#2d6b7c","#5a2d7c","#7c2d2d","#4a4a7c"];
@@ -573,6 +573,7 @@ function subscribeTemplates(){if(tplUnsub){tplUnsub();tplUnsub=null;}tplUnsub=db
 function ce(tag,cls,attrs){var el=document.createElement(tag);if(cls)el.className=cls;if(attrs)Object.keys(attrs).forEach(function(k){if(k==="style"&&typeof attrs[k]==="object"){Object.assign(el.style,attrs[k]);}else if(k.startsWith("on")){el[k]=attrs[k];}else{el.setAttribute(k,attrs[k]);}});return el;}
 function tx(t){return document.createTextNode(String(t));}
 function ap(el){var args=Array.prototype.slice.call(arguments,1);args.forEach(function(c){if(c==null||c===false)return;el.appendChild(typeof c==="string"?tx(c):c);});return el;}
+function beginnerMark(){var w=ce("span","",{style:{display:"inline-flex",width:"20px",height:"20px"}});w.innerHTML='<svg viewBox="0 0 100 100" width="20" height="20" aria-hidden="true"><path d="M50 27 L13 7 C9 6 6 8 6 13 L6 73 L50 96 L94 73 L94 13 C94 8 91 6 87 7 Z" fill="#fff" stroke="#403c3c" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 27 L87 7 C91 6 94 8 94 13 L94 73 L50 96 Z" fill="#403c3c"/></svg>';return w;}
 
 function render(){
   var app=document.getElementById("app");
@@ -672,11 +673,11 @@ function renderHeader(){
   }
   ap(ti,ht);ap(l,ti);var r=ce("div","hdr-r");
   if(isWide&&!isViewOnly){
-    ap(r,ap(ce("button","icon-btn2",{onclick:function(){showGuide=true;render();}}),tx("?")));
+    ap(r,ap(ce("button","icon-btn2",{title:"使い方",onclick:function(){showGuide=true;render();}}),beginnerMark()));
     ap(r,ap(ce("button","icon-btn2",{onclick:function(){showMenu=!showMenu;render();}}),tx("👤")));
     ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
   }else if(view==="list"&&!isViewOnly){
-    ap(r,ap(ce("button","icon-btn2",{onclick:function(){showGuide=true;render();}}),tx("?")));
+    ap(r,ap(ce("button","icon-btn2",{title:"使い方",onclick:function(){showGuide=true;render();}}),beginnerMark()));
     ap(r,ap(ce("button","icon-btn2",{onclick:function(){showMenu=!showMenu;render();}}),tx("👤")));
     ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
   }
