@@ -685,7 +685,8 @@ var ICONS={
   backpack:'<path d="M6 9a6 6 0 0 1 12 0v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 9a3 3 0 0 1 6 0"/><line x1="6" y1="14" x2="18" y2="14"/>',
   check:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
   pin:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
-  money:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  money:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
@@ -893,11 +894,11 @@ function renderList(){
     var row1=ce("div","",{style:{display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap",marginBottom:"5px"}});
     ap(row1,ap(ce("div","trip-nm"),tx(trip.name)));
     ap(row1,ap(ce("div","badge "+(trip.type==="overseas"?"badge-os":"badge-dm")),tx(trip.type==="overseas"?"海外":"国内")));
-    if((trip.memberIds&&trip.memberIds.length||0)>1)ap(row1,ap(ce("div","badge badge-sh"),tx("👥 共有")));
+    if((trip.memberIds&&trip.memberIds.length||0)>1){var shb=ce("div","badge badge-sh",{style:{display:"inline-flex",alignItems:"center",gap:"3px"}});ap(shb,svgIcon("users","currentColor",11),tx("共有"));ap(row1,shb);}
     ap(body,row1);
     // 行2: 目的地
-    var row2=ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"4px",minHeight:"18px"}});
-    if(trip.destination)ap(row2,tx("📍 "+trip.destination));
+    var row2=ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"4px",minHeight:"18px",display:"flex",alignItems:"center",gap:"4px"}});
+    if(trip.destination)ap(row2,svgIcon("pin","currentColor",13),tx(trip.destination));
     ap(body,row2);
     // 行3: 日付 + あと○日
     var row3=ce("div","",{style:{display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap"}});
@@ -945,7 +946,7 @@ function renderDetail(){
   var hm=ce("div","hero-meta");
   if(sel.destination)ap(hm,ap(ce("span",""),tx(" "+sel.destination)));
   if(sel.startDate){ap(hm,ap(ce("span",""),tx(sel.startDate+(sel.endDate?" → "+sel.endDate:""))));ap(hm,ap(ce("span","pill"),tx(getDaysLeft(sel.startDate))));}
-  if((sel.memberIds&&sel.memberIds.length||0)>1)ap(hm,ap(ce("span",""),tx("👥 "+(sel.memberIds.length)+"人で共有中")));
+  if((sel.memberIds&&sel.memberIds.length||0)>1){var shs=ce("span","",{style:{display:"inline-flex",alignItems:"center",gap:"4px"}});ap(shs,svgIcon("users","currentColor",13),tx(sel.memberIds.length+"人で共有中"));ap(hm,shs);}
   ap(hero,hm);ap(wrap,hero);
   var tabBar=ce("div","tabs");
   [{key:"itinerary",icon:"calendar",label:"行程"},{key:"packing",icon:"backpack",label:"持ち物"},{key:"todo",icon:"check",label:"ToDo"},{key:"places",icon:"pin",label:"スポット"},{key:"budget",icon:"money",label:"予算"},{key:"weather",icon:"sun",label:"天気"}].forEach(function(x){
