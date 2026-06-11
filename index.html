@@ -140,6 +140,8 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .rp-opt.on{background:#dbeafe;border-color:#1d4ed8;color:#1d4ed8;}
 .region-tag{display:inline-flex;align-items:center;gap:3px;background:var(--stamp);border-radius:8px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--muted);}
 .region-filter{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:#1c1917;background:#fff;font-family:inherit;margin:0 0 12px;}
+.region-filter-row{display:flex;gap:8px;margin-bottom:12px;}
+.region-filter-row .region-filter{flex:1;min-width:0;margin:0;}
 .tabs{display:flex;background:var(--paper);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .tabs::-webkit-scrollbar{display:none;}
 .tab{flex:1;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 4px 7px;cursor:pointer;border-bottom:2.5px solid transparent;font-size:10px;font-weight:600;color:var(--muted);}
@@ -605,13 +607,13 @@ async function geoSearch(q){q=(q||"").trim();if(q.length<2)return[];if(geoCache[
 function flagEmoji(cc){if(!cc||cc.length!==2)return"📍";try{return String.fromCodePoint.apply(null,cc.toUpperCase().split("").map(function(c){return 0x1F1E6+(c.charCodeAt(0)-65);}));}catch(e){return"📍";}}
 // ===== 地域マスタ =====
 var COUNTRIES_BY_CONTINENT=[
-  ["アジア",[["日本","JP"],["韓国","KR"],["台湾","TW"],["中国","CN"],["香港","HK"],["マカオ","MO"],["タイ","TH"],["ベトナム","VN"],["シンガポール","SG"],["マレーシア","MY"],["インドネシア","ID"],["フィリピン","PH"],["カンボジア","KH"],["ラオス","LA"],["ミャンマー","MM"],["インド","IN"],["スリランカ","LK"],["ネパール","NP"],["モンゴル","MN"],["ブータン","BT"],["バングラデシュ","BD"]]],
-  ["ヨーロッパ",[["フランス","FR"],["イタリア","IT"],["スペイン","ES"],["ドイツ","DE"],["イギリス","GB"],["スイス","CH"],["オーストリア","AT"],["オランダ","NL"],["ベルギー","BE"],["ポルトガル","PT"],["ギリシャ","GR"],["チェコ","CZ"],["ハンガリー","HU"],["ポーランド","PL"],["クロアチア","HR"],["アイルランド","IE"],["デンマーク","DK"],["スウェーデン","SE"],["ノルウェー","NO"],["フィンランド","FI"],["アイスランド","IS"],["ロシア","RU"],["トルコ","TR"]]],
-  ["北米・カリブ海地域",[["アメリカ","US"],["カナダ","CA"],["グアム","GU"],["キューバ","CU"],["ジャマイカ","JM"],["バハマ","BS"],["ドミニカ共和国","DO"],["プエルトリコ","PR"]]],
-  ["中南米",[["メキシコ","MX"],["ブラジル","BR"],["ペルー","PE"],["アルゼンチン","AR"],["チリ","CL"],["コロンビア","CO"],["ボリビア","BO"],["エクアドル","EC"],["グアテマラ","GT"],["コスタリカ","CR"]]],
-  ["オセアニア",[["オーストラリア","AU"],["ニュージーランド","NZ"],["フィジー","FJ"],["パラオ","PW"],["タヒチ","PF"],["ニューカレドニア","NC"]]],
-  ["中東",[["アラブ首長国連邦","AE"],["カタール","QA"],["イスラエル","IL"],["ヨルダン","JO"],["サウジアラビア","SA"],["オマーン","OM"],["バーレーン","BH"],["クウェート","KW"]]],
-  ["アフリカ",[["エジプト","EG"],["モロッコ","MA"],["南アフリカ","ZA"],["ケニア","KE"],["タンザニア","TZ"],["チュニジア","TN"],["エチオピア","ET"],["モーリシャス","MU"]]]
+  ["アジア",[["日本","JP"],["韓国","KR"],["北朝鮮","KP"],["中国","CN"],["香港","HK"],["マカオ","MO"],["台湾","TW"],["モンゴル","MN"],["タイ","TH"],["ベトナム","VN"],["ラオス","LA"],["カンボジア","KH"],["ミャンマー","MM"],["マレーシア","MY"],["シンガポール","SG"],["インドネシア","ID"],["フィリピン","PH"],["ブルネイ","BN"],["東ティモール","TL"],["インド","IN"],["パキスタン","PK"],["バングラデシュ","BD"],["スリランカ","LK"],["ネパール","NP"],["ブータン","BT"],["モルディブ","MV"],["アフガニスタン","AF"],["カザフスタン","KZ"],["ウズベキスタン","UZ"],["トルクメニスタン","TM"],["キルギス","KG"],["タジキスタン","TJ"]]],
+  ["ヨーロッパ",[["イギリス","GB"],["アイルランド","IE"],["フランス","FR"],["ドイツ","DE"],["イタリア","IT"],["スペイン","ES"],["ポルトガル","PT"],["オランダ","NL"],["ベルギー","BE"],["ルクセンブルク","LU"],["スイス","CH"],["オーストリア","AT"],["リヒテンシュタイン","LI"],["モナコ","MC"],["アンドラ","AD"],["サンマリノ","SM"],["バチカン","VA"],["マルタ","MT"],["デンマーク","DK"],["スウェーデン","SE"],["ノルウェー","NO"],["フィンランド","FI"],["アイスランド","IS"],["エストニア","EE"],["ラトビア","LV"],["リトアニア","LT"],["ポーランド","PL"],["チェコ","CZ"],["スロバキア","SK"],["ハンガリー","HU"],["スロベニア","SI"],["クロアチア","HR"],["ボスニア・ヘルツェゴビナ","BA"],["セルビア","RS"],["モンテネグロ","ME"],["北マケドニア","MK"],["アルバニア","AL"],["コソボ","XK"],["ギリシャ","GR"],["ブルガリア","BG"],["ルーマニア","RO"],["モルドバ","MD"],["ウクライナ","UA"],["ベラルーシ","BY"],["ロシア","RU"],["キプロス","CY"],["ジョージア","GE"],["アルメニア","AM"],["アゼルバイジャン","AZ"]]],
+  ["中東",[["トルコ","TR"],["サウジアラビア","SA"],["アラブ首長国連邦","AE"],["カタール","QA"],["クウェート","KW"],["バーレーン","BH"],["オマーン","OM"],["イエメン","YE"],["イラク","IQ"],["イラン","IR"],["イスラエル","IL"],["パレスチナ","PS"],["ヨルダン","JO"],["レバノン","LB"],["シリア","SY"]]],
+  ["北米・カリブ海地域",[["アメリカ","US"],["カナダ","CA"],["グリーンランド","GL"],["バミューダ","BM"],["キューバ","CU"],["ジャマイカ","JM"],["ハイチ","HT"],["ドミニカ共和国","DO"],["バハマ","BS"],["バルバドス","BB"],["トリニダード・トバゴ","TT"],["グレナダ","GD"],["セントルシア","LC"],["セントビンセント・グレナディーン","VC"],["アンティグア・バーブーダ","AG"],["ドミニカ国","DM"],["セントクリストファー・ネイビス","KN"],["プエルトリコ","PR"],["アルバ","AW"],["ケイマン諸島","KY"],["アメリカ領ヴァージン諸島","VI"],["イギリス領ヴァージン諸島","VG"],["タークス・カイコス諸島","TC"],["アンギラ","AI"],["モントセラト","MS"],["グアドループ","GP"],["マルティニーク","MQ"],["キュラソー","CW"],["シント・マールテン","SX"]]],
+  ["中南米",[["メキシコ","MX"],["グアテマラ","GT"],["ベリーズ","BZ"],["エルサルバドル","SV"],["ホンジュラス","HN"],["ニカラグア","NI"],["コスタリカ","CR"],["パナマ","PA"],["コロンビア","CO"],["ベネズエラ","VE"],["ガイアナ","GY"],["スリナム","SR"],["フランス領ギアナ","GF"],["エクアドル","EC"],["ペルー","PE"],["ブラジル","BR"],["ボリビア","BO"],["パラグアイ","PY"],["チリ","CL"],["アルゼンチン","AR"],["ウルグアイ","UY"]]],
+  ["オセアニア",[["オーストラリア","AU"],["ニュージーランド","NZ"],["パプアニューギニア","PG"],["フィジー","FJ"],["ソロモン諸島","SB"],["バヌアツ","VU"],["ニューカレドニア","NC"],["サモア","WS"],["トンガ","TO"],["キリバス","KI"],["ミクロネシア連邦","FM"],["マーシャル諸島","MH"],["パラオ","PW"],["ナウル","NR"],["ツバル","TV"],["クック諸島","CK"],["タヒチ","PF"],["グアム","GU"],["北マリアナ諸島","MP"],["アメリカ領サモア","AS"]]],
+  ["アフリカ",[["エジプト","EG"],["リビア","LY"],["チュニジア","TN"],["アルジェリア","DZ"],["モロッコ","MA"],["スーダン","SD"],["南スーダン","SS"],["モーリタニア","MR"],["マリ","ML"],["ニジェール","NE"],["チャド","TD"],["セネガル","SN"],["ガンビア","GM"],["ギニアビサウ","GW"],["ギニア","GN"],["シエラレオネ","SL"],["リベリア","LR"],["コートジボワール","CI"],["ガーナ","GH"],["トーゴ","TG"],["ベナン","BJ"],["ブルキナファソ","BF"],["ナイジェリア","NG"],["カーボベルデ","CV"],["カメルーン","CM"],["中央アフリカ","CF"],["赤道ギニア","GQ"],["ガボン","GA"],["コンゴ共和国","CG"],["コンゴ民主共和国","CD"],["サントメ・プリンシペ","ST"],["エチオピア","ET"],["エリトリア","ER"],["ジブチ","DJ"],["ソマリア","SO"],["ケニア","KE"],["ウガンダ","UG"],["ルワンダ","RW"],["ブルンジ","BI"],["タンザニア","TZ"],["アンゴラ","AO"],["ザンビア","ZM"],["マラウイ","MW"],["モザンビーク","MZ"],["ジンバブエ","ZW"],["ボツワナ","BW"],["ナミビア","NA"],["南アフリカ","ZA"],["レソト","LS"],["エスワティニ","SZ"],["マダガスカル","MG"],["モーリシャス","MU"],["セーシェル","SC"],["コモロ","KM"]]]
 ];
 var PREFS_BY_REGION=[
   ["北海道・東北",["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県"]],
@@ -874,20 +876,19 @@ function switchListMode(mode){
 function setTlRegionFilter(v){tlRegionFilter=v;loadFeed(true);}
 function setMineRegionFilter(v){mineRegionFilter=v;render();}
 // グループ化した地域 select を作る。availableSet: 表示する名前のSet（null なら全部）
-function renderRegionSelect(value,onChange,availableSet){
+// kind: "country"|"pref"。value は単一フィルタ値（国名 or 県名）。該当kind以外の値なら「すべて」を表示。
+function renderRegionSelect(kind,value,onChange,availableSet){
   var sel=ce("select","region-filter",{onchange:function(e){onChange(e.target.value);}});
-  var allOpt=ce("option","",{value:""});ap(allOpt,tx("🗺️ すべての地域"));ap(sel,allOpt);
-  function addGroups(groups,mode){
-    groups.forEach(function(g){
-      var names=g[1].map(function(it){return mode==="domestic"?it:it[0];}).filter(function(nm){return !availableSet||availableSet.has(nm);});
-      if(!names.length)return;
-      var og=ce("optgroup","",{label:g[0]});
-      names.forEach(function(nm){var o=ce("option","",{value:nm});if(nm===value)o.selected=true;ap(o,tx(regionLabel(nm)));ap(og,o);});
-      ap(sel,og);
-    });
-  }
-  addGroups(COUNTRIES_BY_CONTINENT,"overseas");
-  addGroups(PREFS_BY_REGION,"domestic");
+  var allOpt=ce("option","",{value:""});ap(allOpt,tx(kind==="pref"?"🗾 すべての都道府県":"🌍 すべての国"));ap(sel,allOpt);
+  var groups=kind==="pref"?PREFS_BY_REGION:COUNTRIES_BY_CONTINENT;
+  var mode=kind==="pref"?"domestic":"overseas";
+  groups.forEach(function(g){
+    var names=g[1].map(function(it){return mode==="domestic"?it:it[0];}).filter(function(nm){return !availableSet||availableSet.has(nm);});
+    if(!names.length)return;
+    var og=ce("optgroup","",{label:g[0]});
+    names.forEach(function(nm){var o=ce("option","",{value:nm});if(nm===value)o.selected=true;ap(o,tx(regionLabel(nm)));ap(og,o);});
+    ap(sel,og);
+  });
   return sel;
 }
 var MAX_FILE_SIZE=3*1024*1024;
@@ -1195,10 +1196,18 @@ function renderList(){
   ap(seg,t1,t2);ap(outer,seg);
 
   if(listMode==="timeline"){
-    ap(outer,renderRegionSelect(tlRegionFilter,setTlRegionFilter,null));
+    var trow=ce("div","region-filter-row");
+    ap(trow,renderRegionSelect("country",tlRegionFilter,setTlRegionFilter,null),renderRegionSelect("pref",tlRegionFilter,setTlRegionFilter,null));
+    ap(outer,trow);
   }else{
-    var avail=new Set();trips.forEach(function(t){(t.regions||[]).forEach(function(r){avail.add(r);});});
-    if(avail.size)ap(outer,renderRegionSelect(mineRegionFilter,setMineRegionFilter,avail));
+    var availC=new Set(),availP=new Set();
+    trips.forEach(function(t){(t.regions||[]).forEach(function(r){var info=REGION_INDEX[r];if(info&&info.mode==="domestic")availP.add(r);else availC.add(r);});});
+    if(availC.size||availP.size){
+      var mrow=ce("div","region-filter-row");
+      if(availC.size)ap(mrow,renderRegionSelect("country",mineRegionFilter,setMineRegionFilter,availC));
+      if(availP.size)ap(mrow,renderRegionSelect("pref",mineRegionFilter,setMineRegionFilter,availP));
+      ap(outer,mrow);
+    }
   }
 
   if(listMode==="timeline"){
