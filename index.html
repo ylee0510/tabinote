@@ -1086,6 +1086,8 @@ function detectInApp(){
   var os=/iPhone|iPad|iPod/i.test(ua)?"ios":/Android/i.test(ua)?"android":"other";
   var app=null;
   if(/\bLine\//i.test(ua))app="line";
+  else if(/Barcelona|Threads/i.test(ua))app="threads";
+  else if(/Twitter/i.test(ua))app="x";
   else if(/FBAN|FBAV|FB_IAB|Messenger/i.test(ua))app="fb";
   else if(/Instagram/i.test(ua))app="instagram";
   return {inApp:!!app,app:app,os:os};
@@ -1100,7 +1102,7 @@ function renderLogin(){
   var inapp=detectInApp();
   if(inapp.inApp){
     if(!window._inappTracked){window._inappTracked=true;track('inapp_browser',{app:inapp.app,os:inapp.os});}
-    var appName=inapp.app==="line"?"LINE":inapp.app==="fb"?"Messenger / Facebook":inapp.app==="instagram"?"Instagram":"アプリ内";
+    var appName=inapp.app==="line"?"LINE":inapp.app==="fb"?"Messenger / Facebook":inapp.app==="instagram"?"Instagram":inapp.app==="threads"?"Threads":inapp.app==="x"?"X":"アプリ内";
     var warn=ce("div","",{style:{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:"16px",padding:"18px 16px",marginBottom:"28px",textAlign:"left"}});
     ap(warn,ap(ce("div","",{style:{fontSize:"15px",fontWeight:"800",color:"#9a3412",marginBottom:"8px",textAlign:"center"}}),tx("⚠️ このままではログインできません")));
     ap(warn,ap(ce("div","",{style:{fontSize:"13px",lineHeight:"1.8",color:"#7c2d12",marginBottom:"14px"}}),tx(appName+"内のブラウザでは Googleログインがご利用いただけません。お手数ですが Safari / Chrome などのブラウザで開いてください。")));
