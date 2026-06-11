@@ -675,6 +675,19 @@ async function uploadCoverPhoto(file){
 async function deleteAttachment(category,idx){var profile=window._tavyProfile||{};var attachments=profile["attachments_"+category]||[];var item=attachments[idx];if(!item)return;try{await storage.ref(item.path).delete();}catch(e){}attachments.splice(idx,1);profile["attachments_"+category]=attachments;window._tavyProfile=profile;await db.collection("users").doc(user.uid).collection("settings").doc("profile").set(profile);render();}
 function loadProfile(){db.collection("users").doc(user.uid).collection("settings").doc("profile").get().then(function(doc){window._tavyProfile=doc.exists?doc.data():{};}).catch(function(){window._tavyProfile={};});}
 function saveProfile(){if(!user)return Promise.resolve();return db.collection("users").doc(user.uid).collection("settings").doc("profile").set(window._tavyProfile||{}).catch(function(){});}
+function getNickname(){return (window._tavyProfile&&window._tavyProfile.nickname)?String(window._tavyProfile.nickname).trim():"";}
+function setNickname(v){window._tavyProfile=window._tavyProfile||{};window._tavyProfile.nickname=String(v||"").trim().slice(0,20);return saveProfile();}
+async function ensureNickname(){
+  if(!user){toast("ログインが必要です");return false;}
+  if(getNickname())return true;
+  var def=(user.displayName||"").slice(0,20);
+  var v=window.prompt("タイムラインで表示するニックネームを入力してください（最大20文字）",def);
+  if(v==null)return false;
+  v=v.trim();
+  if(!v){toast("ニックネームを入力してください");return false;}
+  await setNickname(v);
+  return true;
+}
 // 旧固定フィールドを汎用メモ/記録に移行し、機微なレガシーキー（緊急連絡先・医療情報含む）を削除
 function migrateProfile(p){p=p||{};var changed=false;
   if(!Array.isArray(p.memos)){var mm=[];[["passport_no","パスポート番号"],["passport_exp","有効期限"],["nationality","国籍"],["esta_no","ESTA申請番号"],["esta_exp","ESTA有効期限"],["visa_note","その他ビザ情報"]].forEach(function(pr){if(p[pr[0]])mm.push({label:pr[1],value:String(p[pr[0]])});});p.memos=mm;changed=true;}
@@ -1581,6 +1594,13 @@ function renderModal_mypage(){
   while(profile.records.length<5)profile.records.push({id:mkId(),label:"",attachments:[]});
   if(mig.changed)saveProfile();
   var delBtn=function(fn){return ap(ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"15px",cursor:"pointer",flex:"0 0 auto",padding:"0 2px"},onclick:fn}),tx("✕"));};
+  // ニックネーム（タイムライン表示名）
+  var nickSec=ce("div","",{style:{marginBottom:"22px"}});
+  ap(nickSec,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",letterSpacing:"1px",textTransform:"uppercase"}}),tx("ニックネーム（タイムライン表示名）")));
+  var nickIn=ce("input","mypage-val",{placeholder:"例: たびすき",value:profile.nickname||"",maxlength:"20",style:{width:"100%"}});
+  nickIn.onblur=function(e){profile.nickname=String(e.target.value||"").trim().slice(0,20);saveProfile();};
+  ap(nickSec,nickIn);
+  ap(m.modal,nickSec);
   // 旅行情報メモ（項目名は自由入力）
   var memoSec=ce("div","mypage-section");
   profile.memos.forEach(function(mo,idx){
