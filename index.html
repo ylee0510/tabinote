@@ -107,6 +107,10 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .feed-comment-del{background:none;border:none;color:#ccc;font-size:11px;cursor:pointer;font-family:inherit;margin-top:3px;padding:0;}
 .feed-comment-inrow{display:flex;gap:8px;margin-top:12px;}
 .feed-more-btn{display:block;width:100%;margin:14px 0 0;padding:12px;background:none;border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;}
+.profile-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 16px 18px;}
+.profile-ava{width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;}
+.profile-name{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:3px;}
+.profile-count{font-size:13px;color:var(--muted);margin-bottom:6px;}
 .trip-card-body{padding:12px 14px 12px;}
 .trip-nm{font-size:18px;font-weight:800;color:#1c1917;padding-right:28px;}
 .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
@@ -558,6 +562,7 @@ var listMode="mine"; // "mine" | "timeline"
 var feedItems=[],feedLastDoc=null,feedLoading=false,feedDone=false;
 var myLikes=null; // Set of liked feedId; null when logged out
 var feedComments=[],feedCommentsFor=null,commentInput="";
+var profileUserId=null,profileUserName="",profileUserPhoto=null,profileFeed=[],profileLoading=false;
 
 function mkId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function getSel(){return isViewOnly?viewOnlyTrip:(trips.find(function(t){return t.id===selId;}));}
@@ -953,13 +958,15 @@ function render(){
     var layout=ce("div","pc-layout");
     ap(layout,renderSidebar());
     var main=ce("div","main-area");
-    if(view==="detail")ap(main,renderDetail());
+    if(view==="userProfile")ap(main,renderUserProfile());
+    else if(view==="detail")ap(main,renderDetail());
     else if(view==="templates")ap(main,renderTemplates());
     else ap(main,renderList());
     ap(layout,main);
     ap(wrap,layout);
   }else{
-    if(view==="list"){ap(wrap,renderList());
+    if(view==="userProfile")ap(wrap,renderUserProfile());
+    else if(view==="list"){ap(wrap,renderList());
       var _tf=ce("div","",{style:{textAlign:"center",padding:"34px 0 22px"}});
       var _tb=ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",opacity:"0.55",fontSize:"11px",cursor:"pointer",fontFamily:"inherit",textDecoration:"underline"},onclick:function(){guidePage="terms";showGuide=true;render();}});ap(_tb,tx("利用規約"));ap(_tf,_tb);ap(wrap,_tf);
     }
@@ -1032,8 +1039,8 @@ function renderLogin(){
 function renderHeader(){
   var sel=getSel();var hdr=ce("div","hdr");var l=ce("div","hdr-l");
   var isWide=window.innerWidth>=768;
-  if(isViewOnly||(!isWide&&(view==="detail"||view==="templates"))){
-    var bb=ce("button","back-btn",{onclick:function(){var wasFeed=!!feedViewId;if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;feedViewId=null;if(!wasFeed)window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";if(wasFeed)listMode="timeline";render();}});
+  if(isViewOnly||view==="userProfile"||(!isWide&&(view==="detail"||view==="templates"))){
+    var bb=ce("button","back-btn",{onclick:function(){if(view==="userProfile"){view="list";listMode="timeline";profileUserId=null;render();return;}var wasFeed=!!feedViewId;if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;feedViewId=null;if(!wasFeed)window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";if(wasFeed)listMode="timeline";render();}});
     ap(bb,tx("←"));ap(l,bb);
   }
   var ti=ce("div","",{style:{minWidth:"0",flex:"1"}});var ht=ce("div","hdr-title");
@@ -1043,7 +1050,7 @@ function renderHeader(){
     ap(ht,tx("Tavy"));
   }else{
     if(view==="list"&&!isViewOnly)ht.style.cssText="font-size:28px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917";
-    ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="list"?"Tavy":view==="templates"?"マイ持ち物リスト":(sel?sel.name:"")));
+    ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="userProfile"?(profileUserName||"プロフィール"):view==="list"?"Tavy":view==="templates"?"マイ持ち物リスト":(sel?sel.name:"")));
     if(view==="list"&&!isViewOnly){var hs=ce("div","hdr-sub");ap(hs,tx(user?user.displayName||user.email:""));ap(ti,hs);}
   }
   ap(ti,ht);ap(l,ti);var r=ce("div","hdr-r");
@@ -1224,6 +1231,37 @@ function renderFeedDetailExtras(item){
   }
   ap(box,cwrap);
   return box;
+}
+
+async function openUserProfile(uid,name,photo){
+  if(!uid)return;
+  profileUserId=uid;profileUserName=name||"";profileUserPhoto=photo||null;profileFeed=[];profileLoading=true;
+  if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;feedViewId=null;}
+  view="userProfile";
+  render();
+  try{
+    var snap=await db.collection("feed").where("ownerId","==",uid).orderBy("publishedAt","desc").limit(50).get();
+    profileFeed=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(profileFeed.length&&profileFeed[0].ownerName)profileUserName=profileFeed[0].ownerName;
+    if(profileFeed.length&&profileFeed[0].ownerPhoto)profileUserPhoto=profileFeed[0].ownerPhoto;
+  }catch(e){console.warn("openUserProfile:",e);toast("プロフィールの取得に失敗しました");}
+  profileLoading=false;
+  render();
+}
+function renderUserProfile(){
+  var wrap=ce("div","");
+  var head=ce("div","profile-head");
+  var ava=ce("div","profile-ava");
+  if(profileUserPhoto){var pi=document.createElement("img");pi.src=profileUserPhoto;pi.style.cssText="width:100%;height:100%;border-radius:50%;object-fit:cover";ap(ava,pi);}else{ap(ava,tx((profileUserName||"?")[0].toUpperCase()));}
+  ap(head,ava);
+  ap(head,ap(ce("div","profile-name"),tx(profileUserName||"旅人")));
+  ap(head,ap(ce("div","profile-count"),tx(profileLoading?"読み込み中…":("公開した旅行 "+profileFeed.length+"件"))));
+  ap(wrap,head);
+  if(!profileLoading&&profileFeed.length===0){ap(wrap,ap(ce("div","",{style:{textAlign:"center",padding:"50px 24px",color:"var(--muted)"}}),tx("公開された旅行がありません")));return wrap;}
+  var list=ce("div","feed-list");
+  profileFeed.forEach(function(item){ap(list,renderFeedCard(item));});
+  ap(wrap,list);
+  return wrap;
 }
 
 function renderTemplates(){
