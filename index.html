@@ -1406,7 +1406,7 @@ function renderDetail(){
   if((sel.memberIds&&sel.memberIds.length||0)>1){var shs=ce("span","",{style:{display:"inline-flex",alignItems:"center",gap:"4px"}});ap(shs,svgIcon("users","currentColor",13),tx(sel.memberIds.length+"人で共有中"));ap(hm,shs);}
   if(!isViewOnly&&!isGuest&&user&&sel.ownerId===user.uid){
     var edBtn=ce("button","hero-cover-btn",{style:{right:"auto",left:"12px"},onclick:openEditTrip});
-    edBtn.style.display="inline-flex";edBtn.style.alignItems="center";edBtn.style.gap="5px";ap(edBtn,tx("✏️ 編集"));ap(covW,edBtn);
+    edBtn.style.display="inline-flex";edBtn.style.alignItems="center";edBtn.style.gap="5px";ap(edBtn,svgIcon("pencil","#fff",14),tx("編集"));ap(covW,edBtn);
   }
   ap(hero,hm);ap(wrap,hero);
   if(sel._publicTabs&&sel._publicTabs.indexOf(activeTab)<0)activeTab=sel._publicTabs[0]||"itinerary";
@@ -1705,7 +1705,7 @@ async function saveEditTrip(){
 function renderModal_editTrip(){
   if(!editDraft)return ce("div","");
   var m=mkOverlay(function(){showEditTrip=false;editDraft=null;render();});
-  ap(m.modal,ap(ce("div","modal-title"),tx("✏️ 旅行を編集")));
+  ap(m.modal,ap(ce("div","modal-title",{style:{display:"flex",alignItems:"center",gap:"7px"}}),svgIcon("pencil","currentColor",17),tx("旅行を編集")));
   var tg=ce("div","fg");ap(tg,ap(ce("label","lbl"),tx("旅行の種類")));
   var tr=typeToggleRow(editDraft.type,function(t){if(editDraft.type!==t){editDraft.type=t;editDraft.regions=[];rpView=null;}render();});
   ap(tg,tr);ap(m.modal,tg);
