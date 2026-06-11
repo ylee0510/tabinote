@@ -534,6 +534,7 @@ var showNewTrip=false,showShare=false,showPinModal=false,showMap=false,showNewBu
 var publishDraftTabs=null; // 公開設定中に選択中のタブ配列（モーダルを開くとsel.publicTabsで初期化）
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
 var isViewOnly=false,viewOnlyTrip=null;
+var feedViewId=null; // 現在閲覧中のfeedアイテムID（feed由来の閲覧専用詳細）
 var isGuest=false;
 var newBudget={icon:"💰",name:""};
 var budgetExpandedEntry=null;
@@ -687,6 +688,14 @@ async function unpublishFeed(tripId){
   try{await db.collection("feed").doc(tripId).delete();}catch(e){console.warn("unpublish:",e);}
 }
 async function loadSharedTrip(tripId){try{var doc=await db.collection("trips").doc(tripId).get();if(doc.exists&&doc.data().isPublic){viewOnlyTrip=Object.assign({id:doc.id},doc.data());isViewOnly=true;selId=tripId;view="detail";activeTab="itinerary";render();return;}document.getElementById("app").innerHTML='<div style="padding:60px 24px;text-align:center"><div style="font-size:40px;margin-bottom:16px">🔒</div><div style="font-size:15px;font-weight:700;margin-bottom:8px">このリンクは無効です</div><div style="font-size:13px;color:#78716c">公開が停止されているか、URLが間違っています</div></div>';}catch(e){console.error(e);}}
+function openFeedTrip(item){
+  var vo=Object.assign({id:item.id,name:item.name,destination:item.destination,type:item.type,coverUrl:item.coverUrl,startDate:item.startDate,endDate:item.endDate},item.content||{});
+  vo._publicTabs=(item.publicTabs||["itinerary"]).slice();
+  viewOnlyTrip=vo;isViewOnly=true;feedViewId=item.id;selId=item.id;
+  view="detail";activeTab=vo._publicTabs[0]||"itinerary";
+  track('feed_open',{});
+  render();
+}
 async function duplicateTrip(trip){try{await db.collection("trips").add({name:trip.name+" (コピー)",destination:trip.destination||"",startDate:"",endDate:"",type:trip.type||"overseas",ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],isPublic:false,currency:trip.currency||"JPY",itinerary:trip.itinerary||[],packing:(trip.packing||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),todo:(trip.todo||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),places:(trip.places||[]).map(function(i){return Object.assign({},i,{id:mkId()});}),budget:JSON.parse(JSON.stringify(trip.budget||[])),createdAt:firebase.firestore.FieldValue.serverTimestamp()});toast("旅行を複製しました！");}catch(e){console.error(e);toast("複製に失敗: "+e.message);}}
 function getWeatherIcon(code){if(code<=1)return"☀️";if(code<=3)return"⛅";if(code<=48)return"🌫";if(code<=67)return"🌧";if(code<=77)return"❄️";if(code<=82)return"🌧";if(code<=99)return"⛈";return"🌡";}
 async function fetchWeather(lat,lng,startDate,endDate){var cacheKey=lat+","+lng+","+startDate+","+endDate;if(weatherCache[cacheKey])return weatherCache[cacheKey];try{var start=startDate||new Date().toISOString().slice(0,10);var end=endDate||start;var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&start_date="+start+"&end_date="+end;var r=await fetch(url);var d=await r.json();if(d.daily){weatherCache[cacheKey]=d.daily;return d.daily;}}catch(e){}return null;}
@@ -954,7 +963,7 @@ function renderHeader(){
   var sel=getSel();var hdr=ce("div","hdr");var l=ce("div","hdr-l");
   var isWide=window.innerWidth>=768;
   if(isViewOnly||(!isWide&&(view==="detail"||view==="templates"))){
-    var bb=ce("button","back-btn",{onclick:function(){if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";render();}});
+    var bb=ce("button","back-btn",{onclick:function(){var wasFeed=!!feedViewId;if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;feedViewId=null;if(!wasFeed)window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";if(wasFeed)listMode="timeline";render();}});
     ap(bb,tx("←"));ap(l,bb);
   }
   var ti=ce("div","",{style:{minWidth:"0",flex:"1"}});var ht=ce("div","hdr-title");
