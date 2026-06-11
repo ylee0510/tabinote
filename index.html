@@ -146,7 +146,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .budget-summary *{color:#fff !important;}
 .budget-prog-bg{background:rgba(255,255,255,0.15);border-radius:4px;height:6px;overflow:hidden;margin-bottom:8px;}
 .budget-prog-fill{height:100%;border-radius:4px;transition:width 0.4s;}
-.budget-item{background:var(--paper);border:1px solid var(--border);border-radius:11px;padding:12px 13px;margin-bottom:8px;}
+.budget-item{background:var(--paper);border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:6px;}
 .budget-inputs{display:flex;gap:8px;margin-top:8px;}
 .budget-inp-wrap{flex:1;}
 .budget-inp-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
@@ -1379,13 +1379,13 @@ function renderBudget(sel){
 
     var card=ce("div","budget-item");
     // ヘッダー
-    var top=ce("div","",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"10px"}});
+    var top=ce("div","",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"7px"}});
     ap(top,ap(ce("div","",{style:{flexShrink:"0",display:"inline-flex",alignItems:"center",color:"var(--ink)"}}),budgetIconEl(item.icon||"💰",19)),ap(ce("div","",{style:{flex:"1",fontSize:"14px",fontWeight:"700",color:"var(--ink)"}}),tx(item.name)));
     ap(top,mkDelBtn(function(){delBudgetItem(idx);}));
     ap(card,top);
 
     // 予算入力（A/B）
-    var bRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"10px"}});
+    var bRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"6px"}});
     var bwA=ce("div","budget-inp-wrap");ap(bwA,ap(ce("div","budget-inp-label"),tx("予算 "+symA)));
     var rawA=parseFloat(item.budget_A||item.budget)||0;
     var biA=ce("input","budget-inp-ghost ghost-a",{type:"text",inputmode:"decimal",value:rawA?fmtAmt(curs.A,rawA):"",placeholder:"0"});
@@ -1399,8 +1399,13 @@ function renderBudget(sel){
     ap(bRow,bwA,bwB);ap(card,bRow);
 
     // 明細セクション
-    var entSec=ce("div","",{style:{borderTop:"1px solid var(--border)",paddingTop:"8px"}});
-    ap(entSec,ap(ce("div","",{style:{fontSize:"10px",fontWeight:"700",color:"var(--muted)",letterSpacing:"1px",textTransform:"uppercase",marginBottom:"6px"}}),tx("実績 明細")));
+    var addId="ent-add-"+idx;
+    var entSec=ce("div","",{style:{borderTop:"1px solid var(--border)",paddingTop:"7px"}});
+    var entHd=ce("div","",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"6px"}});
+    ap(entHd,ap(ce("div","",{style:{fontSize:"10px",fontWeight:"700",color:"var(--muted)",letterSpacing:"1px",textTransform:"uppercase"}}),tx("実績 明細")));
+    var addEntBtn=ce("button","",{style:{padding:"3px 10px",background:"var(--stamp)",border:"1px dashed var(--border)",borderRadius:"7px",fontSize:"11px",fontWeight:"700",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit",flexShrink:"0"},onclick:function(){var el=document.getElementById(addId);el.style.display=el.style.display==="none"?"block":"none";if(el.style.display!=="none")el.querySelector("input").focus();}});
+    ap(addEntBtn,tx("＋ 明細"));ap(entHd,addEntBtn);
+    ap(entSec,entHd);
 
     // 既存明細リスト
     entries.forEach(function(ent,ei){
@@ -1441,7 +1446,6 @@ function renderBudget(sel){
     }
 
     // 明細追加フォーム (インライン)
-    var addId="ent-add-"+idx;
     var addForm=ce("div","",{id:addId,style:{marginTop:"8px",display:"none"}});
     var fMemo=ce("input","budget-inp",{placeholder:"メモ（任意）",style:{width:"100%",textAlign:"left",marginBottom:"5px"}});
     var fRow=ce("div","",{style:{display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:"6px",alignItems:"center"}});
@@ -1467,13 +1471,6 @@ function renderBudget(sel){
     }});
     ap(fAdd,tx("追加"));
     ap(fRow,fA,fB,fAdd);ap(addForm,fMemo,fRow);ap(entSec,addForm);
-
-    var addEntBtn=ce("button","",{style:{width:"100%",marginTop:"7px",padding:"7px",background:"var(--stamp)",border:"1.5px dashed var(--border)",borderRadius:"8px",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit"},onclick:function(){
-      var el=document.getElementById(addId);
-      el.style.display=el.style.display==="none"?"block":"none";
-      if(el.style.display!=="none")el.querySelector("input").focus();
-    }});
-    ap(addEntBtn,tx("＋ 明細を追加"));ap(entSec,addEntBtn);
     ap(card,entSec);
 
     // 残り / 超過
