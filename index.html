@@ -122,11 +122,19 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .rp-selected{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
 .rp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:#fff;border-radius:16px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;}
 .rp-chip .rp-x{opacity:.8;font-weight:700;}
-.rp-acc{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
-.rp-grp{border-top:1px solid var(--border);}
-.rp-grp:first-child{border-top:none;}
-.rp-grp-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;font-size:13px;font-weight:700;color:#1c1917;cursor:pointer;background:var(--paper);}
-.rp-grp-hd .rp-caret{color:var(--muted);font-size:12px;}
+.rp-add{width:100%;padding:11px;border:1.5px dashed var(--border);border-radius:10px;background:var(--paper);color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.rp-add:hover{border-color:var(--accent);}
+.rp-panel{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+.rp-panel-hd{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid var(--border);background:var(--paper);}
+.rp-panel-title{font-size:13px;font-weight:700;color:#1c1917;}
+.rp-back{display:inline-flex;align-items:center;gap:4px;background:none;border:none;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;padding:0;}
+.rp-close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;}
+.rp-nav{display:flex;flex-direction:column;}
+.rp-nav-item{display:flex;align-items:center;gap:8px;padding:11px 13px;background:var(--paper);border:none;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;color:#1c1917;cursor:pointer;font-family:inherit;text-align:left;}
+.rp-nav-item:last-child{border-bottom:none;}
+.rp-nav-name{flex:1;}
+.rp-nav-cnt{font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:10px;padding:1px 8px;}
+.rp-nav-chev{color:var(--muted);display:inline-flex;}
 .rp-grp-body{display:flex;flex-wrap:wrap;gap:6px;padding:10px 13px;}
 .rp-opt{background:var(--stamp);border:1.5px solid var(--border);border-radius:16px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;}
 .rp-opt.on{background:#dbeafe;border-color:#1d4ed8;color:#1d4ed8;}
@@ -177,7 +185,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .place-move:disabled{opacity:0.3;cursor:default;}
 .place-move:not(:disabled):active{background:#f4f4f5;}
 .type-row{display:flex;gap:8px;margin-bottom:12px;}
-.type-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--paper);color:var(--muted);font-family:inherit;}
+.type-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--paper);color:var(--muted);font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
 .type-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;z-index:100;backdrop-filter:blur(2px);}
 .modal{background:var(--paper);border-radius:22px 22px 0 0;padding:22px 18px 44px;width:100%;max-width:480px;margin:0 auto;max-height:92vh;overflow-y:auto;animation:up 0.22s ease;}
@@ -597,7 +605,7 @@ async function geoSearch(q){q=(q||"").trim();if(q.length<2)return[];if(geoCache[
 function flagEmoji(cc){if(!cc||cc.length!==2)return"📍";try{return String.fromCodePoint.apply(null,cc.toUpperCase().split("").map(function(c){return 0x1F1E6+(c.charCodeAt(0)-65);}));}catch(e){return"📍";}}
 // ===== 地域マスタ =====
 var COUNTRIES_BY_CONTINENT=[
-  ["アジア",[["韓国","KR"],["台湾","TW"],["中国","CN"],["香港","HK"],["マカオ","MO"],["タイ","TH"],["ベトナム","VN"],["シンガポール","SG"],["マレーシア","MY"],["インドネシア","ID"],["フィリピン","PH"],["カンボジア","KH"],["ラオス","LA"],["ミャンマー","MM"],["インド","IN"],["スリランカ","LK"],["ネパール","NP"],["モンゴル","MN"],["ブータン","BT"],["バングラデシュ","BD"]]],
+  ["アジア",[["日本","JP"],["韓国","KR"],["台湾","TW"],["中国","CN"],["香港","HK"],["マカオ","MO"],["タイ","TH"],["ベトナム","VN"],["シンガポール","SG"],["マレーシア","MY"],["インドネシア","ID"],["フィリピン","PH"],["カンボジア","KH"],["ラオス","LA"],["ミャンマー","MM"],["インド","IN"],["スリランカ","LK"],["ネパール","NP"],["モンゴル","MN"],["ブータン","BT"],["バングラデシュ","BD"]]],
   ["ヨーロッパ",[["フランス","FR"],["イタリア","IT"],["スペイン","ES"],["ドイツ","DE"],["イギリス","GB"],["スイス","CH"],["オーストリア","AT"],["オランダ","NL"],["ベルギー","BE"],["ポルトガル","PT"],["ギリシャ","GR"],["チェコ","CZ"],["ハンガリー","HU"],["ポーランド","PL"],["クロアチア","HR"],["アイルランド","IE"],["デンマーク","DK"],["スウェーデン","SE"],["ノルウェー","NO"],["フィンランド","FI"],["アイスランド","IS"],["ロシア","RU"],["トルコ","TR"]]],
   ["北米・カリブ海地域",[["アメリカ","US"],["カナダ","CA"],["グアム","GU"],["キューバ","CU"],["ジャマイカ","JM"],["バハマ","BS"],["ドミニカ共和国","DO"],["プエルトリコ","PR"]]],
   ["中南米",[["メキシコ","MX"],["ブラジル","BR"],["ペルー","PE"],["アルゼンチン","AR"],["チリ","CL"],["コロンビア","CO"],["ボリビア","BO"],["エクアドル","EC"],["グアテマラ","GT"],["コスタリカ","CR"]]],
@@ -992,7 +1000,9 @@ var ICONS={
   unlock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
   comment:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/>',
   heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
-  pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>'
+  pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  chevright:'<polyline points="9 18 15 12 9 6"/>'
 };
 function svgIcon(name,color,size){var s=size||16;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"currentColor")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||"")+'</svg>';return w;}
 function heartIcon(filled,size,color){var s=size||16;var c=color||(filled?"#e0526a":"currentColor");var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="'+(filled?c:"none")+'" stroke="'+c+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS.heart+'</svg>';return w;}
@@ -1131,10 +1141,10 @@ function renderHeader(){
   ap(ti,ht);ap(l,ti);var r=ce("div","hdr-r");
   if(isWide&&!isViewOnly){
     ap(r,ap(ce("button","menu-btn",{onclick:function(){showMenu=!showMenu;render();}}),tx("☰ Menu")));
-    ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
+    ap(r,ap(ce("button","add-btn2",{onclick:function(){openNewTrip();}}),tx("＋ 追加")));
   }else if(view==="list"&&!isViewOnly){
     ap(r,ap(ce("button","menu-btn",{onclick:function(){showMenu=!showMenu;render();}}),tx("☰ Menu")));
-    ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
+    ap(r,ap(ce("button","add-btn2",{onclick:function(){openNewTrip();}}),tx("＋ 追加")));
   }
   if(view==="detail"&&!isViewOnly){
     if(sel&&user&&sel.ownerId===user.uid)ap(r,ap(ce("button","add-btn2",{style:{display:"inline-flex",alignItems:"center",gap:"6px"},onclick:function(){showShare=true;render();}}),linkIcon("#fff"),tx("共有")));
@@ -1146,7 +1156,7 @@ function renderSidebar(){
   var d=ce("div","sidebar");
   var sh=ce("div","sidebar-hdr");
   ap(sh,ap(ce("div","sidebar-label"),tx("MY TRIPS")));
-  var ab=ce("button","sidebar-add-btn",{onclick:function(){showNewTrip=true;render();}});ap(ab,tx("+"));ap(sh,ab);
+  var ab=ce("button","sidebar-add-btn",{onclick:function(){openNewTrip();}});ap(ab,tx("+"));ap(sh,ab);
   ap(d,sh);
   var tl=ce("div","sidebar-trips");
   if(trips.length===0){
@@ -1164,7 +1174,7 @@ function renderSidebar(){
   }
   ap(d,tl);
   var ft=ce("div","sidebar-footer");
-  var nb=ce("button","sidebar-new-btn",{onclick:function(){showNewTrip=true;render();}});ap(nb,tx("＋ 新しい旅行"));ap(ft,nb);
+  var nb=ce("button","sidebar-new-btn",{onclick:function(){openNewTrip();}});ap(nb,tx("＋ 新しい旅行"));ap(ft,nb);
   var tb=ce("button","",{style:{background:"none",border:"none",color:"rgba(255,255,255,0.4)",fontSize:"11px",cursor:"pointer",fontFamily:"inherit",textDecoration:"underline",padding:"10px 2px 0"},onclick:function(){guidePage="terms";showGuide=true;render();}});ap(tb,tx("利用規約"));ap(ft,tb);
   ap(d,ft);
   return d;
@@ -1204,7 +1214,7 @@ function renderList(){
   if(trips.length===0){
     var d=ce("div","",{style:{textAlign:"center",padding:"80px 24px",color:"var(--muted)"}});
     ap(d,ap(ce("div","",{style:{fontSize:"52px",marginBottom:"14px",opacity:"0.5"}}),tx("🗺️")),ap(ce("div","",{style:{fontSize:"15px",fontWeight:"700",color:"var(--ink)",marginBottom:"6px"}}),tx("旅行がまだありません")),ap(ce("div","",{style:{fontSize:"13px",marginBottom:"18px"}}),tx("右上から追加してください")));
-    ap(d,ap(ce("button","btn-ok",{style:{padding:"12px 24px",flex:"none",border:"none"},onclick:function(){showNewTrip=true;render();}}),tx("＋ 最初の旅行を作成")));ap(outer,d);return outer;
+    ap(d,ap(ce("button","btn-ok",{style:{padding:"12px 24px",flex:"none",border:"none"},onclick:function(){openNewTrip();}}),tx("＋ 最初の旅行を作成")));ap(outer,d);return outer;
   }
   var mineList=mineRegionFilter?trips.filter(function(t){return (t.regions||[]).indexOf(mineRegionFilter)>=0;}):trips;
   if(mineList.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"40px 24px",color:"var(--muted)"}}),tx("この地域の旅行はありません")));return outer;}
@@ -1356,7 +1366,7 @@ function renderUserProfile(){
 
 function renderTemplates(){
   var d=ce("div","content");ap(d,ap(ce("p","",{style:{fontSize:"13px",color:"var(--muted)",lineHeight:"1.6",marginBottom:"12px"}}),tx("新しい旅行作成時に自動追加される持ち物リストのテンプレートです。")));
-  var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(tplTab===t?" on":""),{onclick:function(){tplTab=t;render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});ap(d,tr);
+  ap(d,typeToggleRow(tplTab,function(t){tplTab=t;render();}));
   ["packing","todo"].forEach(function(tab){
     var sec=ce("div","",{style:{marginBottom:"22px"}});ap(sec,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",letterSpacing:"1px",textTransform:"uppercase"}}),tx(tab==="packing"?"🎒 持ち物":"✅ ToDo")));
     var row=ce("div","row");var inp=ce("input","inp",{placeholder:"項目を追加",value:tplInput[tab],oninput:function(e){tplInput[tab]=e.target.value;},onkeydown:onEnterTwice(function(){addTplItem(tab);})});ap(row,inp,ap(ce("button","plus-btn",{onclick:function(){addTplItem(tab);}}),tx("＋")));ap(sec,row);
@@ -1584,7 +1594,16 @@ function renderPlaces(sel){
   ap(wrap,d);return wrap;
 }
 
-var rpOpenGroups={}; // グループ名 → true（アコーディオン開閉）
+var rpView=null; // null（＋追加ボタンのみ）| "groups"（大陸/地方一覧）| グループ名（その配下の国/県）
+// 国内/海外トグル行。onPick(type) を呼ぶ。
+function typeToggleRow(curType,onPick){
+  var tr=ce("div","type-row");
+  [["domestic","国内","home"],["overseas","海外","plane"]].forEach(function(t){
+    var b=ce("button","type-btn"+(curType===t[0]?" on":""),{onclick:function(){onPick(t[0]);}});
+    ap(b,svgIcon(t[2],"currentColor",16),tx(t[1]));ap(tr,b);
+  });
+  return tr;
+}
 // mode: "overseas"|"domestic", selected: string[], onToggle: function(name)
 function renderRegionPicker(mode,selected,onToggle){
   var wrap=ce("div","");
@@ -1597,28 +1616,46 @@ function renderRegionPicker(mode,selected,onToggle){
     });
     ap(wrap,sel);
   }
-  var acc=ce("div","rp-acc");
-  regionGroups(mode).forEach(function(g){
-    var gname=g[0],items=g[1];
-    var open=!!rpOpenGroups[gname];
-    var grp=ce("div","rp-grp");
-    var hd=ce("div","rp-grp-hd",{onclick:function(){rpOpenGroups[gname]=!open;render();}});
-    var cnt=items.filter(function(it){var nm=mode==="domestic"?it:it[0];return selected.indexOf(nm)>=0;}).length;
-    ap(hd,tx(gname+(cnt?" ("+cnt+")":"")),ap(ce("span","rp-caret"),tx(open?"▲":"▼")));
-    ap(grp,hd);
-    if(open){
-      var body=ce("div","rp-grp-body");
-      items.forEach(function(it){
-        var nm=mode==="domestic"?it:it[0];
-        var on=selected.indexOf(nm)>=0;
-        var b=ce("button","rp-opt"+(on?" on":""),{type:"button",onclick:function(){onToggle(nm);}});
-        ap(b,tx(regionLabel(nm)));ap(body,b);
-      });
-      ap(grp,body);
-    }
-    ap(acc,grp);
-  });
-  ap(wrap,acc);
+  var groups=regionGroups(mode);
+  // 折りたたみ：＋追加ボタンのみ
+  if(rpView===null){
+    var addBtn=ce("button","rp-add",{type:"button",onclick:function(){rpView="groups";render();}});
+    ap(addBtn,tx(mode==="domestic"?"＋ 都道府県を追加":"＋ 国を追加"));ap(wrap,addBtn);
+    return wrap;
+  }
+  var panel=ce("div","rp-panel");
+  if(rpView==="groups"){
+    var hd=ce("div","rp-panel-hd");
+    ap(hd,ap(ce("span","rp-panel-title"),tx(mode==="domestic"?"地方を選択":"地域を選択")),ap(ce("button","rp-close",{type:"button",onclick:function(){rpView=null;render();}}),tx("閉じる")));
+    ap(panel,hd);
+    var nav=ce("div","rp-nav");
+    groups.forEach(function(g){
+      var gname=g[0],items=g[1];
+      var cnt=items.filter(function(it){var nm=mode==="domestic"?it:it[0];return selected.indexOf(nm)>=0;}).length;
+      var it=ce("button","rp-nav-item",{type:"button",onclick:function(){rpView=gname;render();}});
+      ap(it,ap(ce("span","rp-nav-name"),tx(gname)));
+      if(cnt)ap(it,ap(ce("span","rp-nav-cnt"),tx(String(cnt))));
+      ap(it,ap(ce("span","rp-nav-chev"),svgIcon("chevright","currentColor",16)));
+      ap(nav,it);
+    });
+    ap(panel,nav);
+  }else{
+    var grp=null;groups.forEach(function(g){if(g[0]===rpView)grp=g;});
+    if(!grp){rpView="groups";return renderRegionPicker(mode,selected,onToggle);}
+    var hd2=ce("div","rp-panel-hd");
+    var back=ce("button","rp-back",{type:"button",onclick:function(){rpView="groups";render();}});ap(back,tx("← 戻る"));
+    ap(hd2,back,ap(ce("span","rp-panel-title"),tx(rpView)),ap(ce("button","rp-close",{type:"button",onclick:function(){rpView=null;render();}}),tx("閉じる")));
+    ap(panel,hd2);
+    var body=ce("div","rp-grp-body");
+    grp[1].forEach(function(it){
+      var nm=mode==="domestic"?it:it[0];
+      var on=selected.indexOf(nm)>=0;
+      var b=ce("button","rp-opt"+(on?" on":""),{type:"button",onclick:function(){onToggle(nm);}});
+      ap(b,tx(regionLabel(nm)));ap(body,b);
+    });
+    ap(panel,body);
+  }
+  ap(wrap,panel);
   return wrap;
 }
 // selected 配列に対するトグル（破壊的）。呼び出し側で render() する。
@@ -1630,7 +1667,7 @@ function mkDelBtn(fn){var b=ce("button","",{style:{background:"none",border:"non
 function renderModal_newTrip(){
   var m=mkOverlay(function(){showNewTrip=false;render();});ap(m.modal,ap(ce("div","modal-title"),tx("✈️ 新しい旅行を登録")));
   var tg=ce("div","fg");ap(tg,ap(ce("label","lbl"),tx("旅行の種類")));
-  var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(tripForm.type===t?" on":""),{onclick:function(){if(tripForm.type!==t){tripForm.type=t;tripForm.regions=[];}render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});
+  var tr=typeToggleRow(tripForm.type,function(t){if(tripForm.type!==t){tripForm.type=t;tripForm.regions=[];rpView=null;}render();});
   ap(tg,tr);ap(m.modal,tg);
   [["name","旅行名 *","例：夏の韓国旅行"],["destination","行き先","例：ソウル・釜山"]].forEach(function(f){
     var g=ce("div","fg");ap(g,ap(ce("label","lbl"),tx(f[1])));var inp=ce("input","finp",{type:"text",placeholder:f[2],value:tripForm[f[0]],oninput:function(e){tripForm[f[0]]=e.target.value;}});if(f[0]==="name")inp.setAttribute("autofocus","true");ap(g,inp);ap(m.modal,g);
@@ -1645,10 +1682,11 @@ function renderModal_newTrip(){
   ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{onclick:function(){showNewTrip=false;render();}}),tx("キャンセル")),b));
   return m.ov;
 }
+function openNewTrip(){showNewTrip=true;rpView=null;render();}
 function openEditTrip(){
   var sel=getSel();if(!sel)return;
   editDraft={name:sel.name||"",destination:sel.destination||"",startDate:sel.startDate||"",endDate:sel.endDate||"",type:sel.type||"overseas",regions:(sel.regions||[]).slice()};
-  showEditTrip=true;render();
+  rpView=null;showEditTrip=true;render();
 }
 async function saveEditTrip(){
   if(!editDraft||!editDraft.name.trim())return;
@@ -1660,7 +1698,7 @@ function renderModal_editTrip(){
   var m=mkOverlay(function(){showEditTrip=false;editDraft=null;render();});
   ap(m.modal,ap(ce("div","modal-title"),tx("✏️ 旅行を編集")));
   var tg=ce("div","fg");ap(tg,ap(ce("label","lbl"),tx("旅行の種類")));
-  var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(editDraft.type===t?" on":""),{onclick:function(){if(editDraft.type!==t){editDraft.type=t;editDraft.regions=[];}render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});
+  var tr=typeToggleRow(editDraft.type,function(t){if(editDraft.type!==t){editDraft.type=t;editDraft.regions=[];rpView=null;}render();});
   ap(tg,tr);ap(m.modal,tg);
   [["name","旅行名 *","例：夏の韓国旅行"],["destination","行き先","例：ソウル・釜山"]].forEach(function(f){
     var g=ce("div","fg");ap(g,ap(ce("label","lbl"),tx(f[1])));var inp=ce("input","finp",{type:"text",placeholder:f[2],value:editDraft[f[0]],oninput:function(e){editDraft[f[0]]=e.target.value;}});ap(g,inp);ap(m.modal,g);
