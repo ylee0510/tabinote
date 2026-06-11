@@ -73,6 +73,44 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
 .trip-list{padding:16px;display:flex;flex-direction:column;gap:12px;}
 .trip-card{background:var(--paper);border-radius:16px;padding:0;border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;}
+.feed-seg{display:flex;gap:22px;padding:6px 16px 0;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.feed-seg-tab{font-size:15px;font-weight:800;padding:8px 2px 11px;color:var(--muted);position:relative;cursor:pointer;}
+.feed-seg-tab.on{color:var(--ink);}
+.feed-seg-tab.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2.5px;background:var(--accent);border-radius:2px;}
+.feed-list{display:flex;flex-direction:column;gap:14px;}
+.feed-card{background:var(--paper);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;}
+.feed-card-cover{position:relative;width:100%;height:110px;}
+.feed-card-cover-img{width:100%;height:110px;object-fit:cover;display:block;}
+.feed-card-type{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.feed-card-body{padding:11px 14px 4px;}
+.feed-card-owner{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.feed-card-ava{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;overflow:hidden;}
+.feed-card-oname{font-size:12px;color:var(--muted);font-weight:600;cursor:pointer;}
+.feed-card-title{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:3px;}
+.feed-card-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+.feed-card-chips{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 2px;}
+.feed-card-chip{background:var(--stamp);color:var(--muted);font-size:10px;font-weight:700;padding:2px 8px;border-radius:7px;}
+.feed-card-acts{display:flex;gap:18px;padding:9px 14px 12px;border-top:1px solid var(--border);margin-top:8px;}
+.feed-card-act{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);font-weight:700;cursor:pointer;}
+.feed-card-act.liked{color:#e0526a;}
+.feed-detail-extras{padding:14px 16px 40px;}
+.feed-detail-likebar{display:flex;gap:18px;padding:12px 0;border-bottom:1px solid var(--border);}
+.feed-comments{margin-top:16px;}
+.feed-comments-h{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:10px;}
+.feed-comment{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);}
+.feed-comment-ava{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+.feed-comment-main{flex:1;min-width:0;}
+.feed-comment-top{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+.feed-comment-name{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;}
+.feed-comment-time{font-size:11px;color:var(--muted);}
+.feed-comment-text{font-size:14px;color:var(--ink);line-height:1.5;word-break:break-word;}
+.feed-comment-del{background:none;border:none;color:#ccc;font-size:11px;cursor:pointer;font-family:inherit;margin-top:3px;padding:0;}
+.feed-comment-inrow{display:flex;gap:8px;margin-top:12px;}
+.feed-more-btn{display:block;width:100%;margin:14px 0 0;padding:12px;background:none;border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;}
+.profile-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 16px 18px;}
+.profile-ava{width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;}
+.profile-name{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:3px;}
+.profile-count{font-size:13px;color:var(--muted);margin-bottom:6px;}
 .trip-card-body{padding:12px 14px 12px;}
 .trip-nm{font-size:18px;font-weight:800;color:#1c1917;padding-right:28px;}
 .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
@@ -495,6 +533,14 @@ var DEMO_TRIPS=[{
 
 var user=null,trips=[],templates=DEFAULT_TEMPLATES;
 var view="list",selId=null,activeTab="itinerary";
+var TAB_DEFS=[
+  {key:"itinerary",icon:"calendar",label:"行程",always:true},
+  {key:"packing",icon:"backpack",label:"持ち物"},
+  {key:"todo",icon:"check",label:"ToDo"},
+  {key:"places",icon:"pin",label:"スポット"},
+  {key:"budget",icon:"money",label:"予算"},
+  {key:"weather",icon:"sun",label:"天気"}
+];
 var tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas"};
 var itinForm={date:"",time:"",text:"",type:""};
 var editingItinId=null;
@@ -502,14 +548,22 @@ var checkInput="",placeInput="",placeMemo="",shareEmail="",pinName="";
 var placeSuggestions=[],placeSearchTm=null,geoPlaceCache={};
 var tplTab="domestic",tplInput={packing:"",todo:""};
 var showNewTrip=false,showShare=false,showPinModal=false,showMap=false,showNewBudget=false,showGuide=false,showMenu=false,showMyPage=false,guidePage="guide";
+var publishDraftTabs=null; // 公開設定中に選択中のタブ配列（モーダルを開くとsel.publicTabsで初期化）
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
 var isViewOnly=false,viewOnlyTrip=null;
+var feedViewId=null; // 現在閲覧中のfeedアイテムID（feed由来の閲覧専用詳細）
+var feedViewItem=null; // 現在閲覧中のfeedアイテム実体（feedItemsまたはprofileFeed由来）
 var isGuest=false;
 var newBudget={icon:"💰",name:""};
 var budgetExpandedEntry=null;
 var geocoding=false,saving=false,pendingPin=null;
 var tripsUnsub=null,tplUnsub=null,mapInst=null,mapMarkers=[];
 var auth=null,db=null,storage=null;
+var listMode="mine"; // "mine" | "timeline"
+var feedItems=[],feedLastDoc=null,feedLoading=false,feedDone=false;
+var myLikes=null; // Set of liked feedId; null when logged out
+var feedComments=[],feedCommentsFor=null,commentInput="";
+var profileUserId=null,profileUserName="",profileUserPhoto=null,profileFeed=[],profileLoading=false;
 
 function mkId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function getSel(){return isViewOnly?viewOnlyTrip:(trips.find(function(t){return t.id===selId;}));}
@@ -547,7 +601,10 @@ async function loginGoogle(){
   }
 }
 async function logout(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}if(tplUnsub){tplUnsub();tplUnsub=null;}await auth.signOut();trips=[];view="list";selId=null;render();}
-async function upd(patch){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var sel=getSel();if(!sel)return;await db.collection("trips").doc(sel.id).update(patch);}
+async function upd(patch){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var sel=getSel();if(!sel)return;await db.collection("trips").doc(sel.id).update(patch);
+  var fresh=Object.assign({},sel,patch);
+  if(fresh.publishedToFeed){try{await syncFeed(fresh);}catch(e){console.warn("feed resync:",e);}}
+}
 async function createTrip(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!tripForm.name.trim()||saving||!user)return;saving=true;render();try{var tpl=templates[tripForm.type]||{packing:[],todo:[]};var ref=await db.collection("trips").add({name:tripForm.name.trim(),destination:tripForm.destination.trim(),startDate:tripForm.startDate,endDate:tripForm.endDate,type:tripForm.type,ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],currency:"JPY",itinerary:[],packing:tpl.packing.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),todo:tpl.todo.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),places:[],budget:JSON.parse(JSON.stringify(DEFAULT_BUDGET[tripForm.type]||DEFAULT_BUDGET.overseas)),createdAt:firebase.firestore.FieldValue.serverTimestamp()});track('trip_create',{trip_type:tripForm.type});selId=ref.id;tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas"};showNewTrip=false;view="detail";activeTab="itinerary";toast("旅行を作成しました！");}catch(e){console.error(e);toast("作成に失敗: "+e.message);}saving=false;render();}
 async function deleteTrip(id){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!confirm("この旅行を削除しますか？"))return;await db.collection("trips").doc(id).delete();if(selId===id){selId=null;view="list";}toast("削除しました");render();}
 async function shareTrip(){if(!shareEmail.trim())return;var sel=getSel();if(!sel)return;try{await db.collection("trips").doc(sel.id).update({memberIds:firebase.firestore.FieldValue.arrayUnion(shareEmail.trim()),members:firebase.firestore.FieldValue.arrayUnion({uid:shareEmail.trim(),name:shareEmail.trim(),email:shareEmail.trim()})});shareEmail="";toast("招待しました！");render();}catch(e){toast("共有に失敗: "+e.message);}}
@@ -619,13 +676,142 @@ async function addBudgetItem(){
 async function delBudgetItem(idx){var sel=getSel();if(!sel)return;var b=JSON.parse(JSON.stringify(sel.budget||[]));b.splice(idx,1);await upd({budget:b});}
 async function enableShare(id){await db.collection("trips").doc(id).update({isPublic:true});return getShareUrl(id);}
 async function disableShare(id){await db.collection("trips").doc(id).update({isPublic:false});}
+async function syncFeed(trip){
+  if(!user||trip.ownerId!==user.uid||!trip.publishedToFeed)return;
+  var tabs=(trip.publicTabs&&trip.publicTabs.length)?trip.publicTabs.slice():["itinerary"];
+  if(tabs.indexOf("itinerary")<0)tabs.unshift("itinerary");
+  var content={};
+  tabs.forEach(function(k){content[k]=trip[k]!==undefined?trip[k]:[];});
+  var meta={
+    ownerId:trip.ownerId,
+    ownerName:getNickname()||"旅人",
+    ownerPhoto:(user&&user.photoURL)||null,
+    name:trip.name||"",
+    destination:trip.destination||"",
+    type:trip.type||"overseas",
+    coverUrl:trip.coverUrl||null,
+    startDate:trip.startDate||"",
+    endDate:trip.endDate||"",
+    publicTabs:tabs,
+    content:content
+  };
+  var ref=db.collection("feed").doc(trip.id);
+  var snap=await ref.get();
+  if(snap.exists){
+    await ref.set(meta,{merge:true});
+  }else{
+    meta.likeCount=0;meta.commentCount=0;meta.publishedAt=firebase.firestore.FieldValue.serverTimestamp();
+    await ref.set(meta);
+  }
+}
+async function unpublishFeed(tripId){
+  try{await db.collection("feed").doc(tripId).delete();}catch(e){console.warn("unpublish:",e);}
+}
 async function loadSharedTrip(tripId){try{var doc=await db.collection("trips").doc(tripId).get();if(doc.exists&&doc.data().isPublic){viewOnlyTrip=Object.assign({id:doc.id},doc.data());isViewOnly=true;selId=tripId;view="detail";activeTab="itinerary";render();return;}document.getElementById("app").innerHTML='<div style="padding:60px 24px;text-align:center"><div style="font-size:40px;margin-bottom:16px">🔒</div><div style="font-size:15px;font-weight:700;margin-bottom:8px">このリンクは無効です</div><div style="font-size:13px;color:#78716c">公開が停止されているか、URLが間違っています</div></div>';}catch(e){console.error(e);}}
+function openFeedTrip(item){
+  var vo=Object.assign({id:item.id,name:item.name,destination:item.destination,type:item.type,coverUrl:item.coverUrl,startDate:item.startDate,endDate:item.endDate},item.content||{});
+  vo._publicTabs=(item.publicTabs||["itinerary"]).slice();
+  viewOnlyTrip=vo;isViewOnly=true;feedViewId=item.id;feedViewItem=item;selId=item.id;
+  view="detail";activeTab=vo._publicTabs[0]||"itinerary";
+  track('feed_open',{});
+  loadComments(item.id);
+  render();
+}
+async function toggleLike(item){
+  if(!user){toast("ログインするといいねできます");return;}
+  var liked=!!(myLikes&&myLikes.has(item.id));
+  var feedRef=db.collection("feed").doc(item.id);
+  var likeRef=feedRef.collection("likes").doc(user.uid);
+  myLikes=myLikes||new Set();
+  if(liked){myLikes.delete(item.id);item.likeCount=Math.max(0,(item.likeCount||0)-1);}
+  else{myLikes.add(item.id);item.likeCount=(item.likeCount||0)+1;}
+  render();
+  try{
+    await db.runTransaction(async function(tx){
+      var f=await tx.get(feedRef);if(!f.exists)return;
+      var c=f.data().likeCount||0;
+      if(liked){tx.delete(likeRef);tx.update(feedRef,{likeCount:Math.max(0,c-1)});}
+      else{tx.set(likeRef,{uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});tx.update(feedRef,{likeCount:c+1});}
+    });
+  }catch(e){console.warn("toggleLike:",e);toast("いいねに失敗しました");
+    if(liked){myLikes.add(item.id);item.likeCount=(item.likeCount||0)+1;}else{myLikes.delete(item.id);item.likeCount=Math.max(0,(item.likeCount||0)-1);}
+    render();
+  }
+}
+async function loadComments(feedId){
+  feedCommentsFor=feedId;feedComments=[];
+  try{
+    var snap=await db.collection("feed").doc(feedId).collection("comments").orderBy("createdAt","asc").get();
+    feedComments=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+  }catch(e){console.warn("loadComments:",e);}
+  render();
+}
+async function postComment(feedId){
+  if(!user){toast("ログインするとコメントできます");return;}
+  var text=(commentInput||"").trim();
+  if(!text)return;
+  if(text.length>500){toast("コメントは500文字以内です");return;}
+  if(!(await ensureNickname())){render();return;}
+  var feedRef=db.collection("feed").doc(feedId);
+  try{
+    await feedRef.collection("comments").add({uid:user.uid,name:getNickname()||"旅人",text:text,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await feedRef.update({commentCount:firebase.firestore.FieldValue.increment(1)});
+    commentInput="";
+    var _fi=feedItems.find(function(x){return x.id===feedId;});if(_fi)_fi.commentCount=(_fi.commentCount||0)+1;
+    if(feedViewItem&&feedViewItem.id===feedId&&feedViewItem!==_fi)feedViewItem.commentCount=(feedViewItem.commentCount||0)+1;
+    await loadComments(feedId);
+    track('feed_comment',{});
+  }catch(e){console.warn("postComment:",e);toast("コメントに失敗しました");}
+}
+async function deleteComment(feedId,commentId){
+  if(!confirm("このコメントを削除しますか？"))return;
+  var feedRef=db.collection("feed").doc(feedId);
+  try{
+    await feedRef.collection("comments").doc(commentId).delete();
+    await feedRef.update({commentCount:firebase.firestore.FieldValue.increment(-1)});
+    var _fi=feedItems.find(function(x){return x.id===feedId;});if(_fi)_fi.commentCount=Math.max(0,(_fi.commentCount||0)-1);
+    if(feedViewItem&&feedViewItem.id===feedId&&feedViewItem!==_fi)feedViewItem.commentCount=Math.max(0,(feedViewItem.commentCount||0)-1);
+    await loadComments(feedId);
+  }catch(e){console.warn("deleteComment:",e);toast("削除に失敗しました");}
+}
 async function duplicateTrip(trip){try{await db.collection("trips").add({name:trip.name+" (コピー)",destination:trip.destination||"",startDate:"",endDate:"",type:trip.type||"overseas",ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],isPublic:false,currency:trip.currency||"JPY",itinerary:trip.itinerary||[],packing:(trip.packing||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),todo:(trip.todo||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),places:(trip.places||[]).map(function(i){return Object.assign({},i,{id:mkId()});}),budget:JSON.parse(JSON.stringify(trip.budget||[])),createdAt:firebase.firestore.FieldValue.serverTimestamp()});toast("旅行を複製しました！");}catch(e){console.error(e);toast("複製に失敗: "+e.message);}}
 function getWeatherIcon(code){if(code<=1)return"☀️";if(code<=3)return"⛅";if(code<=48)return"🌫";if(code<=67)return"🌧";if(code<=77)return"❄️";if(code<=82)return"🌧";if(code<=99)return"⛈";return"🌡";}
 async function fetchWeather(lat,lng,startDate,endDate){var cacheKey=lat+","+lng+","+startDate+","+endDate;if(weatherCache[cacheKey])return weatherCache[cacheKey];try{var start=startDate||new Date().toISOString().slice(0,10);var end=endDate||start;var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&start_date="+start+"&end_date="+end;var r=await fetch(url);var d=await r.json();if(d.daily){weatherCache[cacheKey]=d.daily;return d.daily;}}catch(e){}return null;}
 async function addWeatherCity(tripId,cities,cand){if(!cand||cand.lat==null)return;await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).concat([{name:cand.name,lat:cand.lat,lng:cand.lng,country:cand.country||"",country_code:cand.country_code||"",admin1:cand.admin1||""}])});weatherCityInput="";weatherSuggestions=[];if(weatherSearchTm){clearTimeout(weatherSearchTm);weatherSearchTm=null;}render();}
 async function removeWeatherCity(tripId,cities,idx){await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).filter(function(_,i){return i!==idx;})});}
 function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0);});if(trips.length===0&&user&&!showGuide){try{if(!localStorage.getItem("tavy_guide_seen")){guidePage="guide";showGuide=true;track('open_guide',{source:'auto_login'});localStorage.setItem("tavy_guide_seen","1");}}catch(e){guidePage="guide";showGuide=true;}}syncMarkers();render();},function(err){console.warn("trips err:",err);});}
+async function loadFeed(reset){
+  if(feedLoading)return;
+  feedLoading=true;
+  if(reset){feedItems=[];feedLastDoc=null;feedDone=false;}
+  try{
+    var q=db.collection("feed").orderBy("publishedAt","desc").limit(30);
+    if(feedLastDoc)q=q.startAfter(feedLastDoc);
+    var snap=await q.get();
+    snap.docs.forEach(function(d){feedItems.push(Object.assign({id:d.id},d.data()));});
+    feedLastDoc=snap.docs.length?snap.docs[snap.docs.length-1]:feedLastDoc;
+    if(snap.docs.length<30)feedDone=true;
+  }catch(e){console.warn("loadFeed:",e);toast("タイムラインの取得に失敗しました");}
+  feedLoading=false;
+  render();
+}
+async function loadMyLikes(){
+  if(!user){myLikes=null;return;}
+  myLikes=new Set();
+  try{
+    var snap=await db.collectionGroup("likes").where("uid","==",user.uid).get();
+    snap.docs.forEach(function(d){var p=d.ref.parent.parent;if(p)myLikes.add(p.id);});
+  }catch(e){console.warn("loadMyLikes:",e);}
+  render();
+}
+function switchListMode(mode){
+  listMode=mode;
+  if(mode==="timeline"){
+    if(feedItems.length===0)loadFeed(true);
+    if(user&&myLikes===null)loadMyLikes();
+  }
+  render();
+}
 var MAX_FILE_SIZE=3*1024*1024;
 async function uploadAttachment(category,file){if(!file)return null;if(file.size>MAX_FILE_SIZE){toast("ファイルサイズは3MB以内にしてください");return null;}var ext=file.name.split(".").pop();var path="users/"+user.uid+"/"+category+"/"+Date.now()+"."+ext;var ref=storage.ref(path);await ref.put(file);var url=await ref.getDownloadURL();return{name:file.name,url:url,path:path,type:file.type,uploadedAt:new Date().toISOString()};}
 var COVER_COLORS=["#2d3e5a","#4a7c59","#7c4a6b","#7c5a2d","#2d6b7c","#5a2d7c","#7c2d2d","#4a4a7c"];
@@ -667,6 +853,19 @@ async function uploadCoverPhoto(file){
 async function deleteAttachment(category,idx){var profile=window._tavyProfile||{};var attachments=profile["attachments_"+category]||[];var item=attachments[idx];if(!item)return;try{await storage.ref(item.path).delete();}catch(e){}attachments.splice(idx,1);profile["attachments_"+category]=attachments;window._tavyProfile=profile;await db.collection("users").doc(user.uid).collection("settings").doc("profile").set(profile);render();}
 function loadProfile(){db.collection("users").doc(user.uid).collection("settings").doc("profile").get().then(function(doc){window._tavyProfile=doc.exists?doc.data():{};}).catch(function(){window._tavyProfile={};});}
 function saveProfile(){if(!user)return Promise.resolve();return db.collection("users").doc(user.uid).collection("settings").doc("profile").set(window._tavyProfile||{}).catch(function(){});}
+function getNickname(){return (window._tavyProfile&&window._tavyProfile.nickname)?String(window._tavyProfile.nickname).trim():"";}
+function setNickname(v){window._tavyProfile=window._tavyProfile||{};window._tavyProfile.nickname=String(v||"").trim().slice(0,20);return saveProfile();}
+async function ensureNickname(){
+  if(!user){toast("ログインが必要です");return false;}
+  if(getNickname())return true;
+  var def=(user.displayName||"").slice(0,20);
+  var v=window.prompt("タイムラインで表示するニックネームを入力してください（最大20文字）",def);
+  if(v==null)return false;
+  v=v.trim();
+  if(!v){toast("ニックネームを入力してください");return false;}
+  await setNickname(v);
+  return true;
+}
 // 旧固定フィールドを汎用メモ/記録に移行し、機微なレガシーキー（緊急連絡先・医療情報含む）を削除
 function migrateProfile(p){p=p||{};var changed=false;
   if(!Array.isArray(p.memos)){var mm=[];[["passport_no","パスポート番号"],["passport_exp","有効期限"],["nationality","国籍"],["esta_no","ESTA申請番号"],["esta_exp","ESTA有効期限"],["visa_note","その他ビザ情報"]].forEach(function(pr){if(p[pr[0]])mm.push({label:pr[1],value:String(p[pr[0]])});});p.memos=mm;changed=true;}
@@ -720,9 +919,12 @@ var ICONS={
   link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-  unlock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>'
+  unlock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+  comment:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/>',
+  heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>'
 };
 function svgIcon(name,color,size){var s=size||16;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"currentColor")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||"")+'</svg>';return w;}
+function heartIcon(filled,size,color){var s=size||16;var c=color||(filled?"#e0526a":"currentColor");var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="'+(filled?c:"none")+'" stroke="'+c+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS.heart+'</svg>';return w;}
 var BICONS={"🚃":"train","🚋":"train","🚇":"train","🚆":"train","✈":"plane","🏨":"bed","🛏":"bed","🍜":"utensils","🍽":"utensils","🍴":"utensils","🏝":"umbrella","🏖":"umbrella","⛱":"umbrella","🛍":"shopping","🛒":"shopping","💊":"pill","🏥":"pill","🚕":"car","🚗":"car","☕":"coffee","🎭":"film","🎬":"film","🎟":"ticket","🎫":"ticket","💰":"money","💴":"money","💳":"money"};
 function budgetIconEl(v,size){var s=size||18;var key=(v||"").replace(/[️‍]/g,"");var name=BICONS[key]||(ICONS[v]?v:null);if(name)return svgIcon(name,"currentColor",s);var sp=ce("span","",{style:{fontSize:s+"px",lineHeight:"1",display:"inline-flex",alignItems:"center"}});ap(sp,tx(v||"💰"));return sp;}
 
@@ -759,13 +961,15 @@ function render(){
     var layout=ce("div","pc-layout");
     ap(layout,renderSidebar());
     var main=ce("div","main-area");
-    if(view==="detail")ap(main,renderDetail());
+    if(view==="userProfile")ap(main,renderUserProfile());
+    else if(view==="detail")ap(main,renderDetail());
     else if(view==="templates")ap(main,renderTemplates());
     else ap(main,renderList());
     ap(layout,main);
     ap(wrap,layout);
   }else{
-    if(view==="list"){ap(wrap,renderList());
+    if(view==="userProfile")ap(wrap,renderUserProfile());
+    else if(view==="list"){ap(wrap,renderList());
       var _tf=ce("div","",{style:{textAlign:"center",padding:"34px 0 22px"}});
       var _tb=ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",opacity:"0.55",fontSize:"11px",cursor:"pointer",fontFamily:"inherit",textDecoration:"underline"},onclick:function(){guidePage="terms";showGuide=true;render();}});ap(_tb,tx("利用規約"));ap(_tf,_tb);ap(wrap,_tf);
     }
@@ -838,8 +1042,8 @@ function renderLogin(){
 function renderHeader(){
   var sel=getSel();var hdr=ce("div","hdr");var l=ce("div","hdr-l");
   var isWide=window.innerWidth>=768;
-  if(isViewOnly||(!isWide&&(view==="detail"||view==="templates"))){
-    var bb=ce("button","back-btn",{onclick:function(){if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";render();}});
+  if(isViewOnly||view==="userProfile"||(!isWide&&(view==="detail"||view==="templates"))){
+    var bb=ce("button","back-btn",{onclick:function(){if(view==="userProfile"){view="list";listMode="timeline";profileUserId=null;render();return;}var wasFeed=!!feedViewId;if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;feedViewId=null;feedViewItem=null;if(!wasFeed)window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";if(wasFeed)listMode="timeline";render();}});
     ap(bb,tx("←"));ap(l,bb);
   }
   var ti=ce("div","",{style:{minWidth:"0",flex:"1"}});var ht=ce("div","hdr-title");
@@ -849,7 +1053,7 @@ function renderHeader(){
     ap(ht,tx("Tavy"));
   }else{
     if(view==="list"&&!isViewOnly)ht.style.cssText="font-size:28px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917";
-    ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="list"?"Tavy":view==="templates"?"マイ持ち物リスト":(sel?sel.name:"")));
+    ap(ht,tx(isViewOnly?(sel?sel.name:"閲覧"):view==="userProfile"?(profileUserName||"プロフィール"):view==="list"?"Tavy":view==="templates"?"マイ持ち物リスト":(sel?sel.name:"")));
     if(view==="list"&&!isViewOnly){var hs=ce("div","hdr-sub");ap(hs,tx(user?user.displayName||user.email:""));ap(ti,hs);}
   }
   ap(ti,ht);ap(l,ti);var r=ce("div","hdr-r");
@@ -902,10 +1106,26 @@ function renderWelcome(){
 }
 
 function renderList(){
+  var outer=ce("div","");
+  var seg=ce("div","feed-seg");
+  var t1=ce("div","feed-seg-tab"+(listMode==="mine"?" on":""),{onclick:function(){switchListMode("mine");}});ap(t1,tx("自分の旅行"));
+  var t2=ce("div","feed-seg-tab"+(listMode==="timeline"?" on":""),{onclick:function(){switchListMode("timeline");}});ap(t2,tx("タイムライン"));
+  ap(seg,t1,t2);ap(outer,seg);
+
+  if(listMode==="timeline"){
+    if(feedLoading&&feedItems.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted)"}}),tx("読み込み中…")));return outer;}
+    if(feedItems.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"60px 24px",color:"var(--muted)"}}),tx("まだ公開された旅行がありません")));return outer;}
+    var feedWrap=ce("div","feed-list");
+    feedItems.forEach(function(item){ap(feedWrap,renderFeedCard(item));});
+    ap(outer,feedWrap);
+    if(!feedDone){ap(outer,ap(ce("button","feed-more-btn",{onclick:function(){loadFeed(false);}}),tx(feedLoading?"読み込み中…":"もっと見る")));}
+    return outer;
+  }
+
   if(trips.length===0){
     var d=ce("div","",{style:{textAlign:"center",padding:"80px 24px",color:"var(--muted)"}});
     ap(d,ap(ce("div","",{style:{fontSize:"52px",marginBottom:"14px",opacity:"0.5"}}),tx("🗺️")),ap(ce("div","",{style:{fontSize:"15px",fontWeight:"700",color:"var(--ink)",marginBottom:"6px"}}),tx("旅行がまだありません")),ap(ce("div","",{style:{fontSize:"13px",marginBottom:"18px"}}),tx("右上から追加してください")));
-    ap(d,ap(ce("button","btn-ok",{style:{padding:"12px 24px",flex:"none",border:"none"},onclick:function(){showNewTrip=true;render();}}),tx("＋ 最初の旅行を作成")));return d;
+    ap(d,ap(ce("button","btn-ok",{style:{padding:"12px 24px",flex:"none",border:"none"},onclick:function(){showNewTrip=true;render();}}),tx("＋ 最初の旅行を作成")));ap(outer,d);return outer;
   }
   var d=ce("div","trip-list");
   trips.forEach(function(trip){
@@ -945,7 +1165,106 @@ function renderList(){
     ap(card,body);
     ap(d,card);
   });
-  return d;
+  ap(outer,d);
+  return outer;
+}
+
+function relTime(ts){if(!ts||!ts.seconds)return "";var diff=Date.now()/1000-ts.seconds;if(diff<3600)return Math.max(1,Math.floor(diff/60))+"分前";if(diff<86400)return Math.floor(diff/3600)+"時間前";if(diff<2592000)return Math.floor(diff/86400)+"日前";return Math.floor(diff/2592000)+"ヶ月前";}
+function renderFeedCard(item){
+  var card=ce("div","feed-card");
+  var cov=ce("div","feed-card-cover",{onclick:function(){openFeedTrip(item);}});
+  if(item.coverUrl){var img=document.createElement("img");img.className="feed-card-cover-img";img.src=item.coverUrl;ap(cov,img);}
+  else{cov.style.background=getTripColor(item.id);}
+  ap(cov,ap(ce("span","feed-card-type"),tx(item.type==="overseas"?"🌏 海外":"🏠 国内")));
+  ap(card,cov);
+  var body=ce("div","feed-card-body",{onclick:function(){openFeedTrip(item);}});
+  var owner=ce("div","feed-card-owner");
+  var ava=ce("div","feed-card-ava",{onclick:function(e){e.stopPropagation();openUserProfile(item.ownerId,item.ownerName,item.ownerPhoto);}});
+  if(item.ownerPhoto){var pi=document.createElement("img");pi.src=item.ownerPhoto;pi.style.cssText="width:100%;height:100%;border-radius:50%;object-fit:cover";ap(ava,pi);}else{ap(ava,tx((item.ownerName||"?")[0].toUpperCase()));}
+  var oname=ce("span","feed-card-oname",{onclick:function(e){e.stopPropagation();openUserProfile(item.ownerId,item.ownerName,item.ownerPhoto);}});ap(oname,tx((item.ownerName||"旅人")+" · "+relTime(item.publishedAt)));
+  ap(owner,ava,oname);ap(body,owner);
+  ap(body,ap(ce("div","feed-card-title"),tx(item.name||"無題の旅行")));
+  var meta=ce("div","feed-card-meta");
+  if(item.destination)ap(meta,ap(ce("span",""),tx("📍 "+item.destination)));
+  if(item.startDate)ap(meta,ap(ce("span",""),tx(item.startDate+(item.endDate?" → "+item.endDate:""))));
+  ap(body,meta);
+  var chips=ce("div","feed-card-chips");
+  (item.publicTabs||[]).forEach(function(k){var d=TAB_DEFS.find(function(t){return t.key===k;});if(d)ap(chips,ap(ce("span","feed-card-chip"),tx(d.label)));});
+  ap(body,chips);
+  ap(card,body);
+  var acts=ce("div","feed-card-acts");
+  var liked=!!(myLikes&&myLikes.has(item.id));
+  var likeBtn=ce("div","feed-card-act"+(liked?" liked":""),{onclick:function(e){e.stopPropagation();toggleLike(item);}});
+  ap(likeBtn,heartIcon(liked,16),ap(ce("span",""),tx(String(item.likeCount||0))));
+  var cmtBtn=ce("div","feed-card-act",{onclick:function(e){e.stopPropagation();openFeedTrip(item);}});
+  ap(cmtBtn,svgIcon("comment","currentColor",16),ap(ce("span",""),tx(String(item.commentCount||0))));
+  ap(acts,likeBtn,cmtBtn);ap(card,acts);
+  return card;
+}
+
+function renderFeedDetailExtras(item){
+  var box=ce("div","feed-detail-extras");
+  var liked=!!(myLikes&&myLikes.has(item.id));
+  var bar=ce("div","feed-detail-likebar");
+  var likeBtn=ce("div","feed-card-act"+(liked?" liked":""),{onclick:function(){toggleLike(item);}});
+  ap(likeBtn,heartIcon(liked,20),ap(ce("span",""),tx(String(item.likeCount||0)+" いいね")));
+  ap(bar,likeBtn);ap(box,bar);
+  var cwrap=ce("div","feed-comments");
+  ap(cwrap,ap(ce("div","feed-comments-h"),tx("コメント "+(item.commentCount||0))));
+  var list=(feedCommentsFor===item.id)?feedComments:[];
+  if(list.length===0){ap(cwrap,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",padding:"8px 0"}}),tx("まだコメントはありません")));}
+  list.forEach(function(c){
+    var row=ce("div","feed-comment");
+    var ava=ce("div","feed-comment-ava",{onclick:function(){openUserProfile(c.uid,c.name,null);}});ap(ava,tx((c.name||"?")[0].toUpperCase()));
+    var main=ce("div","feed-comment-main");
+    var top=ce("div","feed-comment-top");
+    var nm=ce("span","feed-comment-name",{onclick:function(){openUserProfile(c.uid,c.name,null);}});ap(nm,tx(c.name||"旅人"));
+    ap(top,nm,ap(ce("span","feed-comment-time"),tx(relTime(c.createdAt))));
+    ap(main,top,ap(ce("div","feed-comment-text"),tx(c.text||"")));
+    if(user&&c.uid===user.uid){var del=ce("button","feed-comment-del",{onclick:function(){deleteComment(item.id,c.id);}});ap(del,tx("削除"));ap(main,del);}
+    ap(row,ava,main);ap(cwrap,row);
+  });
+  if(user){
+    var inRow=ce("div","feed-comment-inrow");
+    var inp=ce("input","finp",{placeholder:"コメントを書く…",value:commentInput,maxlength:"500",oninput:function(e){commentInput=e.target.value;},onkeydown:function(e){if(e.key==="Enter"){postComment(item.id);}}});
+    var sb=ce("button","plus-btn",{onclick:function(){postComment(item.id);}});ap(sb,tx("送信"));
+    ap(inRow,inp,sb);ap(cwrap,inRow);
+  }else{
+    ap(cwrap,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",padding:"10px 0"}}),tx("ログインするとコメントできます")));
+  }
+  ap(box,cwrap);
+  return box;
+}
+
+async function openUserProfile(uid,name,photo){
+  if(!uid)return;
+  profileUserId=uid;profileUserName=name||"";profileUserPhoto=photo||null;profileFeed=[];profileLoading=true;
+  if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;feedViewId=null;feedViewItem=null;}
+  view="userProfile";
+  render();
+  try{
+    var snap=await db.collection("feed").where("ownerId","==",uid).orderBy("publishedAt","desc").limit(50).get();
+    profileFeed=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    if(profileFeed.length&&profileFeed[0].ownerName)profileUserName=profileFeed[0].ownerName;
+    if(profileFeed.length&&profileFeed[0].ownerPhoto)profileUserPhoto=profileFeed[0].ownerPhoto;
+  }catch(e){console.warn("openUserProfile:",e);toast("プロフィールの取得に失敗しました");}
+  profileLoading=false;
+  render();
+}
+function renderUserProfile(){
+  var wrap=ce("div","");
+  var head=ce("div","profile-head");
+  var ava=ce("div","profile-ava");
+  if(profileUserPhoto){var pi=document.createElement("img");pi.src=profileUserPhoto;pi.style.cssText="width:100%;height:100%;border-radius:50%;object-fit:cover";ap(ava,pi);}else{ap(ava,tx((profileUserName||"?")[0].toUpperCase()));}
+  ap(head,ava);
+  ap(head,ap(ce("div","profile-name"),tx(profileUserName||"旅人")));
+  ap(head,ap(ce("div","profile-count"),tx(profileLoading?"読み込み中…":("公開した旅行 "+profileFeed.length+"件"))));
+  ap(wrap,head);
+  if(!profileLoading&&profileFeed.length===0){ap(wrap,ap(ce("div","",{style:{textAlign:"center",padding:"50px 24px",color:"var(--muted)"}}),tx("公開された旅行がありません")));return wrap;}
+  var list=ce("div","feed-list");
+  profileFeed.forEach(function(item){ap(list,renderFeedCard(item));});
+  ap(wrap,list);
+  return wrap;
 }
 
 function renderTemplates(){
@@ -979,8 +1298,10 @@ function renderDetail(){
   if(sel.startDate){ap(hm,ap(ce("span",""),tx(sel.startDate+(sel.endDate?" → "+sel.endDate:""))));ap(hm,ap(ce("span","pill"),tx(getDaysLeft(sel.startDate))));}
   if((sel.memberIds&&sel.memberIds.length||0)>1){var shs=ce("span","",{style:{display:"inline-flex",alignItems:"center",gap:"4px"}});ap(shs,svgIcon("users","currentColor",13),tx(sel.memberIds.length+"人で共有中"));ap(hm,shs);}
   ap(hero,hm);ap(wrap,hero);
+  if(sel._publicTabs&&sel._publicTabs.indexOf(activeTab)<0)activeTab=sel._publicTabs[0]||"itinerary";
   var tabBar=ce("div","tabs");
-  [{key:"itinerary",icon:"calendar",label:"行程"},{key:"packing",icon:"backpack",label:"持ち物"},{key:"todo",icon:"check",label:"ToDo"},{key:"places",icon:"pin",label:"スポット"},{key:"budget",icon:"money",label:"予算"},{key:"weather",icon:"sun",label:"天気"}].forEach(function(x){
+  var _tabList=sel._publicTabs?TAB_DEFS.filter(function(d){return sel._publicTabs.indexOf(d.key)>=0;}):TAB_DEFS;
+  _tabList.forEach(function(x){
     var tb=ce("div","tab"+(activeTab===x.key?" on":""),{onclick:function(){activeTab=x.key;checkInput="";destroyMap();showMap=false;render();}});
     ap(tb,ap(ce("div","tab-ic"),svgIcon(x.icon,"currentColor",20)),ap(ce("div",""),tx(x.label)));
     var cnt=(sel[x.key]&&sel[x.key].length)||0;if(cnt>0)ap(tb,ap(ce("div","tab-n"),tx(String(cnt))));
@@ -992,6 +1313,10 @@ function renderDetail(){
   else if(activeTab==="places")ap(wrap,renderPlaces(sel));
   else if(activeTab==="weather")ap(wrap,ap(ce("div","content"),renderWeather(sel)));
   else ap(wrap,renderBudget(sel));
+  if(feedViewId){
+    var _fi=(feedViewItem&&feedViewItem.id===feedViewId)?feedViewItem:(feedItems.find(function(x){return x.id===feedViewId;})||{id:feedViewId,likeCount:0,commentCount:0});
+    ap(wrap,renderFeedDetailExtras(_fi));
+  }
   return wrap;
 }
 
@@ -1187,8 +1512,20 @@ function renderModal_newTrip(){
   return m.ov;
 }
 
+function renderPublishTabPicker(){
+  var box=ce("div","",{style:{marginBottom:"12px"}});
+  TAB_DEFS.forEach(function(d){
+    var on=d.always||publishDraftTabs.indexOf(d.key)>=0;
+    var row=ce("label","",{style:{display:"flex",alignItems:"center",gap:"10px",padding:"7px 2px",cursor:d.always?"default":"pointer",opacity:d.always?"0.6":"1"}});
+    var cb=ce("input","",{type:"checkbox"});cb.checked=on;cb.disabled=!!d.always;
+    cb.onchange=function(){if(d.always)return;var i=publishDraftTabs.indexOf(d.key);if(cb.checked&&i<0)publishDraftTabs.push(d.key);else if(!cb.checked&&i>=0)publishDraftTabs.splice(i,1);};
+    ap(row,cb,svgIcon(d.icon,"var(--accent)",16),ap(ce("span","",{style:{fontSize:"14px",fontWeight:"600"}}),tx(d.label+(d.always?"（必須）":""))));
+    ap(box,row);
+  });
+  return box;
+}
 function renderModal_share(){
-  var sel=getSel();if(!sel)return ce("div","");var m=mkOverlay(function(){showShare=false;render();});
+  var sel=getSel();if(!sel)return ce("div","");var m=mkOverlay(function(){showShare=false;publishDraftTabs=null;render();});
   ap(m.modal,ap(ce("div","modal-title",{style:{display:"flex",alignItems:"center",gap:"8px"}}),svgIcon("link","currentColor",18),tx("旅行を共有")));
   ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("リンクで共有（ログイン不要・閲覧のみ）")));
   if(sel.isPublic){
@@ -1200,6 +1537,21 @@ function renderModal_share(){
     ap(m.modal,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.6"}}),tx("リンクを発行すると、ログインなしで誰でも閲覧できます。")));
     ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"16px",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"6px"},onclick:async function(){await enableShare(sel.id);toast("リンクを発行しました！");render();}}),svgIcon("unlock","currentColor",15),tx("閲覧リンクを発行する")));
   }
+  if(user&&sel.ownerId===user.uid){
+    ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",margin:"4px 0 8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("みんなのタイムラインに公開")));
+    if(sel.publishedToFeed){
+      ap(m.modal,ap(ce("div","",{style:{fontSize:"13px",color:"var(--green)",fontWeight:"700",marginBottom:"8px"}}),tx("✓ タイムラインに公開中")));
+      if(publishDraftTabs==null)publishDraftTabs=(sel.publicTabs||["itinerary"]).slice();
+      ap(m.modal,renderPublishTabPicker());
+      ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"8px"},onclick:async function(){var tabs=publishDraftTabs.slice();await upd({publicTabs:tabs});var t=Object.assign({},getSel(),{publicTabs:tabs});await syncFeed(t);publishDraftTabs=null;toast("公開内容を更新しました");render();}}),tx("公開内容を更新する")));
+      ap(m.modal,ap(ce("button","",{style:{width:"100%",padding:"10px",background:"none",border:"1px solid var(--border)",borderRadius:"10px",fontSize:"13px",color:"var(--muted)",cursor:"pointer",marginBottom:"16px"},onclick:async function(){await unpublishFeed(sel.id);await upd({publishedToFeed:false});publishDraftTabs=null;toast("タイムラインへの公開を停止しました");render();}}),tx("公開を停止する")));
+    }else{
+      ap(m.modal,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.6"}}),tx("公開すると、行程など選んだ内容がタイムラインに流れ、他のユーザーがいいね・コメントできます。")));
+      if(publishDraftTabs==null)publishDraftTabs=(sel.publicTabs||["itinerary"]).slice();
+      ap(m.modal,renderPublishTabPicker());
+      ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"16px"},onclick:async function(){if(!(await ensureNickname())){render();return;}var tabs=publishDraftTabs.slice();await upd({publishedToFeed:true,publicTabs:tabs});var t=Object.assign({},getSel(),{publishedToFeed:true,publicTabs:tabs});await syncFeed(t);publishDraftTabs=null;track('feed_publish',{});toast("タイムラインに公開しました！");render();}}),tx("タイムラインに公開する")));
+    }
+  }
   ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("メンバー招待（ログイン必須・編集可能）")));
   (sel.members||[]).forEach(function(mb){
     var row=ce("div","",{style:{display:"flex",alignItems:"center",gap:"10px",padding:"7px 0",borderBottom:"1px solid var(--border)"}});
@@ -1210,7 +1562,7 @@ function renderModal_share(){
   ap(m.modal,ap(ce("label","lbl",{style:{marginTop:"12px",display:"block"}}),tx("メールアドレスで招待")));
   var row=ce("div","row",{style:{marginBottom:"4px"}});var inp=ce("input","finp",{placeholder:"friend@gmail.com",value:shareEmail,oninput:function(e){shareEmail=e.target.value;},onkeydown:onEnterTwice(function(){shareTrip();})});ap(row,inp,ap(ce("button","plus-btn",{onclick:shareTrip}),tx("招待")));ap(m.modal,row);
   ap(m.modal,ap(ce("div","",{style:{fontSize:"11px",color:"var(--muted)"}}),tx("※ 同じメールアドレスでGoogleログインすると表示されます")));
-  ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{style:{flex:"1"},onclick:function(){showShare=false;render();}}),tx("閉じる"))));
+  ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{style:{flex:"1"},onclick:function(){showShare=false;publishDraftTabs=null;render();}}),tx("閉じる"))));
   return m.ov;
 }
 
@@ -1568,6 +1920,13 @@ function renderModal_mypage(){
   while(profile.records.length<5)profile.records.push({id:mkId(),label:"",attachments:[]});
   if(mig.changed)saveProfile();
   var delBtn=function(fn){return ap(ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"15px",cursor:"pointer",flex:"0 0 auto",padding:"0 2px"},onclick:fn}),tx("✕"));};
+  // ニックネーム（タイムライン表示名）
+  var nickSec=ce("div","",{style:{marginBottom:"22px"}});
+  ap(nickSec,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",letterSpacing:"1px",textTransform:"uppercase"}}),tx("ニックネーム（タイムライン表示名）")));
+  var nickIn=ce("input","mypage-val",{placeholder:"例: たびすき",value:profile.nickname||"",maxlength:"20",style:{width:"100%"}});
+  nickIn.onblur=function(e){profile.nickname=String(e.target.value||"").trim().slice(0,20);saveProfile();};
+  ap(nickSec,nickIn);
+  ap(m.modal,nickSec);
   // 旅行情報メモ（項目名は自由入力）
   var memoSec=ce("div","mypage-section");
   profile.memos.forEach(function(mo,idx){
@@ -1611,6 +1970,7 @@ try{if(firebase.storage)storage=firebase.storage();}catch(e){console.warn("stora
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){console.warn("persistence:",e);});
 auth.onAuthStateChanged(function(u){
   user=u;
+  myLikes=null;feedItems=[];feedLastDoc=null;feedDone=false;
   if(u&&isGuest){isGuest=false;trips=[];selId=null;view="list";}
   var sharedId=getSharedId();
   if(sharedId&&!isViewOnly){loadSharedTrip(sharedId);return;}
