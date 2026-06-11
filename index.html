@@ -1189,12 +1189,21 @@ function renderWelcome(){
   return d;
 }
 
+// 「自分の旅行 / タイムライン」セグメント。詳細画面からもトップへ戻れるよう共通化。
+function renderListSeg(){
+  var seg=ce("div","feed-seg");
+  var mk=function(mode,label){
+    var t=ce("div","feed-seg-tab"+(listMode===mode?" on":""),{onclick:function(){
+      if(view!=="list"){view="list";selId=null;destroyMap();showMap=false;activeTab="itinerary";}
+      switchListMode(mode);
+    }});ap(t,tx(label));return t;
+  };
+  ap(seg,mk("mine","自分の旅行"),mk("timeline","タイムライン"));
+  return seg;
+}
 function renderList(){
   var outer=ce("div","");
-  var seg=ce("div","feed-seg");
-  var t1=ce("div","feed-seg-tab"+(listMode==="mine"?" on":""),{onclick:function(){switchListMode("mine");}});ap(t1,tx("自分の旅行"));
-  var t2=ce("div","feed-seg-tab"+(listMode==="timeline"?" on":""),{onclick:function(){switchListMode("timeline");}});ap(t2,tx("タイムライン"));
-  ap(seg,t1,t2);ap(outer,seg);
+  ap(outer,renderListSeg());
 
   if(listMode==="timeline"){
     var trow=ce("div","region-filter-row");
@@ -1388,6 +1397,7 @@ function renderTemplates(){
 
 function renderDetail(){
   var sel=getSel();if(!sel)return ce("div","");var wrap=ce("div","");
+  if(!isViewOnly)ap(wrap,renderListSeg());
   var hero=ce("div","hero");
   var covW=ce("div","hero-cover-wrap");
   if(sel.coverUrl){
