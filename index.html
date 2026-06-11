@@ -678,6 +678,8 @@ function tx(t){return document.createTextNode(String(t));}
 function ap(el){var args=Array.prototype.slice.call(arguments,1);args.forEach(function(c){if(c==null||c===false)return;el.appendChild(typeof c==="string"?tx(c):c);});return el;}
 function beginnerMark(){var w=ce("span","",{style:{display:"inline-flex",width:"20px",height:"20px"}});w.innerHTML='<svg viewBox="0 0 100 100" width="20" height="20" aria-hidden="true"><path d="M50 27 L13 7 C9 6 6 8 6 13 L6 73 L50 96 L94 73 L94 13 C94 8 91 6 87 7 Z" fill="#fff" stroke="#403c3c" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 27 L87 7 C91 6 94 8 94 13 L94 73 L50 96 Z" fill="#403c3c"/></svg>';return w;}
 function linkIcon(color){var w=ce("span","",{style:{display:"inline-flex",width:"16px",height:"16px"}});w.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="'+(color||"#fff")+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';return w;}
+function cameraIcon(color,size){var s=size||16;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"#fff")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';return w;}
+function copyIcon(color,size){var s=size||14;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"currentColor")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';return w;}
 
 function render(){
   var app=document.getElementById("app");
@@ -865,7 +867,7 @@ function renderList(){
     else{covWrap.style.background=getTripColor(trip.id);}
     if(!isViewOnly&&!isGuest&&user&&trip.ownerId===user.uid){
       var covBtn=ce("button","trip-card-cover-btn",{onclick:function(e){e.stopPropagation();var fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.onchange=function(ev){var f=ev.target.files[0];if(f){selId=trip.id;uploadCoverPhoto(f);}};fi.click();}});
-      ap(covBtn,tx("📷"));ap(covWrap,covBtn);
+      covBtn.style.display="inline-flex";covBtn.style.alignItems="center";ap(covBtn,cameraIcon("#fff",15));ap(covWrap,covBtn);
     }
     ap(card,covWrap);
     // ボディ（3行レイアウト）
@@ -888,7 +890,7 @@ function renderList(){
     if(user&&trip.ownerId===user.uid){
       var dupRow=ce("div","",{style:{marginTop:"10px",paddingTop:"8px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}});
       var delBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"#ccc",cursor:"pointer",fontFamily:"inherit"},onclick:function(e){e.stopPropagation();deleteTrip(trip.id);}});ap(delBtn,tx("✕ 削除"));
-      var dupBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit"},onclick:function(e){e.stopPropagation();duplicateTrip(trip);}});ap(dupBtn,tx("📋 複製する"));
+      var dupBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:"5px"},onclick:function(e){e.stopPropagation();duplicateTrip(trip);}});ap(dupBtn,copyIcon("currentColor",13),tx("複製する"));
       ap(dupRow,delBtn,dupBtn);ap(body,dupRow);
     }
     ap(card,body);
@@ -920,7 +922,7 @@ function renderDetail(){
   }
   if(!isViewOnly&&!isGuest&&user&&sel.ownerId===user.uid){
     var cBtn=ce("button","hero-cover-btn",{onclick:function(){var fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.onchange=function(ev){var f=ev.target.files[0];if(f)uploadCoverPhoto(f);};fi.click();}});
-    ap(cBtn,tx("📷 カバーを変更"));ap(covW,cBtn);
+    cBtn.style.display="inline-flex";cBtn.style.alignItems="center";cBtn.style.gap="5px";ap(cBtn,cameraIcon("#fff",14),tx("カバーを変更"));ap(covW,cBtn);
   }
   ap(hero,covW);
   var hm=ce("div","hero-meta");
