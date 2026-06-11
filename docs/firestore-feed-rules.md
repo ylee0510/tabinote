@@ -89,3 +89,12 @@ service cloud.firestore {
 - [ ] 他人の `feed` ドキュメントの本文等を直接編集できない（オーナー以外は `likeCount`/`commentCount` 以外不可）
 - [ ] いいね・コメントが書け、他人のコメントは削除できない
 - [ ] 公開プロフィールのクエリがインデックスエラー（`FAILED_PRECONDITION`）にならない
+
+## 複合インデックス（タイムライン地域フィルタ）
+
+トップページのタイムラインを国/都道府県で絞り込むため、`feed` コレクションに以下の複合インデックスが必要:
+
+- コレクション: `feed`
+- フィールド: `regions`（Arrays / ARRAY_CONTAINS）, `publishedAt`（Descending）
+
+クエリは `feed.where("regions","array-contains",地域).orderBy("publishedAt","desc")`。`feed` ドキュメントには `syncFeed` で `regions: string[]` を保存している。Firestore コンソールでクエリ実行時に表示される自動作成リンクからでも作成可。未作成だとフィルタ時に `FAILED_PRECONDITION` になる。

@@ -119,6 +119,19 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .badge-sh{background:#fef3c7;color:#92400e;}
 .pill{background:var(--accent);color:#fff !important;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
 .chip{background:var(--stamp);border-radius:8px;padding:3px 9px;font-size:11px;color:var(--muted);font-weight:600;}
+.rp-selected{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.rp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:#fff;border-radius:16px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;}
+.rp-chip .rp-x{opacity:.8;font-weight:700;}
+.rp-acc{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+.rp-grp{border-top:1px solid var(--border);}
+.rp-grp:first-child{border-top:none;}
+.rp-grp-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;font-size:13px;font-weight:700;color:#1c1917;cursor:pointer;background:var(--paper);}
+.rp-grp-hd .rp-caret{color:var(--muted);font-size:12px;}
+.rp-grp-body{display:flex;flex-wrap:wrap;gap:6px;padding:10px 13px;}
+.rp-opt{background:var(--stamp);border:1.5px solid var(--border);border-radius:16px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;}
+.rp-opt.on{background:#dbeafe;border-color:#1d4ed8;color:#1d4ed8;}
+.region-tag{display:inline-flex;align-items:center;gap:3px;background:var(--stamp);border-radius:8px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--muted);}
+.region-filter{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:#1c1917;background:#fff;font-family:inherit;margin:0 0 12px;}
 .tabs{display:flex;background:var(--paper);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .tabs::-webkit-scrollbar{display:none;}
 .tab{flex:1;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 4px 7px;cursor:pointer;border-bottom:2.5px solid transparent;font-size:10px;font-weight:600;color:var(--muted);}
@@ -541,13 +554,14 @@ var TAB_DEFS=[
   {key:"budget",icon:"money",label:"予算"},
   {key:"weather",icon:"sun",label:"天気"}
 ];
-var tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas"};
+var tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas",regions:[]};
 var itinForm={date:"",time:"",text:"",type:""};
 var editingItinId=null;
 var checkInput="",placeInput="",placeMemo="",shareEmail="",pinName="";
 var placeSuggestions=[],placeSearchTm=null,geoPlaceCache={};
 var tplTab="domestic",tplInput={packing:"",todo:""};
-var showNewTrip=false,showShare=false,showPinModal=false,showMap=false,showNewBudget=false,showGuide=false,showMenu=false,showMyPage=false,guidePage="guide";
+var showNewTrip=false,showEditTrip=false,showShare=false,showPinModal=false,showMap=false,showNewBudget=false,showGuide=false,showMenu=false,showMyPage=false,guidePage="guide";
+var editDraft=null;
 var publishDraftTabs=null; // 公開設定中に選択中のタブ配列（モーダルを開くとsel.publicTabsで初期化）
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
 var isViewOnly=false,viewOnlyTrip=null;
@@ -560,6 +574,7 @@ var geocoding=false,saving=false,pendingPin=null;
 var tripsUnsub=null,tplUnsub=null,mapInst=null,mapMarkers=[];
 var auth=null,db=null,storage=null;
 var listMode="mine"; // "mine" | "timeline"
+var mineRegionFilter="",tlRegionFilter="";
 var feedItems=[],feedLastDoc=null,feedLoading=false,feedDone=false;
 var myLikes=null; // Set of liked feedId; null when logged out
 var feedComments=[],feedCommentsFor=null,commentInput="";
@@ -580,6 +595,35 @@ async function geocode(q){try{var r=await fetch("https://nominatim.openstreetmap
 async function geoSearch(q){q=(q||"").trim();if(q.length<2)return[];if(geoCache[q])return geoCache[q];try{var r=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(q)+"&count=6&language=ja");var d=await r.json();var out=(d.results||[]).map(function(x){return{name:x.name,admin1:x.admin1||"",country:x.country||"",country_code:x.country_code||"",lat:x.latitude,lng:x.longitude};});geoCache[q]=out;return out;}catch(e){return[];}}
 // ISO-2 国コード → 国旗絵文字
 function flagEmoji(cc){if(!cc||cc.length!==2)return"📍";try{return String.fromCodePoint.apply(null,cc.toUpperCase().split("").map(function(c){return 0x1F1E6+(c.charCodeAt(0)-65);}));}catch(e){return"📍";}}
+// ===== 地域マスタ =====
+var COUNTRIES_BY_CONTINENT=[
+  ["アジア",[["韓国","KR"],["台湾","TW"],["中国","CN"],["香港","HK"],["マカオ","MO"],["タイ","TH"],["ベトナム","VN"],["シンガポール","SG"],["マレーシア","MY"],["インドネシア","ID"],["フィリピン","PH"],["カンボジア","KH"],["ラオス","LA"],["ミャンマー","MM"],["インド","IN"],["スリランカ","LK"],["ネパール","NP"],["モンゴル","MN"],["ブータン","BT"],["バングラデシュ","BD"]]],
+  ["ヨーロッパ",[["フランス","FR"],["イタリア","IT"],["スペイン","ES"],["ドイツ","DE"],["イギリス","GB"],["スイス","CH"],["オーストリア","AT"],["オランダ","NL"],["ベルギー","BE"],["ポルトガル","PT"],["ギリシャ","GR"],["チェコ","CZ"],["ハンガリー","HU"],["ポーランド","PL"],["クロアチア","HR"],["アイルランド","IE"],["デンマーク","DK"],["スウェーデン","SE"],["ノルウェー","NO"],["フィンランド","FI"],["アイスランド","IS"],["ロシア","RU"],["トルコ","TR"]]],
+  ["北米・カリブ海地域",[["アメリカ","US"],["カナダ","CA"],["グアム","GU"],["キューバ","CU"],["ジャマイカ","JM"],["バハマ","BS"],["ドミニカ共和国","DO"],["プエルトリコ","PR"]]],
+  ["中南米",[["メキシコ","MX"],["ブラジル","BR"],["ペルー","PE"],["アルゼンチン","AR"],["チリ","CL"],["コロンビア","CO"],["ボリビア","BO"],["エクアドル","EC"],["グアテマラ","GT"],["コスタリカ","CR"]]],
+  ["オセアニア",[["オーストラリア","AU"],["ニュージーランド","NZ"],["フィジー","FJ"],["パラオ","PW"],["タヒチ","PF"],["ニューカレドニア","NC"]]],
+  ["中東",[["アラブ首長国連邦","AE"],["カタール","QA"],["イスラエル","IL"],["ヨルダン","JO"],["サウジアラビア","SA"],["オマーン","OM"],["バーレーン","BH"],["クウェート","KW"]]],
+  ["アフリカ",[["エジプト","EG"],["モロッコ","MA"],["南アフリカ","ZA"],["ケニア","KE"],["タンザニア","TZ"],["チュニジア","TN"],["エチオピア","ET"],["モーリシャス","MU"]]]
+];
+var PREFS_BY_REGION=[
+  ["北海道・東北",["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県"]],
+  ["関東",["茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県"]],
+  ["中部",["新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県"]],
+  ["近畿",["三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県"]],
+  ["中国",["鳥取県","島根県","岡山県","広島県","山口県"]],
+  ["四国",["徳島県","香川県","愛媛県","高知県"]],
+  ["九州・沖縄",["福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"]]
+];
+// 名前 → {group, cc, mode}
+var REGION_INDEX=(function(){
+  var idx={};
+  COUNTRIES_BY_CONTINENT.forEach(function(g){g[1].forEach(function(c){idx[c[0]]={group:g[0],cc:c[1],mode:"overseas"};});});
+  PREFS_BY_REGION.forEach(function(g){g[1].forEach(function(p){idx[p]={group:g[0],cc:null,mode:"domestic"};});});
+  return idx;
+})();
+function regionGroups(mode){return mode==="domestic"?PREFS_BY_REGION:COUNTRIES_BY_CONTINENT;}
+// 地域名 → 表示ラベル（国は国旗付き）。県は名前のみ。
+function regionLabel(name){var info=REGION_INDEX[name];if(info&&info.cc)return flagEmoji(info.cc)+" "+name;return name;}
 function initMap(){var el=document.getElementById("leaflet-map");if(!el||mapInst||!window.L)return;mapInst=L.map(el).setView([35.6762,139.6503],5);L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{detectRetina:true,subdomains:"abcd",attribution:"© OpenStreetMap contributors © CARTO"}).addTo(mapInst);mapInst.on("click",function(e){pendingPin=e.latlng;pinName="";showPinModal=true;render();});syncMarkers();}
 function destroyMap(){if(mapInst){mapInst.remove();mapInst=null;mapMarkers=[];}}
 // 各renderでDOMが作り直されるため、地図インスタンスが古いコンテナを指していたら作り直す
@@ -605,7 +649,7 @@ async function upd(patch){if(isGuest){toast("💡 保存するにはログイン
   var fresh=Object.assign({},sel,patch);
   if(fresh.publishedToFeed){try{await syncFeed(fresh);}catch(e){console.warn("feed resync:",e);}}
 }
-async function createTrip(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!tripForm.name.trim()||saving||!user)return;saving=true;render();try{var tpl=templates[tripForm.type]||{packing:[],todo:[]};var ref=await db.collection("trips").add({name:tripForm.name.trim(),destination:tripForm.destination.trim(),startDate:tripForm.startDate,endDate:tripForm.endDate,type:tripForm.type,ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],currency:"JPY",itinerary:[],packing:tpl.packing.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),todo:tpl.todo.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),places:[],budget:JSON.parse(JSON.stringify(DEFAULT_BUDGET[tripForm.type]||DEFAULT_BUDGET.overseas)),createdAt:firebase.firestore.FieldValue.serverTimestamp()});track('trip_create',{trip_type:tripForm.type});selId=ref.id;tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas"};showNewTrip=false;view="detail";activeTab="itinerary";toast("旅行を作成しました！");}catch(e){console.error(e);toast("作成に失敗: "+e.message);}saving=false;render();}
+async function createTrip(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!tripForm.name.trim()||saving||!user)return;saving=true;render();try{var tpl=templates[tripForm.type]||{packing:[],todo:[]};var ref=await db.collection("trips").add({name:tripForm.name.trim(),destination:tripForm.destination.trim(),startDate:tripForm.startDate,endDate:tripForm.endDate,type:tripForm.type,regions:tripForm.regions.slice(),ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],currency:"JPY",itinerary:[],packing:tpl.packing.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),todo:tpl.todo.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),places:[],budget:JSON.parse(JSON.stringify(DEFAULT_BUDGET[tripForm.type]||DEFAULT_BUDGET.overseas)),createdAt:firebase.firestore.FieldValue.serverTimestamp()});track('trip_create',{trip_type:tripForm.type});selId=ref.id;tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas",regions:[]};showNewTrip=false;view="detail";activeTab="itinerary";toast("旅行を作成しました！");}catch(e){console.error(e);toast("作成に失敗: "+e.message);}saving=false;render();}
 async function deleteTrip(id){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!confirm("この旅行を削除しますか？"))return;await db.collection("trips").doc(id).delete();if(selId===id){selId=null;view="list";}toast("削除しました");render();}
 async function shareTrip(){if(!shareEmail.trim())return;var sel=getSel();if(!sel)return;try{await db.collection("trips").doc(sel.id).update({memberIds:firebase.firestore.FieldValue.arrayUnion(shareEmail.trim()),members:firebase.firestore.FieldValue.arrayUnion({uid:shareEmail.trim(),name:shareEmail.trim(),email:shareEmail.trim()})});shareEmail="";toast("招待しました！");render();}catch(e){toast("共有に失敗: "+e.message);}}
 async function addItin(){
@@ -689,6 +733,7 @@ async function syncFeed(trip){
     name:trip.name||"",
     destination:trip.destination||"",
     type:trip.type||"overseas",
+    regions:trip.regions||[],
     coverUrl:trip.coverUrl||null,
     startDate:trip.startDate||"",
     endDate:trip.endDate||"",
@@ -785,7 +830,9 @@ async function loadFeed(reset){
   feedLoading=true;
   if(reset){feedItems=[];feedLastDoc=null;feedDone=false;}
   try{
-    var q=db.collection("feed").orderBy("publishedAt","desc").limit(30);
+    var q=db.collection("feed");
+    if(tlRegionFilter)q=q.where("regions","array-contains",tlRegionFilter);
+    q=q.orderBy("publishedAt","desc").limit(30);
     if(feedLastDoc)q=q.startAfter(feedLastDoc);
     var snap=await q.get();
     var added=snap.docs.map(function(d){var it=Object.assign({id:d.id},d.data());feedItems.push(it);return it;});
@@ -815,6 +862,25 @@ function switchListMode(mode){
     else if(user&&myLikes===null)loadLikesFor(feedItems);
   }
   render();
+}
+function setTlRegionFilter(v){tlRegionFilter=v;loadFeed(true);}
+function setMineRegionFilter(v){mineRegionFilter=v;render();}
+// グループ化した地域 select を作る。availableSet: 表示する名前のSet（null なら全部）
+function renderRegionSelect(value,onChange,availableSet){
+  var sel=ce("select","region-filter",{onchange:function(e){onChange(e.target.value);}});
+  var allOpt=ce("option","",{value:""});ap(allOpt,tx("🗺️ すべての地域"));ap(sel,allOpt);
+  function addGroups(groups,mode){
+    groups.forEach(function(g){
+      var names=g[1].map(function(it){return mode==="domestic"?it:it[0];}).filter(function(nm){return !availableSet||availableSet.has(nm);});
+      if(!names.length)return;
+      var og=ce("optgroup","",{label:g[0]});
+      names.forEach(function(nm){var o=ce("option","",{value:nm});if(nm===value)o.selected=true;ap(o,tx(regionLabel(nm)));ap(og,o);});
+      ap(sel,og);
+    });
+  }
+  addGroups(COUNTRIES_BY_CONTINENT,"overseas");
+  addGroups(PREFS_BY_REGION,"domestic");
+  return sel;
 }
 var MAX_FILE_SIZE=3*1024*1024;
 async function uploadAttachment(category,file){if(!file)return null;if(file.size>MAX_FILE_SIZE){toast("ファイルサイズは3MB以内にしてください");return null;}var ext=file.name.split(".").pop();var path="users/"+user.uid+"/"+category+"/"+Date.now()+"."+ext;var ref=storage.ref(path);await ref.put(file);var url=await ref.getDownloadURL();return{name:file.name,url:url,path:path,type:file.type,uploadedAt:new Date().toISOString()};}
@@ -981,6 +1047,7 @@ function render(){
     else if(view==="detail")ap(wrap,renderDetail());
   }
   if(showNewTrip)ap(wrap,renderModal_newTrip());
+  if(showEditTrip)ap(wrap,renderModal_editTrip());
   if(showShare)ap(wrap,renderModal_share());
   if(showPinModal)ap(wrap,renderModal_pin());
   if(showNewBudget)ap(wrap,renderModal_newBudget());
@@ -1117,6 +1184,13 @@ function renderList(){
   ap(seg,t1,t2);ap(outer,seg);
 
   if(listMode==="timeline"){
+    ap(outer,renderRegionSelect(tlRegionFilter,setTlRegionFilter,null));
+  }else{
+    var avail=new Set();trips.forEach(function(t){(t.regions||[]).forEach(function(r){avail.add(r);});});
+    if(avail.size)ap(outer,renderRegionSelect(mineRegionFilter,setMineRegionFilter,avail));
+  }
+
+  if(listMode==="timeline"){
     if(feedLoading&&feedItems.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted)"}}),tx("読み込み中…")));return outer;}
     if(feedItems.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"60px 24px",color:"var(--muted)"}}),tx("まだ公開された旅行がありません")));return outer;}
     var feedWrap=ce("div","feed-list");
@@ -1131,8 +1205,10 @@ function renderList(){
     ap(d,ap(ce("div","",{style:{fontSize:"52px",marginBottom:"14px",opacity:"0.5"}}),tx("🗺️")),ap(ce("div","",{style:{fontSize:"15px",fontWeight:"700",color:"var(--ink)",marginBottom:"6px"}}),tx("旅行がまだありません")),ap(ce("div","",{style:{fontSize:"13px",marginBottom:"18px"}}),tx("右上から追加してください")));
     ap(d,ap(ce("button","btn-ok",{style:{padding:"12px 24px",flex:"none",border:"none"},onclick:function(){showNewTrip=true;render();}}),tx("＋ 最初の旅行を作成")));ap(outer,d);return outer;
   }
+  var mineList=mineRegionFilter?trips.filter(function(t){return (t.regions||[]).indexOf(mineRegionFilter)>=0;}):trips;
+  if(mineList.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"40px 24px",color:"var(--muted)"}}),tx("この地域の旅行はありません")));return outer;}
   var d=ce("div","trip-list");
-  trips.forEach(function(trip){
+  mineList.forEach(function(trip){
     var card=ce("div","trip-card",{onclick:function(){selId=trip.id;activeTab="itinerary";view="detail";showMap=false;render();}});
     // カバーエリア（全カード共通）
     var covWrap=ce("div","trip-card-cover-wrap");
@@ -1151,9 +1227,10 @@ function renderList(){
     ap(row1,ap(ce("div","badge "+(trip.type==="overseas"?"badge-os":"badge-dm")),tx(trip.type==="overseas"?"海外":"国内")));
     if((trip.memberIds&&trip.memberIds.length||0)>1){var shb=ce("div","badge badge-sh",{style:{display:"inline-flex",alignItems:"center",gap:"3px"}});ap(shb,svgIcon("users","currentColor",11),tx("共有"));ap(row1,shb);}
     ap(body,row1);
-    // 行2: 目的地
-    var row2=ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"4px",minHeight:"18px",display:"flex",alignItems:"center",gap:"4px"}});
-    if(trip.destination)ap(row2,svgIcon("pin","currentColor",13),tx(trip.destination));
+    // 行2: 地域タグ + 目的地
+    var row2=ce("div","",{style:{display:"flex",flexWrap:"wrap",gap:"6px",alignItems:"center",marginBottom:"4px",minHeight:"18px"}});
+    (trip.regions||[]).forEach(function(rn){ap(row2,ap(ce("span","region-tag"),tx(regionLabel(rn))));});
+    if(trip.destination){var dt=ce("span","",{style:{fontSize:"13px",color:"var(--muted)",display:"inline-flex",alignItems:"center",gap:"4px"}});ap(dt,svgIcon("pin","currentColor",13),tx(trip.destination));ap(row2,dt);}
     ap(body,row2);
     // 行3: 日付 + あと○日
     var row3=ce("div","",{style:{display:"flex",alignItems:"center",gap:"6px",flexWrap:"wrap"}});
@@ -1188,6 +1265,7 @@ function renderFeedCard(item){
   var oname=ce("span","feed-card-oname",{onclick:function(e){e.stopPropagation();openUserProfile(item.ownerId,item.ownerName,item.ownerPhoto);}});ap(oname,tx((item.ownerName||"旅人")+" · "+relTime(item.publishedAt)));
   ap(owner,ava,oname);ap(body,owner);
   ap(body,ap(ce("div","feed-card-title"),tx(item.name||"無題の旅行")));
+  if(item.regions&&item.regions.length){var frg=ce("div","",{style:{display:"flex",flexWrap:"wrap",gap:"5px",marginTop:"4px"}});item.regions.forEach(function(rn){ap(frg,ap(ce("span","region-tag"),tx(regionLabel(rn))));});ap(body,frg);}
   var meta=ce("div","feed-card-meta");
   if(item.destination)ap(meta,ap(ce("span",""),tx("📍 "+item.destination)));
   if(item.startDate)ap(meta,ap(ce("span",""),tx(item.startDate+(item.endDate?" → "+item.endDate:""))));
@@ -1299,9 +1377,14 @@ function renderDetail(){
   }
   ap(hero,covW);
   var hm=ce("div","hero-meta");
+  if(sel.regions&&sel.regions.length){var rgw=ce("span","",{style:{display:"inline-flex",flexWrap:"wrap",gap:"5px"}});sel.regions.forEach(function(rn){ap(rgw,ap(ce("span","region-tag"),tx(regionLabel(rn))));});ap(hm,rgw);}
   if(sel.destination)ap(hm,ap(ce("span",""),tx(" "+sel.destination)));
   if(sel.startDate){ap(hm,ap(ce("span",""),tx(sel.startDate+(sel.endDate?" → "+sel.endDate:""))));ap(hm,ap(ce("span","pill"),tx(getDaysLeft(sel.startDate))));}
   if((sel.memberIds&&sel.memberIds.length||0)>1){var shs=ce("span","",{style:{display:"inline-flex",alignItems:"center",gap:"4px"}});ap(shs,svgIcon("users","currentColor",13),tx(sel.memberIds.length+"人で共有中"));ap(hm,shs);}
+  if(!isViewOnly&&!isGuest&&user&&sel.ownerId===user.uid){
+    var edBtn=ce("button","hero-cover-btn",{style:{right:"auto",left:"12px"},onclick:openEditTrip});
+    edBtn.style.display="inline-flex";edBtn.style.alignItems="center";edBtn.style.gap="5px";ap(edBtn,tx("✏️ 編集"));ap(covW,edBtn);
+  }
   ap(hero,hm);ap(wrap,hero);
   if(sel._publicTabs&&sel._publicTabs.indexOf(activeTab)<0)activeTab=sel._publicTabs[0]||"itinerary";
   var tabBar=ce("div","tabs");
@@ -1497,6 +1580,45 @@ function renderPlaces(sel){
   ap(wrap,d);return wrap;
 }
 
+var rpOpenGroups={}; // グループ名 → true（アコーディオン開閉）
+// mode: "overseas"|"domestic", selected: string[], onToggle: function(name)
+function renderRegionPicker(mode,selected,onToggle){
+  var wrap=ce("div","");
+  // 選択済みチップ
+  if(selected.length){
+    var sel=ce("div","rp-selected");
+    selected.forEach(function(nm){
+      var c=ce("button","rp-chip",{type:"button",onclick:function(){onToggle(nm);}});
+      ap(c,tx(regionLabel(nm)),ap(ce("span","rp-x"),tx("×")));ap(sel,c);
+    });
+    ap(wrap,sel);
+  }
+  var acc=ce("div","rp-acc");
+  regionGroups(mode).forEach(function(g){
+    var gname=g[0],items=g[1];
+    var open=!!rpOpenGroups[gname];
+    var grp=ce("div","rp-grp");
+    var hd=ce("div","rp-grp-hd",{onclick:function(){rpOpenGroups[gname]=!open;render();}});
+    var cnt=items.filter(function(it){var nm=mode==="domestic"?it:it[0];return selected.indexOf(nm)>=0;}).length;
+    ap(hd,tx(gname+(cnt?" ("+cnt+")":"")),ap(ce("span","rp-caret"),tx(open?"▲":"▼")));
+    ap(grp,hd);
+    if(open){
+      var body=ce("div","rp-grp-body");
+      items.forEach(function(it){
+        var nm=mode==="domestic"?it:it[0];
+        var on=selected.indexOf(nm)>=0;
+        var b=ce("button","rp-opt"+(on?" on":""),{type:"button",onclick:function(){onToggle(nm);}});
+        ap(b,tx(regionLabel(nm)));ap(body,b);
+      });
+      ap(grp,body);
+    }
+    ap(acc,grp);
+  });
+  ap(wrap,acc);
+  return wrap;
+}
+// selected 配列に対するトグル（破壊的）。呼び出し側で render() する。
+function toggleRegion(arr,nm){var i=arr.indexOf(nm);if(i>=0)arr.splice(i,1);else arr.push(nm);}
 function mkOverlay(closeF){var ov=ce("div","overlay",{onclick:function(e){if(e.target===ov)closeF();}});var modal=ce("div","modal",{onclick:function(e){e.stopPropagation();}});ap(modal,ce("div","modal-bar"));ap(ov,modal);return{ov:ov,modal:modal};}
 // 行程・持ち物・ToDo・スポット共通の削除ボタン（枠なし✕／色は天気タブと同じ濃さ）
 function mkDelBtn(fn){var b=ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"15px",cursor:"pointer",padding:"0 2px",flexShrink:"0",lineHeight:"1"},onclick:function(e){e.stopPropagation();fn();}});ap(b,tx("✕"));return b;}
@@ -1504,16 +1626,49 @@ function mkDelBtn(fn){var b=ce("button","",{style:{background:"none",border:"non
 function renderModal_newTrip(){
   var m=mkOverlay(function(){showNewTrip=false;render();});ap(m.modal,ap(ce("div","modal-title"),tx("✈️ 新しい旅行を登録")));
   var tg=ce("div","fg");ap(tg,ap(ce("label","lbl"),tx("旅行の種類")));
-  var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(tripForm.type===t?" on":""),{onclick:function(){tripForm.type=t;render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});
+  var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(tripForm.type===t?" on":""),{onclick:function(){if(tripForm.type!==t){tripForm.type=t;tripForm.regions=[];}render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});
   ap(tg,tr);ap(m.modal,tg);
   [["name","旅行名 *","例：夏の韓国旅行"],["destination","行き先","例：ソウル・釜山"]].forEach(function(f){
     var g=ce("div","fg");ap(g,ap(ce("label","lbl"),tx(f[1])));var inp=ce("input","finp",{type:"text",placeholder:f[2],value:tripForm[f[0]],oninput:function(e){tripForm[f[0]]=e.target.value;}});if(f[0]==="name")inp.setAttribute("autofocus","true");ap(g,inp);ap(m.modal,g);
   });
+  var rg=ce("div","fg");ap(rg,ap(ce("label","lbl"),tx(tripForm.type==="overseas"?"行き先の国（複数選択可）":"行き先の都道府県（複数選択可）")));
+  ap(rg,renderRegionPicker(tripForm.type,tripForm.regions,function(nm){toggleRegion(tripForm.regions,nm);render();}));
+  ap(m.modal,rg);
   var dr=ce("div","",{style:{display:"flex",gap:"10px",marginBottom:"11px"}});
   [["startDate","出発日"],["endDate","帰着日"]].forEach(function(f){var g=ce("div","",{style:{flex:"1"}});ap(g,ap(ce("label","lbl"),tx(f[1])),ce("input","finp",{type:"date",value:tripForm[f[0]],oninput:function(e){tripForm[f[0]]=e.target.value;}}));ap(dr,g);});
   ap(m.modal,dr,ap(ce("div","",{style:{fontSize:"12px",color:"var(--muted)",marginBottom:"4px"}}),tx("📋 "+(tripForm.type==="overseas"?"海外":"国内")+"テンプレートが自動追加されます")));
   var b=ce("button","btn-ok",{onclick:createTrip});if(saving)b.disabled=true;ap(b,tx(saving?"保存中…":"作成する ✈️"));
   ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{onclick:function(){showNewTrip=false;render();}}),tx("キャンセル")),b));
+  return m.ov;
+}
+function openEditTrip(){
+  var sel=getSel();if(!sel)return;
+  editDraft={name:sel.name||"",destination:sel.destination||"",startDate:sel.startDate||"",endDate:sel.endDate||"",type:sel.type||"overseas",regions:(sel.regions||[]).slice()};
+  showEditTrip=true;render();
+}
+async function saveEditTrip(){
+  if(!editDraft||!editDraft.name.trim())return;
+  await upd({name:editDraft.name.trim(),destination:editDraft.destination.trim(),startDate:editDraft.startDate,endDate:editDraft.endDate,type:editDraft.type,regions:editDraft.regions.slice()});
+  showEditTrip=false;editDraft=null;toast("保存しました");render();
+}
+function renderModal_editTrip(){
+  if(!editDraft)return ce("div","");
+  var m=mkOverlay(function(){showEditTrip=false;editDraft=null;render();});
+  ap(m.modal,ap(ce("div","modal-title"),tx("✏️ 旅行を編集")));
+  var tg=ce("div","fg");ap(tg,ap(ce("label","lbl"),tx("旅行の種類")));
+  var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(editDraft.type===t?" on":""),{onclick:function(){if(editDraft.type!==t){editDraft.type=t;editDraft.regions=[];}render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});
+  ap(tg,tr);ap(m.modal,tg);
+  [["name","旅行名 *","例：夏の韓国旅行"],["destination","行き先","例：ソウル・釜山"]].forEach(function(f){
+    var g=ce("div","fg");ap(g,ap(ce("label","lbl"),tx(f[1])));var inp=ce("input","finp",{type:"text",placeholder:f[2],value:editDraft[f[0]],oninput:function(e){editDraft[f[0]]=e.target.value;}});ap(g,inp);ap(m.modal,g);
+  });
+  var dr=ce("div","",{style:{display:"flex",gap:"10px",marginBottom:"11px"}});
+  [["startDate","出発日"],["endDate","帰着日"]].forEach(function(f){var g=ce("div","",{style:{flex:"1"}});ap(g,ap(ce("label","lbl"),tx(f[1])),ce("input","finp",{type:"date",value:editDraft[f[0]],oninput:function(e){editDraft[f[0]]=e.target.value;}}));ap(dr,g);});
+  ap(m.modal,dr);
+  var rg=ce("div","fg");ap(rg,ap(ce("label","lbl"),tx(editDraft.type==="overseas"?"行き先の国（複数選択可）":"行き先の都道府県（複数選択可）")));
+  ap(rg,renderRegionPicker(editDraft.type,editDraft.regions,function(nm){toggleRegion(editDraft.regions,nm);render();}));
+  ap(m.modal,rg);
+  var b=ce("button","btn-ok",{onclick:saveEditTrip});ap(b,tx("保存する"));
+  ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{onclick:function(){showEditTrip=false;editDraft=null;render();}}),tx("キャンセル")),b));
   return m.ov;
 }
 
