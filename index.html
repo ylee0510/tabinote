@@ -783,7 +783,7 @@ function renderHeader(){
     var bb=ce("button","back-btn",{onclick:function(){if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";render();}});
     ap(bb,tx("←"));ap(l,bb);
   }
-  var ti=ce("div","");var ht=ce("div","hdr-title");
+  var ti=ce("div","",{style:{minWidth:"0",flex:"1"}});var ht=ce("div","hdr-title");
   if(isWide){
     ht.style.cssText="font-size:22px;font-weight:900;letter-spacing:-1px;font-family:Georgia,serif;color:#1c1917;cursor:pointer;";
     ht.onclick=function(){if(isGuest){isGuest=false;trips=[];selId=null;view="list";render();return;}destroyMap();showMap=false;selId=null;view="list";render();};
@@ -802,7 +802,7 @@ function renderHeader(){
     ap(r,ap(ce("button","add-btn2",{onclick:function(){showNewTrip=true;render();}}),tx("＋ 追加")));
   }
   if(view==="detail"&&!isViewOnly){
-    if(sel&&user&&sel.ownerId===user.uid)ap(r,ap(ce("button","icon-btn2",{onclick:function(){showShare=true;render();}}),tx("🔗")));
+    if(sel&&user&&sel.ownerId===user.uid)ap(r,ap(ce("button","add-btn2",{onclick:function(){showShare=true;render();}}),tx("🔗 共有")));
   }
   ap(hdr,l,r);return hdr;
 }
