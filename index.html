@@ -552,6 +552,7 @@ var publishDraftTabs=null; // 公開設定中に選択中のタブ配列（モ�
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
 var isViewOnly=false,viewOnlyTrip=null;
 var feedViewId=null; // 現在閲覧中のfeedアイテムID（feed由来の閲覧専用詳細）
+var feedViewItem=null; // 現在閲覧中のfeedアイテム実体（feedItemsまたはprofileFeed由来）
 var isGuest=false;
 var newBudget={icon:"💰",name:""};
 var budgetExpandedEntry=null;
@@ -710,7 +711,7 @@ async function loadSharedTrip(tripId){try{var doc=await db.collection("trips").d
 function openFeedTrip(item){
   var vo=Object.assign({id:item.id,name:item.name,destination:item.destination,type:item.type,coverUrl:item.coverUrl,startDate:item.startDate,endDate:item.endDate},item.content||{});
   vo._publicTabs=(item.publicTabs||["itinerary"]).slice();
-  viewOnlyTrip=vo;isViewOnly=true;feedViewId=item.id;selId=item.id;
+  viewOnlyTrip=vo;isViewOnly=true;feedViewId=item.id;feedViewItem=item;selId=item.id;
   view="detail";activeTab=vo._publicTabs[0]||"itinerary";
   track('feed_open',{});
   loadComments(item.id);
@@ -757,6 +758,7 @@ async function postComment(feedId){
     await feedRef.update({commentCount:firebase.firestore.FieldValue.increment(1)});
     commentInput="";
     var _fi=feedItems.find(function(x){return x.id===feedId;});if(_fi)_fi.commentCount=(_fi.commentCount||0)+1;
+    if(feedViewItem&&feedViewItem.id===feedId&&feedViewItem!==_fi)feedViewItem.commentCount=(feedViewItem.commentCount||0)+1;
     await loadComments(feedId);
     track('feed_comment',{});
   }catch(e){console.warn("postComment:",e);toast("コメントに失敗しました");}
@@ -768,6 +770,7 @@ async function deleteComment(feedId,commentId){
     await feedRef.collection("comments").doc(commentId).delete();
     await feedRef.update({commentCount:firebase.firestore.FieldValue.increment(-1)});
     var _fi=feedItems.find(function(x){return x.id===feedId;});if(_fi)_fi.commentCount=Math.max(0,(_fi.commentCount||0)-1);
+    if(feedViewItem&&feedViewItem.id===feedId&&feedViewItem!==_fi)feedViewItem.commentCount=Math.max(0,(feedViewItem.commentCount||0)-1);
     await loadComments(feedId);
   }catch(e){console.warn("deleteComment:",e);toast("削除に失敗しました");}
 }
@@ -1040,7 +1043,7 @@ function renderHeader(){
   var sel=getSel();var hdr=ce("div","hdr");var l=ce("div","hdr-l");
   var isWide=window.innerWidth>=768;
   if(isViewOnly||view==="userProfile"||(!isWide&&(view==="detail"||view==="templates"))){
-    var bb=ce("button","back-btn",{onclick:function(){if(view==="userProfile"){view="list";listMode="timeline";profileUserId=null;render();return;}var wasFeed=!!feedViewId;if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;feedViewId=null;if(!wasFeed)window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";if(wasFeed)listMode="timeline";render();}});
+    var bb=ce("button","back-btn",{onclick:function(){if(view==="userProfile"){view="list";listMode="timeline";profileUserId=null;render();return;}var wasFeed=!!feedViewId;if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;selId=null;feedViewId=null;feedViewItem=null;if(!wasFeed)window.history.pushState({},"","https://gotavy.com/");}destroyMap();showMap=false;view="list";if(wasFeed)listMode="timeline";render();}});
     ap(bb,tx("←"));ap(l,bb);
   }
   var ti=ce("div","",{style:{minWidth:"0",flex:"1"}});var ht=ce("div","hdr-title");
@@ -1236,7 +1239,7 @@ function renderFeedDetailExtras(item){
 async function openUserProfile(uid,name,photo){
   if(!uid)return;
   profileUserId=uid;profileUserName=name||"";profileUserPhoto=photo||null;profileFeed=[];profileLoading=true;
-  if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;feedViewId=null;}
+  if(isViewOnly){isViewOnly=false;viewOnlyTrip=null;feedViewId=null;feedViewItem=null;}
   view="userProfile";
   render();
   try{
@@ -1311,7 +1314,7 @@ function renderDetail(){
   else if(activeTab==="weather")ap(wrap,ap(ce("div","content"),renderWeather(sel)));
   else ap(wrap,renderBudget(sel));
   if(feedViewId){
-    var _fi=feedItems.find(function(x){return x.id===feedViewId;})||{id:feedViewId,likeCount:0,commentCount:0};
+    var _fi=(feedViewItem&&feedViewItem.id===feedViewId)?feedViewItem:(feedItems.find(function(x){return x.id===feedViewId;})||{id:feedViewId,likeCount:0,commentCount:0});
     ap(wrap,renderFeedDetailExtras(_fi));
   }
   return wrap;
@@ -1967,6 +1970,7 @@ try{if(firebase.storage)storage=firebase.storage();}catch(e){console.warn("stora
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(e){console.warn("persistence:",e);});
 auth.onAuthStateChanged(function(u){
   user=u;
+  myLikes=null;feedItems=[];feedLastDoc=null;feedDone=false;
   if(u&&isGuest){isGuest=false;trips=[];selId=null;view="list";}
   var sharedId=getSharedId();
   if(sharedId&&!isViewOnly){loadSharedTrip(sharedId);return;}
