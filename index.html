@@ -93,6 +93,8 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .feed-card-acts{display:flex;gap:18px;padding:9px 14px 12px;border-top:1px solid var(--border);margin-top:8px;}
 .feed-card-act{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);font-weight:700;cursor:pointer;}
 .feed-card-act.liked{color:#e0526a;}
+.feed-detail-extras{padding:14px 16px 40px;}
+.feed-detail-likebar{display:flex;gap:18px;padding:12px 0;border-bottom:1px solid var(--border);}
 .feed-more-btn{display:block;width:100%;margin:14px 0 0;padding:12px;background:none;border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;}
 .trip-card-body{padding:12px 14px 12px;}
 .trip-nm{font-size:18px;font-weight:800;color:#1c1917;padding-right:28px;}
@@ -696,6 +698,27 @@ function openFeedTrip(item){
   track('feed_open',{});
   render();
 }
+async function toggleLike(item){
+  if(!user){toast("ログインするといいねできます");return;}
+  var liked=!!(myLikes&&myLikes.has(item.id));
+  var feedRef=db.collection("feed").doc(item.id);
+  var likeRef=feedRef.collection("likes").doc(user.uid);
+  myLikes=myLikes||new Set();
+  if(liked){myLikes.delete(item.id);item.likeCount=Math.max(0,(item.likeCount||0)-1);}
+  else{myLikes.add(item.id);item.likeCount=(item.likeCount||0)+1;}
+  render();
+  try{
+    await db.runTransaction(async function(tx){
+      var f=await tx.get(feedRef);if(!f.exists)return;
+      var c=f.data().likeCount||0;
+      if(liked){tx.delete(likeRef);tx.update(feedRef,{likeCount:Math.max(0,c-1)});}
+      else{tx.set(likeRef,{uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});tx.update(feedRef,{likeCount:c+1});}
+    });
+  }catch(e){console.warn("toggleLike:",e);toast("いいねに失敗しました");
+    if(liked){myLikes.add(item.id);item.likeCount=(item.likeCount||0)+1;}else{myLikes.delete(item.id);item.likeCount=Math.max(0,(item.likeCount||0)-1);}
+    render();
+  }
+}
 async function duplicateTrip(trip){try{await db.collection("trips").add({name:trip.name+" (コピー)",destination:trip.destination||"",startDate:"",endDate:"",type:trip.type||"overseas",ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],isPublic:false,currency:trip.currency||"JPY",itinerary:trip.itinerary||[],packing:(trip.packing||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),todo:(trip.todo||[]).map(function(i){return Object.assign({},i,{id:mkId(),checked:false});}),places:(trip.places||[]).map(function(i){return Object.assign({},i,{id:mkId()});}),budget:JSON.parse(JSON.stringify(trip.budget||[])),createdAt:firebase.firestore.FieldValue.serverTimestamp()});toast("旅行を複製しました！");}catch(e){console.error(e);toast("複製に失敗: "+e.message);}}
 function getWeatherIcon(code){if(code<=1)return"☀️";if(code<=3)return"⛅";if(code<=48)return"🌫";if(code<=67)return"🌧";if(code<=77)return"❄️";if(code<=82)return"🌧";if(code<=99)return"⛈";return"🌡";}
 async function fetchWeather(lat,lng,startDate,endDate){var cacheKey=lat+","+lng+","+startDate+","+endDate;if(weatherCache[cacheKey])return weatherCache[cacheKey];try{var start=startDate||new Date().toISOString().slice(0,10);var end=endDate||start;var url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lng+"&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&start_date="+start+"&end_date="+end;var r=await fetch(url);var d=await r.json();if(d.daily){weatherCache[cacheKey]=d.daily;return d.daily;}}catch(e){}return null;}
@@ -1122,6 +1145,16 @@ function renderFeedCard(item){
   return card;
 }
 
+function renderFeedDetailExtras(item){
+  var box=ce("div","feed-detail-extras");
+  var liked=!!(myLikes&&myLikes.has(item.id));
+  var bar=ce("div","feed-detail-likebar");
+  var likeBtn=ce("div","feed-card-act"+(liked?" liked":""),{onclick:function(){toggleLike(item);}});
+  ap(likeBtn,heartIcon(liked,20),ap(ce("span",""),tx(String(item.likeCount||0)+" いいね")));
+  ap(bar,likeBtn);ap(box,bar);
+  return box;
+}
+
 function renderTemplates(){
   var d=ce("div","content");ap(d,ap(ce("p","",{style:{fontSize:"13px",color:"var(--muted)",lineHeight:"1.6",marginBottom:"12px"}}),tx("新しい旅行作成時に自動追加される持ち物リストのテンプレートです。")));
   var tr=ce("div","type-row");["domestic","overseas"].forEach(function(t){ap(tr,ap(ce("button","type-btn"+(tplTab===t?" on":""),{onclick:function(){tplTab=t;render();}}),tx(t==="domestic"?"🏠 国内":"✈️ 海外")));});ap(d,tr);
@@ -1168,6 +1201,10 @@ function renderDetail(){
   else if(activeTab==="places")ap(wrap,renderPlaces(sel));
   else if(activeTab==="weather")ap(wrap,ap(ce("div","content"),renderWeather(sel)));
   else ap(wrap,renderBudget(sel));
+  if(feedViewId){
+    var _fi=feedItems.find(function(x){return x.id===feedViewId;})||{id:feedViewId,likeCount:0,commentCount:0};
+    ap(wrap,renderFeedDetailExtras(_fi));
+  }
   return wrap;
 }
 
