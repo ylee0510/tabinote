@@ -116,6 +116,9 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .itin-tx{flex:1;font-size:14px;color:#1c1917;line-height:1.5;}
 .itin-type-badge{display:inline-block;font-size:10px;font-weight:700;color:#fff;border-radius:4px;padding:1px 6px;margin-right:5px;vertical-align:middle;}
 .place-num{width:25px;height:25px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.place-move{background:#fff;border:1px solid var(--border);border-radius:6px;width:26px;height:20px;font-size:9px;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;font-family:inherit;}
+.place-move:disabled{opacity:0.3;cursor:default;}
+.place-move:not(:disabled):active{background:#f4f4f5;}
 .type-row{display:flex;gap:8px;margin-bottom:12px;}
 .type-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--paper);color:var(--muted);font-family:inherit;}
 .type-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
@@ -520,7 +523,11 @@ function initMap(){var el=document.getElementById("leaflet-map");if(!el||mapInst
 function destroyMap(){if(mapInst){mapInst.remove();mapInst=null;mapMarkers=[];}}
 // 各renderでDOMが作り直されるため、地図インスタンスが古いコンテナを指していたら作り直す
 function ensureMap(){var el=document.getElementById("leaflet-map");if(!el)return;if(mapInst&&!document.body.contains(mapInst.getContainer()))destroyMap();if(!mapInst)initMap();else{syncMarkers();mapInst.invalidateSize();}}
-function syncMarkers(){if(!mapInst||!window.L)return;var sel=getSel();var spots=sel?sel.places||[]:[];mapMarkers.forEach(function(m){m.remove();});mapMarkers=[];spots.forEach(function(s,i){if(!s.lat||!s.lng)return;var ic=L.divIcon({className:"",html:'<div style="background:#2d3e5a;color:#fff;border-radius:50% 50% 50% 0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg)"><span style="transform:rotate(45deg)">'+(i+1)+'</span></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-28]});var m=L.marker([s.lat,s.lng],{icon:ic}).addTo(mapInst);m.bindPopup("<b>"+(i+1)+". "+s.name+"</b>"+(s.memo?"<br><small>"+s.memo+"</small>":""));mapMarkers.push(m);});if(spots.some(function(s){return s.lat;})){var v=spots.filter(function(s){return s.lat;});mapInst.fitBounds(L.latLngBounds(v.map(function(s){return[s.lat,s.lng];})),{padding:[40,40],maxZoom:14});}}
+function bearing(lat1,lng1,lat2,lng2){var r=Math.PI/180;var dL=(lng2-lng1)*r;var y=Math.sin(dL)*Math.cos(lat2*r);var x=Math.cos(lat1*r)*Math.sin(lat2*r)-Math.sin(lat1*r)*Math.cos(lat2*r)*Math.cos(dL);return Math.atan2(y,x)*180/Math.PI;}
+function syncMarkers(){if(!mapInst||!window.L)return;var sel=getSel();var spots=sel?sel.places||[]:[];mapMarkers.forEach(function(m){m.remove();});mapMarkers=[];
+  var _vp=spots.filter(function(s){return s.lat&&s.lng;});
+  if(_vp.length>=2){var _ll=_vp.map(function(s){return[s.lat,s.lng];});var _pl=L.polyline(_ll,{color:"#2d3e5a",weight:3,opacity:0.7,dashArray:"2,8",lineCap:"round"}).addTo(mapInst);mapMarkers.push(_pl);for(var _k=0;_k<_vp.length-1;_k++){var _a=_vp[_k],_b=_vp[_k+1];var _ang=bearing(_a.lat,_a.lng,_b.lat,_b.lng);var _ar=L.divIcon({className:"",html:'<div style="transform:rotate('+_ang+'deg)"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2 L20 21 L12 16.5 L4 21 Z" fill="#2d3e5a" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg></div>',iconSize:[18,18],iconAnchor:[9,9]});var _am=L.marker([(_a.lat+_b.lat)/2,(_a.lng+_b.lng)/2],{icon:_ar,interactive:false,keyboard:false}).addTo(mapInst);mapMarkers.push(_am);}}
+  spots.forEach(function(s,i){if(!s.lat||!s.lng)return;var ic=L.divIcon({className:"",html:'<div style="background:#2d3e5a;color:#fff;border-radius:50% 50% 50% 0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg)"><span style="transform:rotate(45deg)">'+(i+1)+'</span></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-28]});var m=L.marker([s.lat,s.lng],{icon:ic}).addTo(mapInst);m.bindPopup("<b>"+(i+1)+". "+s.name+"</b>"+(s.memo?"<br><small>"+s.memo+"</small>":""));mapMarkers.push(m);});if(spots.some(function(s){return s.lat;})){var v=spots.filter(function(s){return s.lat;});mapInst.fitBounds(L.latLngBounds(v.map(function(s){return[s.lat,s.lng];})),{padding:[40,40],maxZoom:14});}}
 
 async function loginGoogle(){
   var provider=new firebase.auth.GoogleAuthProvider();
@@ -570,6 +577,7 @@ async function addPlace(){if(isGuest){toast("💡 保存するにはログイン
 async function placeSearch(q){q=(q||"").trim();if(q.length<2)return[];if(geoPlaceCache[q])return geoPlaceCache[q];try{var r=await fetch("https://photon.komoot.io/api/?q="+encodeURIComponent(q)+"&limit=6&lang=default");var d=await r.json();var seen={};var out=[];(d.features||[]).forEach(function(f){var p=f.properties||{},c=(f.geometry||{}).coordinates;if(!c)return;var nm=p.name||p.street||"";var parts=[p.housenumber&&p.street?p.street+" "+p.housenumber:p.street,p.city||p.county,p.state,p.country].filter(Boolean).filter(function(x){return x!==nm;});var addr=parts.join(", ");if(!nm){nm=addr;}var key=nm+"|"+c[1].toFixed(4)+","+c[0].toFixed(4);if(seen[key])return;seen[key]=1;out.push({name:nm,addr:addr,lat:c[1],lng:c[0]});});geoPlaceCache[q]=out;return out;}catch(e){return[];}}
 async function addPlaceCand(cand){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!cand)return;var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).concat([{id:mkId(),name:cand.name,memo:placeMemo.trim(),lat:cand.lat,lng:cand.lng}])});placeInput="";placeMemo="";placeSuggestions=[];if(placeSearchTm){clearTimeout(placeSearchTm);placeSearchTm=null;}render();}
 async function delPlace(id){var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).filter(function(p){return p.id!==id;})});}
+async function movePlace(id,dir){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var sel=getSel();if(!sel)return;var arr=(sel.places||[]).slice();var i=arr.findIndex(function(p){return p.id===id;});if(i<0)return;var j=i+dir;if(j<0||j>=arr.length)return;var t=arr[i];arr[i]=arr[j];arr[j]=t;await upd({places:arr});}
 async function confirmPin(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!pinName.trim()||!pendingPin)return;var sel=getSel();if(!sel)return;await upd({places:(sel.places||[]).concat([{id:mkId(),name:pinName.trim(),memo:"",lat:pendingPin.lat,lng:pendingPin.lng}])});showPinModal=false;pendingPin=null;pinName="";render();}
 async function saveTpl(next){if(isGuest){toast("💡 保存するにはログインが必要です");return;}templates=next;try{await db.collection("users").doc(user.uid).collection("settings").doc("templates").set(next);}catch(e){}}
 async function addTplItem(tab){if(!tplInput[tab].trim())return;var arr=(templates[tplTab]&&templates[tplTab][tab]?templates[tplTab][tab]:[]).concat([tplInput[tab].trim()]);var next=Object.assign({},templates);next[tplTab]=Object.assign({},next[tplTab]);next[tplTab][tab]=arr;await saveTpl(next);tplInput=Object.assign({},tplInput);tplInput[tab]="";render();}
@@ -1079,7 +1087,11 @@ function renderPlaces(sel){
     var info=ce("div","",{style:{flex:"1"}});ap(info,ap(ce("div","item-txt"),tx(p.name)));
     if(p.memo)ap(info,ap(ce("div","",{style:{fontSize:"12px",color:"var(--muted)",marginTop:"3px"}}),tx(p.memo)));
     ap(info,ap(ce("div","",{style:{fontSize:"11px",color:p.lat?"var(--green)":"var(--muted)",marginTop:"3px"}}),tx(p.lat?"📍 地図あり":"座標未取得")));
-    ap(card,num,info,mkDelBtn(function(){delPlace(p.id);}));ap(d,card);
+    var ctrl=ce("div","",{style:{display:"flex",flexDirection:"column",gap:"3px",flexShrink:"0"}});
+    var upB=ce("button","place-move",{disabled:i===0,title:"上へ",onclick:function(e){e.stopPropagation();movePlace(p.id,-1);}});ap(upB,tx("▲"));
+    var dnB=ce("button","place-move",{disabled:i===places.length-1,title:"下へ",onclick:function(e){e.stopPropagation();movePlace(p.id,1);}});ap(dnB,tx("▼"));
+    ap(ctrl,upB,dnB);
+    ap(card,num,info,ctrl,mkDelBtn(function(){delPlace(p.id);}));ap(d,card);
   });
   ap(wrap,d);return wrap;
 }
