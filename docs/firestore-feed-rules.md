@@ -4,42 +4,59 @@
 
 ## セキュリティルール
 
-Firebase コンソール → Firestore Database → ルール に、既存の `trips` / `users` ルールを残したまま、以下の `feed` ブロックを追加して「公開」する。
+Firebase コンソール → Firestore Database → ルール に、以下の全文を設定して「公開」する（`feed` 以外の `trips` / `users` は既存ルールそのまま。`feed` ブロックを追加したもの）。**2026-06-11 に公開済み。**
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /trips/{tripId} {
+      allow read: if resource.data.isPublic == true ||
+                  (request.auth != null && request.auth.uid in resource.data.memberIds);
+      allow create: if request.auth != null &&
+                  request.auth.uid in request.resource.data.memberIds &&
+                  request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+                  request.auth.uid in resource.data.memberIds;
+    }
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
 
-    // ... 既存の trips / users ルールはそのまま ...
-
+    // ===== タイムライン（公開フィード）=====
     match /feed/{tripId} {
+      // 閲覧は誰でも可（未ログイン含む）
       allow read: if true;
-      allow create, delete: if request.auth != null
-        && request.auth.uid == request.resource.data.ownerId;
-      // 本人=全更新可。他人=likeCount/commentCountの変更のみ許可
+      // 公開・公開停止はオーナー本人のみ
+      allow create, delete: if request.auth != null &&
+                  request.auth.uid == request.resource.data.ownerId;
+      // 本人=全項目更新可。他人=いいね/コメント数の増減のみ許可
       allow update: if request.auth != null && (
-        request.auth.uid == resource.data.ownerId ||
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['likeCount','commentCount'])
-      );
+                  request.auth.uid == resource.data.ownerId ||
+                  request.resource.data.diff(resource.data).affectedKeys()
+                    .hasOnly(['likeCount', 'commentCount'])
+                  );
 
+      // いいね（ドキュメントID = ユーザーUID で重複防止）
       match /likes/{uid} {
         allow read: if true;
-        allow create: if request.auth != null && request.auth.uid == uid
-          && uid == request.resource.data.uid;
-        allow delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null &&
+                  request.auth.uid == uid &&
+                  uid == request.resource.data.uid;
+        allow delete: if request.auth != null &&
+                  request.auth.uid == uid;
       }
 
+      // コメント
       match /comments/{cid} {
         allow read: if true;
-        allow create: if request.auth != null
-          && request.auth.uid == request.resource.data.uid
-          && request.resource.data.text is string
-          && request.resource.data.text.size() > 0
-          && request.resource.data.text.size() <= 500;
-        allow delete: if request.auth != null
-          && request.auth.uid == resource.data.uid;
+        allow create: if request.auth != null &&
+                  request.auth.uid == request.resource.data.uid &&
+                  request.resource.data.text is string &&
+                  request.resource.data.text.size() > 0 &&
+                  request.resource.data.text.size() <= 500;
+        allow delete: if request.auth != null &&
+                  request.auth.uid == resource.data.uid;
       }
     }
   }
