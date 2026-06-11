@@ -733,7 +733,10 @@ function render(){
     ap(layout,main);
     ap(wrap,layout);
   }else{
-    if(view==="list")ap(wrap,renderList());
+    if(view==="list"){ap(wrap,renderList());
+      var _tf=ce("div","",{style:{textAlign:"center",padding:"34px 0 22px"}});
+      var _tb=ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",opacity:"0.55",fontSize:"11px",cursor:"pointer",fontFamily:"inherit",textDecoration:"underline"},onclick:function(){guidePage="terms";showGuide=true;render();}});ap(_tb,tx("利用規約"));ap(_tf,_tb);ap(wrap,_tf);
+    }
     else if(view==="templates")ap(wrap,renderTemplates());
     else if(view==="detail")ap(wrap,renderDetail());
   }
@@ -854,6 +857,7 @@ function renderSidebar(){
   ap(d,tl);
   var ft=ce("div","sidebar-footer");
   var nb=ce("button","sidebar-new-btn",{onclick:function(){showNewTrip=true;render();}});ap(nb,tx("＋ 新しい旅行"));ap(ft,nb);
+  var tb=ce("button","",{style:{background:"none",border:"none",color:"rgba(255,255,255,0.4)",fontSize:"11px",cursor:"pointer",fontFamily:"inherit",textDecoration:"underline",padding:"10px 2px 0"},onclick:function(){guidePage="terms";showGuide=true;render();}});ap(tb,tx("利用規約"));ap(ft,tb);
   ap(d,ft);
   return d;
 }
