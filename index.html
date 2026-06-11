@@ -680,6 +680,19 @@ function beginnerMark(){var w=ce("span","",{style:{display:"inline-flex",width:"
 function linkIcon(color){var w=ce("span","",{style:{display:"inline-flex",width:"16px",height:"16px"}});w.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="'+(color||"#fff")+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';return w;}
 function cameraIcon(color,size){var s=size||16;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"#fff")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';return w;}
 function copyIcon(color,size){var s=size||14;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"currentColor")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';return w;}
+var ICONS={
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  backpack:'<path d="M6 9a6 6 0 0 1 12 0v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 9a3 3 0 0 1 6 0"/><line x1="6" y1="14" x2="18" y2="14"/>',
+  check:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  pin:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  money:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  sun:'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  unlock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>'
+};
+function svgIcon(name,color,size){var s=size||16;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"currentColor")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||"")+'</svg>';return w;}
 
 function render(){
   var app=document.getElementById("app");
@@ -931,9 +944,9 @@ function renderDetail(){
   if((sel.memberIds&&sel.memberIds.length||0)>1)ap(hm,ap(ce("span",""),tx("👥 "+(sel.memberIds.length)+"人で共有中")));
   ap(hero,hm);ap(wrap,hero);
   var tabBar=ce("div","tabs");
-  [{key:"itinerary",icon:"🗓",label:"行程"},{key:"packing",icon:"🎒",label:"持ち物"},{key:"todo",icon:"✅",label:"ToDo"},{key:"places",icon:"📍",label:"スポット"},{key:"budget",icon:"💰",label:"予算"},{key:"weather",icon:"🌤",label:"天気"}].forEach(function(x){
+  [{key:"itinerary",icon:"calendar",label:"行程"},{key:"packing",icon:"backpack",label:"持ち物"},{key:"todo",icon:"check",label:"ToDo"},{key:"places",icon:"pin",label:"スポット"},{key:"budget",icon:"money",label:"予算"},{key:"weather",icon:"sun",label:"天気"}].forEach(function(x){
     var tb=ce("div","tab"+(activeTab===x.key?" on":""),{onclick:function(){activeTab=x.key;checkInput="";destroyMap();showMap=false;render();}});
-    ap(tb,ap(ce("div","tab-ic"),tx(x.icon)),ap(ce("div",""),tx(x.label)));
+    ap(tb,ap(ce("div","tab-ic"),svgIcon(x.icon,"currentColor",20)),ap(ce("div",""),tx(x.label)));
     var cnt=(sel[x.key]&&sel[x.key].length)||0;if(cnt>0)ap(tb,ap(ce("div","tab-n"),tx(String(cnt))));
     ap(tabBar,tb);
   });
@@ -1120,16 +1133,16 @@ function renderModal_newTrip(){
 
 function renderModal_share(){
   var sel=getSel();if(!sel)return ce("div","");var m=mkOverlay(function(){showShare=false;render();});
-  ap(m.modal,ap(ce("div","modal-title"),tx("🔗 旅行を共有")));
+  ap(m.modal,ap(ce("div","modal-title",{style:{display:"flex",alignItems:"center",gap:"8px"}}),svgIcon("link","currentColor",18),tx("旅行を共有")));
   ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("リンクで共有（ログイン不要・閲覧のみ）")));
   if(sel.isPublic){
     var url=getShareUrl(sel.id);
     ap(m.modal,ap(ce("div","",{style:{background:"var(--stamp)",borderRadius:"10px",padding:"10px 12px",marginBottom:"8px",wordBreak:"break-all",fontSize:"12px",color:"var(--ink)"}}),tx(url)));
-    ap(m.modal,ap(ce("button","",{style:{width:"100%",padding:"11px",background:"var(--ink)",color:"#fff",border:"none",borderRadius:"10px",fontSize:"13px",fontWeight:"700",cursor:"pointer",marginBottom:"8px"},onclick:function(){if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){toast("コピーしました！");});}else{var ta=document.createElement("textarea");ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("コピーしました！");}}}),tx("📋 リンクをコピー")));
-    ap(m.modal,ap(ce("button","",{style:{width:"100%",padding:"10px",background:"none",border:"1px solid var(--border)",borderRadius:"10px",fontSize:"13px",color:"var(--muted)",cursor:"pointer",marginBottom:"16px"},onclick:async function(){await disableShare(sel.id);toast("リンク共有を無効にしました");render();}}),tx("🔒 リンク共有を無効にする")));
+    ap(m.modal,ap(ce("button","",{style:{width:"100%",padding:"11px",background:"var(--ink)",color:"#fff",border:"none",borderRadius:"10px",fontSize:"13px",fontWeight:"700",cursor:"pointer",marginBottom:"8px",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"6px"},onclick:function(){if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){toast("コピーしました！");});}else{var ta=document.createElement("textarea");ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("コピーしました！");}}}),svgIcon("copy","currentColor",15),tx("リンクをコピー")));
+    ap(m.modal,ap(ce("button","",{style:{width:"100%",padding:"10px",background:"none",border:"1px solid var(--border)",borderRadius:"10px",fontSize:"13px",color:"var(--muted)",cursor:"pointer",marginBottom:"16px",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"6px"},onclick:async function(){await disableShare(sel.id);toast("リンク共有を無効にしました");render();}}),svgIcon("lock","currentColor",14),tx("リンク共有を無効にする")));
   }else{
     ap(m.modal,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.6"}}),tx("リンクを発行すると、ログインなしで誰でも閲覧できます。")));
-    ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"16px"},onclick:async function(){await enableShare(sel.id);toast("リンクを発行しました！");render();}}),tx("🔓 閲覧リンクを発行する")));
+    ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"16px",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"6px"},onclick:async function(){await enableShare(sel.id);toast("リンクを発行しました！");render();}}),svgIcon("unlock","currentColor",15),tx("閲覧リンクを発行する")));
   }
   ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("メンバー招待（ログイン必須・編集可能）")));
   (sel.members||[]).forEach(function(mb){
