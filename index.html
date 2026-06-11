@@ -788,27 +788,31 @@ async function loadFeed(reset){
     var q=db.collection("feed").orderBy("publishedAt","desc").limit(30);
     if(feedLastDoc)q=q.startAfter(feedLastDoc);
     var snap=await q.get();
-    snap.docs.forEach(function(d){feedItems.push(Object.assign({id:d.id},d.data()));});
+    var added=snap.docs.map(function(d){var it=Object.assign({id:d.id},d.data());feedItems.push(it);return it;});
     feedLastDoc=snap.docs.length?snap.docs[snap.docs.length-1]:feedLastDoc;
     if(snap.docs.length<30)feedDone=true;
+    if(user)loadLikesFor(added);
   }catch(e){console.warn("loadFeed:",e);toast("タイムラインの取得に失敗しました");}
   feedLoading=false;
   render();
 }
-async function loadMyLikes(){
-  if(!user){myLikes=null;return;}
-  myLikes=new Set();
-  try{
-    var snap=await db.collectionGroup("likes").where("uid","==",user.uid).get();
-    snap.docs.forEach(function(d){var p=d.ref.parent.parent;if(p)myLikes.add(p.id);});
-  }catch(e){console.warn("loadMyLikes:",e);}
+// 表示中のフィードアイテムについてだけ自分のいいね有無を確認する。
+// 横断検索(collectionGroup)と違い読み取り数が表示枚数に固定されるため、利用者数・いいね履歴が増えてもスケールする。
+async function loadLikesFor(items){
+  if(!user||!items||!items.length)return;
+  if(myLikes===null)myLikes=new Set();
+  await Promise.all(items.map(function(it){
+    return db.collection("feed").doc(it.id).collection("likes").doc(user.uid).get()
+      .then(function(d){if(d.exists)myLikes.add(it.id);})
+      .catch(function(){});
+  }));
   render();
 }
 function switchListMode(mode){
   listMode=mode;
   if(mode==="timeline"){
     if(feedItems.length===0)loadFeed(true);
-    if(user&&myLikes===null)loadMyLikes();
+    else if(user&&myLikes===null)loadLikesFor(feedItems);
   }
   render();
 }
@@ -1247,6 +1251,7 @@ async function openUserProfile(uid,name,photo){
     profileFeed=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
     if(profileFeed.length&&profileFeed[0].ownerName)profileUserName=profileFeed[0].ownerName;
     if(profileFeed.length&&profileFeed[0].ownerPhoto)profileUserPhoto=profileFeed[0].ownerPhoto;
+    if(user)loadLikesFor(profileFeed);
   }catch(e){console.warn("openUserProfile:",e);toast("プロフィールの取得に失敗しました");}
   profileLoading=false;
   render();
