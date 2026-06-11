@@ -1260,7 +1260,7 @@ function renderPublishTabPicker(){
   return box;
 }
 function renderModal_share(){
-  var sel=getSel();if(!sel)return ce("div","");var m=mkOverlay(function(){showShare=false;render();});
+  var sel=getSel();if(!sel)return ce("div","");var m=mkOverlay(function(){showShare=false;publishDraftTabs=null;render();});
   ap(m.modal,ap(ce("div","modal-title",{style:{display:"flex",alignItems:"center",gap:"8px"}}),svgIcon("link","currentColor",18),tx("旅行を共有")));
   ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("リンクで共有（ログイン不要・閲覧のみ）")));
   if(sel.isPublic){
