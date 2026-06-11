@@ -98,7 +98,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .prog-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;}
 .prog-bg{background:var(--border);border-radius:4px;height:4px;margin-bottom:14px;overflow:hidden;}
 .prog-fill{height:100%;background:var(--green);border-radius:4px;transition:width 0.4s;}
-.item{background:var(--paper);border:1px solid var(--border);border-radius:11px;padding:12px 11px;margin-bottom:8px;display:flex;align-items:center;gap:9px;}
+.item{background:var(--paper);border:1px solid var(--border);border-radius:11px;padding:8px 11px;margin-bottom:6px;display:flex;align-items:center;gap:9px;}
 .item.done{opacity:0.45;}
 .chk{width:25px;height:25px;border-radius:7px;border:2px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;flex-shrink:0;transition:all 0.15s;}
 .chk.on{background:var(--green);border-color:var(--green);}
@@ -1095,7 +1095,7 @@ function renderCheckList(sel,tab){
   if(items.length>0)ap(d,ap(ce("div","prog-row"),ap(ce("span",""),tx(checked+" / "+items.length+" 完了")),ap(ce("span",""),tx(prog+"%"))),ap(ce("div","prog-bg"),ap(ce("div","prog-fill",{style:{width:prog+"%"}}))));
   if(items.length===0){ap(d,ap(ce("div","empty"),ap(ce("div","empty-ic"),tx(tab==="packing"?"🎒":"✅")),ap(ce("div","empty-tx"),tx("まだ登録されていません"))));return d;}
   items.forEach(function(it){
-    var wrap=ce("div","",{style:{marginBottom:"8px"}});
+    var wrap=ce("div","",{style:{marginBottom:"6px"}});
     var card=ce("div","item"+(it.checked?" done":""),{style:{marginBottom:"0",flexWrap:"wrap"}});
     var chk=ce("button","chk"+(it.checked?" on":""),{onclick:function(){toggleCheck(tab,it.id);}});ap(chk,tx(it.checked?"✓":""));
     var t=ce("div","item-txt"+(it.checked?" done":""));if(it.template)ap(t,ce("span","tpl-dot"));ap(t,tx(it.text));
@@ -1155,10 +1155,9 @@ function renderPlaces(sel){
   ap(fb,ce("input","inp",{placeholder:"メモ（任意）",value:placeMemo,oninput:function(e){placeMemo=e.target.value;}}));ap(d,fb);
   if(places.length===0){ap(d,ap(ce("div","empty"),ap(ce("div","empty-ic"),tx("📍")),ap(ce("div","empty-tx"),tx("スポットがありません\n場所名を入力して追加"))));ap(wrap,d);return wrap;}
   places.forEach(function(p,i){
-    var card=ce("div","item",{style:{alignItems:"flex-start"}});var num=ce("div","place-num");ap(num,tx(String(i+1)));
+    var card=ce("div","item",{style:{alignItems:"center"}});var num=ce("div","place-num");ap(num,tx(String(i+1)));
     var info=ce("div","",{style:{flex:"1"}});ap(info,ap(ce("div","item-txt"),tx(p.name)));
-    if(p.memo)ap(info,ap(ce("div","",{style:{fontSize:"12px",color:"var(--muted)",marginTop:"3px"}}),tx(p.memo)));
-    ap(info,ap(ce("div","",{style:{fontSize:"11px",color:p.lat?"var(--green)":"var(--muted)",marginTop:"3px"}}),tx(p.lat?"📍 地図あり":"座標未取得")));
+    if(p.memo)ap(info,ap(ce("div","",{style:{fontSize:"12px",color:"var(--muted)",marginTop:"2px"}}),tx(p.memo)));
     var ctrl=ce("div","",{style:{display:"flex",flexDirection:"column",gap:"3px",flexShrink:"0"}});
     var upB=ce("button","place-move",{disabled:i===0,title:"上へ",onclick:function(e){e.stopPropagation();movePlace(p.id,-1);}});ap(upB,tx("▲"));
     var dnB=ce("button","place-move",{disabled:i===places.length-1,title:"下へ",onclick:function(e){e.stopPropagation();movePlace(p.id,1);}});ap(dnB,tx("▼"));
