@@ -73,6 +73,27 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.3);}
 .trip-list{padding:16px;display:flex;flex-direction:column;gap:12px;}
 .trip-card{background:var(--paper);border-radius:16px;padding:0;border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;}
+.feed-seg{display:flex;gap:22px;padding:6px 16px 0;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.feed-seg-tab{font-size:15px;font-weight:800;padding:8px 2px 11px;color:var(--muted);position:relative;cursor:pointer;}
+.feed-seg-tab.on{color:var(--ink);}
+.feed-seg-tab.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2.5px;background:var(--accent);border-radius:2px;}
+.feed-list{display:flex;flex-direction:column;gap:14px;}
+.feed-card{background:var(--paper);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;}
+.feed-card-cover{position:relative;width:100%;height:110px;}
+.feed-card-cover-img{width:100%;height:110px;object-fit:cover;display:block;}
+.feed-card-type{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.feed-card-body{padding:11px 14px 4px;}
+.feed-card-owner{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.feed-card-ava{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;overflow:hidden;}
+.feed-card-oname{font-size:12px;color:var(--muted);font-weight:600;cursor:pointer;}
+.feed-card-title{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:3px;}
+.feed-card-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);}
+.feed-card-chips{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 2px;}
+.feed-card-chip{background:var(--stamp);color:var(--muted);font-size:10px;font-weight:700;padding:2px 8px;border-radius:7px;}
+.feed-card-acts{display:flex;gap:18px;padding:9px 14px 12px;border-top:1px solid var(--border);margin-top:8px;}
+.feed-card-act{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);font-weight:700;cursor:pointer;}
+.feed-card-act.liked{color:#e0526a;}
+.feed-more-btn{display:block;width:100%;margin:14px 0 0;padding:12px;background:none;border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;}
 .trip-card-body{padding:12px 14px 12px;}
 .trip-nm{font-size:18px;font-weight:800;color:#1c1917;padding-right:28px;}
 .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
@@ -519,6 +540,9 @@ var budgetExpandedEntry=null;
 var geocoding=false,saving=false,pendingPin=null;
 var tripsUnsub=null,tplUnsub=null,mapInst=null,mapMarkers=[];
 var auth=null,db=null,storage=null;
+var listMode="mine"; // "mine" | "timeline"
+var feedItems=[],feedLastDoc=null,feedLoading=false,feedDone=false;
+var myLikes=null; // Set of liked feedId; null when logged out
 
 function mkId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function getSel(){return isViewOnly?viewOnlyTrip:(trips.find(function(t){return t.id===selId;}));}
@@ -669,6 +693,38 @@ async function fetchWeather(lat,lng,startDate,endDate){var cacheKey=lat+","+lng+
 async function addWeatherCity(tripId,cities,cand){if(!cand||cand.lat==null)return;await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).concat([{name:cand.name,lat:cand.lat,lng:cand.lng,country:cand.country||"",country_code:cand.country_code||"",admin1:cand.admin1||""}])});weatherCityInput="";weatherSuggestions=[];if(weatherSearchTm){clearTimeout(weatherSearchTm);weatherSearchTm=null;}render();}
 async function removeWeatherCity(tripId,cities,idx){await db.collection("trips").doc(tripId).update({weatherCities:(cities||[]).filter(function(_,i){return i!==idx;})});}
 function subscribeTrips(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}tripsUnsub=db.collection("trips").where("memberIds","array-contains",user.uid).onSnapshot(function(snap){trips=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});trips.sort(function(a,b){return((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0);});if(trips.length===0&&user&&!showGuide){try{if(!localStorage.getItem("tavy_guide_seen")){guidePage="guide";showGuide=true;track('open_guide',{source:'auto_login'});localStorage.setItem("tavy_guide_seen","1");}}catch(e){guidePage="guide";showGuide=true;}}syncMarkers();render();},function(err){console.warn("trips err:",err);});}
+async function loadFeed(reset){
+  if(feedLoading)return;
+  feedLoading=true;
+  if(reset){feedItems=[];feedLastDoc=null;feedDone=false;}
+  try{
+    var q=db.collection("feed").orderBy("publishedAt","desc").limit(30);
+    if(feedLastDoc)q=q.startAfter(feedLastDoc);
+    var snap=await q.get();
+    snap.docs.forEach(function(d){feedItems.push(Object.assign({id:d.id},d.data()));});
+    feedLastDoc=snap.docs.length?snap.docs[snap.docs.length-1]:feedLastDoc;
+    if(snap.docs.length<30)feedDone=true;
+  }catch(e){console.warn("loadFeed:",e);toast("タイムラインの取得に失敗しました");}
+  feedLoading=false;
+  render();
+}
+async function loadMyLikes(){
+  if(!user){myLikes=null;return;}
+  myLikes=new Set();
+  try{
+    var snap=await db.collectionGroup("likes").where("uid","==",user.uid).get();
+    snap.docs.forEach(function(d){var p=d.ref.parent.parent;if(p)myLikes.add(p.id);});
+  }catch(e){console.warn("loadMyLikes:",e);}
+  render();
+}
+function switchListMode(mode){
+  listMode=mode;
+  if(mode==="timeline"){
+    if(feedItems.length===0)loadFeed(true);
+    if(user&&myLikes===null)loadMyLikes();
+  }
+  render();
+}
 var MAX_FILE_SIZE=3*1024*1024;
 async function uploadAttachment(category,file){if(!file)return null;if(file.size>MAX_FILE_SIZE){toast("ファイルサイズは3MB以内にしてください");return null;}var ext=file.name.split(".").pop();var path="users/"+user.uid+"/"+category+"/"+Date.now()+"."+ext;var ref=storage.ref(path);await ref.put(file);var url=await ref.getDownloadURL();return{name:file.name,url:url,path:path,type:file.type,uploadedAt:new Date().toISOString()};}
 var COVER_COLORS=["#2d3e5a","#4a7c59","#7c4a6b","#7c5a2d","#2d6b7c","#5a2d7c","#7c2d2d","#4a4a7c"];
@@ -961,10 +1017,26 @@ function renderWelcome(){
 }
 
 function renderList(){
+  var outer=ce("div","");
+  var seg=ce("div","feed-seg");
+  var t1=ce("div","feed-seg-tab"+(listMode==="mine"?" on":""),{onclick:function(){switchListMode("mine");}});ap(t1,tx("自分の旅行"));
+  var t2=ce("div","feed-seg-tab"+(listMode==="timeline"?" on":""),{onclick:function(){switchListMode("timeline");}});ap(t2,tx("タイムライン"));
+  ap(seg,t1,t2);ap(outer,seg);
+
+  if(listMode==="timeline"){
+    if(feedLoading&&feedItems.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted)"}}),tx("読み込み中…")));return outer;}
+    if(feedItems.length===0){ap(outer,ap(ce("div","",{style:{textAlign:"center",padding:"60px 24px",color:"var(--muted)"}}),tx("まだ公開された旅行がありません")));return outer;}
+    var feedWrap=ce("div","feed-list");
+    feedItems.forEach(function(item){ap(feedWrap,renderFeedCard(item));});
+    ap(outer,feedWrap);
+    if(!feedDone){ap(outer,ap(ce("button","feed-more-btn",{onclick:function(){loadFeed(false);}}),tx(feedLoading?"読み込み中…":"もっと見る")));}
+    return outer;
+  }
+
   if(trips.length===0){
     var d=ce("div","",{style:{textAlign:"center",padding:"80px 24px",color:"var(--muted)"}});
     ap(d,ap(ce("div","",{style:{fontSize:"52px",marginBottom:"14px",opacity:"0.5"}}),tx("🗺️")),ap(ce("div","",{style:{fontSize:"15px",fontWeight:"700",color:"var(--ink)",marginBottom:"6px"}}),tx("旅行がまだありません")),ap(ce("div","",{style:{fontSize:"13px",marginBottom:"18px"}}),tx("右上から追加してください")));
-    ap(d,ap(ce("button","btn-ok",{style:{padding:"12px 24px",flex:"none",border:"none"},onclick:function(){showNewTrip=true;render();}}),tx("＋ 最初の旅行を作成")));return d;
+    ap(d,ap(ce("button","btn-ok",{style:{padding:"12px 24px",flex:"none",border:"none"},onclick:function(){showNewTrip=true;render();}}),tx("＋ 最初の旅行を作成")));ap(outer,d);return outer;
   }
   var d=ce("div","trip-list");
   trips.forEach(function(trip){
@@ -1004,7 +1076,41 @@ function renderList(){
     ap(card,body);
     ap(d,card);
   });
-  return d;
+  ap(outer,d);
+  return outer;
+}
+
+function relTime(ts){if(!ts||!ts.seconds)return "";var diff=Date.now()/1000-ts.seconds;if(diff<3600)return Math.max(1,Math.floor(diff/60))+"分前";if(diff<86400)return Math.floor(diff/3600)+"時間前";if(diff<2592000)return Math.floor(diff/86400)+"日前";return Math.floor(diff/2592000)+"ヶ月前";}
+function renderFeedCard(item){
+  var card=ce("div","feed-card");
+  var cov=ce("div","feed-card-cover",{onclick:function(){openFeedTrip(item);}});
+  if(item.coverUrl){var img=document.createElement("img");img.className="feed-card-cover-img";img.src=item.coverUrl;ap(cov,img);}
+  else{cov.style.background=getTripColor(item.id);}
+  ap(cov,ap(ce("span","feed-card-type"),tx(item.type==="overseas"?"🌏 海外":"🏠 国内")));
+  ap(card,cov);
+  var body=ce("div","feed-card-body",{onclick:function(){openFeedTrip(item);}});
+  var owner=ce("div","feed-card-owner");
+  var ava=ce("div","feed-card-ava",{onclick:function(e){e.stopPropagation();openUserProfile(item.ownerId,item.ownerName,item.ownerPhoto);}});
+  if(item.ownerPhoto){var pi=document.createElement("img");pi.src=item.ownerPhoto;pi.style.cssText="width:100%;height:100%;border-radius:50%;object-fit:cover";ap(ava,pi);}else{ap(ava,tx((item.ownerName||"?")[0].toUpperCase()));}
+  var oname=ce("span","feed-card-oname",{onclick:function(e){e.stopPropagation();openUserProfile(item.ownerId,item.ownerName,item.ownerPhoto);}});ap(oname,tx((item.ownerName||"旅人")+" · "+relTime(item.publishedAt)));
+  ap(owner,ava,oname);ap(body,owner);
+  ap(body,ap(ce("div","feed-card-title"),tx(item.name||"無題の旅行")));
+  var meta=ce("div","feed-card-meta");
+  if(item.destination)ap(meta,ap(ce("span",""),tx("📍 "+item.destination)));
+  if(item.startDate)ap(meta,ap(ce("span",""),tx(item.startDate+(item.endDate?" → "+item.endDate:""))));
+  ap(body,meta);
+  var chips=ce("div","feed-card-chips");
+  (item.publicTabs||[]).forEach(function(k){var d=TAB_DEFS.find(function(t){return t.key===k;});if(d)ap(chips,ap(ce("span","feed-card-chip"),tx(d.label)));});
+  ap(body,chips);
+  ap(card,body);
+  var acts=ce("div","feed-card-acts");
+  var liked=!!(myLikes&&myLikes.has(item.id));
+  var likeBtn=ce("div","feed-card-act"+(liked?" liked":""),{onclick:function(e){e.stopPropagation();toggleLike(item);}});
+  ap(likeBtn,heartIcon(liked,16),ap(ce("span",""),tx(String(item.likeCount||0))));
+  var cmtBtn=ce("div","feed-card-act",{onclick:function(e){e.stopPropagation();openFeedTrip(item);}});
+  ap(cmtBtn,svgIcon("comment","currentColor",16),ap(ce("span",""),tx(String(item.commentCount||0))));
+  ap(acts,likeBtn,cmtBtn);ap(card,acts);
+  return card;
 }
 
 function renderTemplates(){
