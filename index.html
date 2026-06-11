@@ -1495,7 +1495,7 @@ function renderModal_guide(){
     ap(ov,modal);return ov;
   }
   [{title:"旅行を作成する",desc:"右上の「＋ 追加」から旅行を登録。国内・海外を選ぶと持ち物・ToDoのテンプレートが自動で追加されます。旅行カードにはカバー写真も設定できます。"},
-   {title:"各タブで旅を管理する",desc:"旅行カードをタップすると詳細画面へ。6つのタブで旅行情報を管理できます。",tabs:["🗓 行程","🎒 持ち物","✅ ToDo","📍 スポット","💰 予算","🌤 天気"]},
+   {title:"各タブで旅を管理する",desc:"旅行カードをタップすると詳細画面へ。6つのタブで旅行情報を管理できます。",tabs:[{i:"calendar",l:"行程"},{i:"backpack",l:"持ち物"},{i:"check",l:"ToDo"},{i:"pin",l:"スポット"},{i:"money",l:"予算"},{i:"sun",l:"天気"}]},
    {title:"行程を記録する",desc:"日付・時刻・種別（到着/出発/食事/ミーティングなど）・内容を入力して旅程を登録。種別はカラーバッジで表示されます。登録済みの行程はタップで編集、×で削除できます。"},
    {title:"予算を管理する",desc:"39カ国の通貨に対応。リアルタイム為替レートで円換算も自動表示されます。金額欄では「15000+3000」のような四則演算も入力できます。"},
    {title:"天気を確認する",desc:"天気タブで都市名を入力すると、国名つきの候補が表示されます。同名の都市が世界に複数あっても、正しい場所を選んで追加できます。追加した都市は旅行期間中の天気予報と最高・最低気温が表示されます。"},
@@ -1503,8 +1503,11 @@ function renderModal_guide(){
    {title:"旅行情報メモ・持ち物リストを活用する",desc:"右上の「☰ Menu」から「旅行情報メモ」や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。「旅行情報メモ」では項目名を自由に決めてメモでき、「旅行用記録」には書類やEチケットなどのファイルを添付できます。※個人の特定につながる情報の保存はお控えください。"}
   ].forEach(function(s,i){
     var step=ce("div","guide-step");var num=ce("div","guide-step-num");ap(num,tx(String(i+1)));
-    var body=ce("div","");ap(body,ap(ce("div","guide-step-title"),tx(s.title)),ap(ce("div","guide-step-desc"),tx(s.desc)));
-    if(s.tabs){var tl=ce("div","guide-tab-list");s.tabs.forEach(function(t){ap(tl,ap(ce("div","guide-tab-item"),tx(t)));});ap(body,tl);}
+    var descEl=ce("div","guide-step-desc");
+    if(s.desc.indexOf("🔗")>=0){var ps=s.desc.split("🔗");ap(descEl,tx(ps[0]));var lic=svgIcon("link","currentColor",13);lic.style.cssText="display:inline-block;vertical-align:-2px;width:13px;height:13px;";ap(descEl,lic);ap(descEl,tx(ps[1]));}
+    else ap(descEl,tx(s.desc));
+    var body=ce("div","");ap(body,ap(ce("div","guide-step-title"),tx(s.title)),descEl);
+    if(s.tabs){var tl=ce("div","guide-tab-list");s.tabs.forEach(function(t){var chip=ce("div","guide-tab-item",{style:{display:"inline-flex",alignItems:"center",gap:"4px"}});ap(chip,svgIcon(t.i,"currentColor",13),tx(t.l));ap(tl,chip);});ap(body,tl);}
     ap(step,num,body);ap(modal,step);
   });
   var gfoot=ce("div","",{style:{fontSize:"11px",lineHeight:"1.6",color:"var(--muted)",marginTop:"8px",marginBottom:"16px"}});
