@@ -991,7 +991,8 @@ var ICONS={
   lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   unlock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
   comment:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/>',
-  heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>'
+  heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>',
+  pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>'
 };
 function svgIcon(name,color,size){var s=size||16;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"currentColor")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||"")+'</svg>';return w;}
 function heartIcon(filled,size,color){var s=size||16;var c=color||(filled?"#e0526a":"currentColor");var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="'+(filled?c:"none")+'" stroke="'+c+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS.heart+'</svg>';return w;}
@@ -1239,9 +1240,12 @@ function renderList(){
     // 複製ボタン
     if(user&&trip.ownerId===user.uid){
       var dupRow=ce("div","",{style:{marginTop:"10px",paddingTop:"8px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}});
+      var leftGrp=ce("div","",{style:{display:"flex",alignItems:"center",gap:"14px"}});
       var delBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"#ccc",cursor:"pointer",fontFamily:"inherit"},onclick:function(e){e.stopPropagation();deleteTrip(trip.id);}});ap(delBtn,tx("✕ 削除"));
+      var edBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:"5px"},onclick:function(e){e.stopPropagation();selId=trip.id;openEditTrip();}});ap(edBtn,svgIcon("pencil","currentColor",13),tx("編集"));
+      ap(leftGrp,delBtn,edBtn);
       var dupBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:"5px"},onclick:function(e){e.stopPropagation();duplicateTrip(trip);}});ap(dupBtn,copyIcon("currentColor",13),tx("複製する"));
-      ap(dupRow,delBtn,dupBtn);ap(body,dupRow);
+      ap(dupRow,leftGrp,dupBtn);ap(body,dupRow);
     }
     ap(card,body);
     ap(d,card);
