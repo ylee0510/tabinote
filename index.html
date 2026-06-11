@@ -1011,8 +1011,24 @@ function renderItinerary(sel){
   var di=ce("input","inp",{type:"date",value:itinForm.date,oninput:function(e){itinForm.date=e.target.value;}});
   if(sel.startDate)di.setAttribute("min",sel.startDate);
   if(sel.endDate)di.setAttribute("max",sel.endDate);
-  var ti=ce("input","inp",{type:"time",value:itinForm.time,style:{width:"110px",flex:"none"},oninput:function(e){itinForm.time=e.target.value;}});
-  ap(r1,di,ti);ap(fb,r1);
+  function _tp(t){var p=(t||"").split(":");return {h:p[0]||"",m:p[1]||""};}
+  var _cur=_tp(itinForm.time);
+  var tw=ce("div","",{style:{display:"flex",alignItems:"center",gap:"4px",flex:"none"}});
+  var hSel=ce("select","inp",{style:{width:"58px",flex:"none",padding:"11px 4px",cursor:"pointer"}});
+  var ho0=document.createElement("option");ho0.value="";ho0.textContent="時";hSel.appendChild(ho0);
+  for(var _h=0;_h<24;_h++){var _hh=("0"+_h).slice(-2);var _o=document.createElement("option");_o.value=_hh;_o.textContent=_hh;if(_cur.h===_hh)_o.selected=true;hSel.appendChild(_o);}
+  var mSel=ce("select","inp",{style:{width:"72px",flex:"none",padding:"11px 4px",cursor:"pointer"}});
+  var mo0=document.createElement("option");mo0.value="";mo0.textContent="分";mSel.appendChild(mo0);
+  var og5=document.createElement("optgroup");og5.label="5分刻み";
+  for(var _m5=0;_m5<60;_m5+=5){var _mm=("0"+_m5).slice(-2);var _o5=document.createElement("option");_o5.value=_mm;_o5.textContent=_mm;if(_cur.m===_mm)_o5.selected=true;og5.appendChild(_o5);}
+  mSel.appendChild(og5);
+  var og1=document.createElement("optgroup");og1.label="1分刻み";
+  for(var _m1=0;_m1<60;_m1++){var _m1s=("0"+_m1).slice(-2);var _o1=document.createElement("option");_o1.value=_m1s;_o1.textContent=_m1s;og1.appendChild(_o1);}
+  mSel.appendChild(og1);
+  hSel.onchange=function(){if(!this.value){itinForm.time="";return;}var m=_tp(itinForm.time).m;if(!m){m="00";mSel.value="00";}itinForm.time=this.value+":"+m;};
+  mSel.onchange=function(){var h=_tp(itinForm.time).h;if(!h){h="00";hSel.value="00";}itinForm.time=h+":"+(this.value||"00");};
+  ap(tw,hSel,ap(ce("span","",{style:{color:"var(--muted)",fontWeight:"700"}}),tx(":")),mSel);
+  ap(r1,di,tw);ap(fb,r1);
 
   // 2行目：種別プルダウン + テキスト + 追加/保存ボタン
   var r2=ce("div","row");
