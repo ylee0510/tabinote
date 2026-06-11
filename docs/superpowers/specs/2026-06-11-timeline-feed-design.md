@@ -18,6 +18,7 @@
 - **カードデザイン**: 写真先行（インスタ風）。カバー画像は個人ページの旅行カードと同じ幅・高さ（横幅100% / 高さ110px / 角丸上16px）。画像なしは `getTripColor(tripId)` グラデ。
 - **画面導線**: 一覧ページ上部のアンダーラインタブで「自分の旅行 / タイムライン」を切替（既存タブUIと統一）。
 - **アイコン**: いいね（ハート）・コメント（吹き出し）は絵文字ではなく SVG（`svgIcon()` に追加）。
+- **公開表示名（ニックネーム）**: カード・コメントには各ユーザーが設定した **ニックネーム** を表示する。`displayName` や `email` を公開表示に使わない（メール漏洩防止）。入力導線は2つ併用 ──（1）初回の公開／コメント時にダイアログで促す（Google 表示名を初期値に提案）、（2）メニューのプロフィール画面に常設のニックネーム欄を置きいつでも変更可。
 
 ## 拡張性の原則：タブはレジストリ駆動
 
@@ -41,6 +42,21 @@ var TAB_DEFS = [
 
 補足: feed は公開時点のスナップショット（コピー）。既存の公開済み旅行に新タブを後付けした場合は、その旅行を再保存／再公開して再同期するまで反映されない。新規公開は問題なし。
 
+## 公開表示名（ニックネーム）
+
+カードとコメントに表示する名前は、各ユーザーが設定する **ニックネーム** に統一する。`displayName` / `email` は公開表示に使わない（メール漏洩防止）。
+
+- **保存先**: 既存プロフィール `users/{uid}/settings/profile` に `nickname`（string）を追加（`window._tavyProfile.nickname` / `saveProfile()`）
+- **入力導線（2つ併用）**:
+  1. **初回プロンプト**: 公開／コメントを実行しようとした時点で `nickname` 未設定なら、入力ダイアログを表示。`displayName` を初期値に提案し、確定後にそのまま元のアクション（公開 or コメント投稿）へ進む
+  2. **常設欄**: 「旅行情報メモ」画面（`renderModal_mypage()`）の先頭にニックネーム欄を置き、いつでも変更可
+- **反映（非正規化）**: ニックネームは feed スナップショットの `ownerName` と各コメントの `name` に、書き込み時点の値をコピーする。後からニックネームを変更しても、既存の公開カードは再同期時に、既存コメントは過去分そのまま（最新には新しい名前）という素直な挙動にする
+- **ガード**: 空文字不可・最大文字数（例 20）
+
+### `users/{uid}/settings/profile`（既存に追加）
+
+- `nickname`（string）— 公開表示名
+
 ## データ構造
 
 ### `trips` ドキュメント（既存に追加）
@@ -55,7 +71,7 @@ var TAB_DEFS = [
 ```
 feed/{tripId}
   ├ ownerId      (string)            投稿者UID（ルール判定用）
-  ├ ownerName    (string)            表示名
+  ├ ownerName    (string)            公開表示名（= 投稿者のニックネーム。email/displayNameは入れない）
   ├ ownerPhoto   (string|null)       アバター画像URL（任意）
   ├ name, destination, type          表示メタ
   ├ coverUrl     (string|null)
@@ -74,7 +90,7 @@ feed/{tripId}
 既存の共有モーダル `renderModal_share()` 内に新セクション「みんなのタイムラインに公開」を追加する。
 
 1. オーナーのみ表示（`sel.ownerId === user.uid`）
-2. トグル「タイムラインに公開する」（`publishedToFeed`）
+2. トグル「タイムラインに公開する」（`publishedToFeed`）。ON 操作時に `nickname` 未設定ならニックネーム入力プロンプトを挟む
 3. ON にすると公開タブのチェックリストを表示（`TAB_DEFS` を回す。`always:true` の行程はチェック済み＆無効でグレーアウト）
 4. 「公開する／更新する」ボタン → `syncFeed(trip)`：選択タブの中身を集めて `feed/{tripId}` を作成・更新
 5. OFF にすると `feed/{tripId}` を削除 → タイムラインから消える（`publishedToFeed=false`、`publicTabs` クリア）
@@ -87,6 +103,7 @@ feed/{tripId}
 
 - `trips` ドキュメントから公開メタと `publicTabs` 各タブの中身を抽出
 - メール・会員ID等の非公開項目は除外
+- `ownerName` には投稿者の **ニックネーム**（`profile.nickname`）を入れる
 - `feed/{tripId}` に set（merge）。新規作成時のみ `likeCount=0`、`commentCount=0`、`publishedAt=serverTimestamp()` を初期化
 
 ## タイムライン画面 / カード
@@ -126,7 +143,7 @@ feed/{tripId}
 
 - 閲覧専用の詳細画面の下部に「コメント」セクション（一覧＋入力欄）
 - 一覧: `feed/{tripId}/comments` を `createdAt` 昇順。各行に投稿者名・相対時刻・本文。自分の投稿には削除ボタン
-- 投稿: ログイン必須（未ログインは入力欄の代わりに「ログインしてコメント」）。`{uid, name, text, createdAt}` を追加し `commentCount` を増加
+- 投稿: ログイン必須（未ログインは入力欄の代わりに「ログインしてコメント」）。投稿前に `nickname` 未設定ならニックネーム入力プロンプトを挟む。`{uid, name, text, createdAt}` を追加（`name` = ニックネーム）し `commentCount` を増加
 - 削除: 自分のコメントのみ（`uid === user.uid`）。`commentCount` を減算
 - 簡易ガード: 空文字禁止・最大文字数 500
 
@@ -170,6 +187,7 @@ Firebase コンソール側でのルール更新が必須（コードのデプ�
 ### JavaScript（index.html）
 
 - `TAB_DEFS` レジストリ導入と既存タブ描画の寄せ替え
+- ニックネーム（`profile.nickname`）の保存・初回入力プロンプト・プロフィール画面の常設欄
 - `publishedToFeed` / `publicTabs` の状態と公開設定UI
 - `syncFeed` / 公開停止 / `upd()` 後の自動再同期
 - `listMode` とタイムライン一覧描画 / フィード取得・ページング
