@@ -557,7 +557,8 @@ async function loginGoogle(){
 }
 async function logout(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}if(tplUnsub){tplUnsub();tplUnsub=null;}await auth.signOut();trips=[];view="list";selId=null;render();}
 async function upd(patch){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var sel=getSel();if(!sel)return;await db.collection("trips").doc(sel.id).update(patch);
-  if(sel.publishedToFeed){try{var fresh=Object.assign({},sel,patch);await syncFeed(fresh);}catch(e){console.warn("feed resync:",e);}}
+  var fresh=Object.assign({},sel,patch);
+  if(fresh.publishedToFeed){try{await syncFeed(fresh);}catch(e){console.warn("feed resync:",e);}}
 }
 async function createTrip(){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!tripForm.name.trim()||saving||!user)return;saving=true;render();try{var tpl=templates[tripForm.type]||{packing:[],todo:[]};var ref=await db.collection("trips").add({name:tripForm.name.trim(),destination:tripForm.destination.trim(),startDate:tripForm.startDate,endDate:tripForm.endDate,type:tripForm.type,ownerId:user.uid,ownerName:user.displayName||user.email,memberIds:[user.uid],members:[{uid:user.uid,name:user.displayName||user.email,email:user.email}],currency:"JPY",itinerary:[],packing:tpl.packing.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),todo:tpl.todo.map(function(t){return{id:mkId(),text:t,checked:false,template:true};}),places:[],budget:JSON.parse(JSON.stringify(DEFAULT_BUDGET[tripForm.type]||DEFAULT_BUDGET.overseas)),createdAt:firebase.firestore.FieldValue.serverTimestamp()});track('trip_create',{trip_type:tripForm.type});selId=ref.id;tripForm={name:"",destination:"",startDate:"",endDate:"",type:"overseas"};showNewTrip=false;view="detail";activeTab="itinerary";toast("旅行を作成しました！");}catch(e){console.error(e);toast("作成に失敗: "+e.message);}saving=false;render();}
 async function deleteTrip(id){if(isGuest){toast("💡 保存するにはログインが必要です");return;}if(!confirm("この旅行を削除しますか？"))return;await db.collection("trips").doc(id).delete();if(selId===id){selId=null;view="list";}toast("削除しました");render();}
@@ -631,7 +632,7 @@ async function delBudgetItem(idx){var sel=getSel();if(!sel)return;var b=JSON.par
 async function enableShare(id){await db.collection("trips").doc(id).update({isPublic:true});return getShareUrl(id);}
 async function disableShare(id){await db.collection("trips").doc(id).update({isPublic:false});}
 async function syncFeed(trip){
-  if(!user||trip.ownerId!==user.uid)return;
+  if(!user||trip.ownerId!==user.uid||!trip.publishedToFeed)return;
   var tabs=(trip.publicTabs&&trip.publicTabs.length)?trip.publicTabs.slice():["itinerary"];
   if(tabs.indexOf("itinerary")<0)tabs.unshift("itinerary");
   var content={};
