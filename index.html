@@ -1542,7 +1542,7 @@ function renderCheckList(sel,tab){
         var memoDisp=ce("div","item-memo");
         if(/^https?:\/\//.test(memoVal)){var a=ce("a","",{href:memoVal,target:"_blank"});ap(a,tx("🔗 "+memoVal));ap(memoDisp,a);}
         else ap(memoDisp,tx("📝 "+memoVal));
-        ap(wrap,memoDisp,ap(ce("button","memo-toggle",{onclick:function(){var el=document.getElementById(memoId);if(el)el.style.display=el.style.display==="none"?"block":"none";}}),tx("✏️ 編集")));
+        ap(wrap,memoDisp,ap(ce("button","memo-toggle",{style:{display:"inline-flex",alignItems:"center",gap:"4px"},onclick:function(){var el=document.getElementById(memoId);if(el)el.style.display=el.style.display==="none"?"block":"none";}}),svgIcon("pencil","currentColor",11),tx("編集")));
         ap(wrap,ce("input","memo-inp",{id:memoId,value:memoVal,style:{display:"none"},onblur:function(e){updateMemo(tab,it.id,e.target.value);}}));
       }else{
         ap(wrap,ap(ce("button","memo-toggle",{onclick:function(){var el=document.getElementById(memoId);if(el){el.style.display="block";el.focus();}}}),tx("＋ メモ・URLを追加")));
