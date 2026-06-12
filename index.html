@@ -229,9 +229,16 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .weather-collapse-title{flex:1;font-size:14px;font-weight:700;color:var(--ink);}
 .weather-collapse-chev{color:var(--muted);display:inline-flex;}
 .weather-collapse-body{padding:12px 14px 4px;border-top:1px solid var(--border);}
-.note-ta{width:100%;min-height:320px;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;line-height:1.85;color:#1c1917;background:#fff;font-family:inherit;resize:vertical;outline:none;-webkit-appearance:none;}
+.note-hint{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7;}
+.note-block-wrap{position:relative;margin-bottom:12px;}
+.note-ta{width:100%;min-height:160px;padding:14px;padding-right:40px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;line-height:1.85;color:#1c1917;background:#fff;font-family:inherit;resize:vertical;outline:none;-webkit-appearance:none;}
 .note-ta:focus{border-color:var(--accent);}
+.note-del-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;}
+.note-del-btn:hover{color:var(--ink);background:var(--stamp);}
+.note-add-btn{width:100%;padding:13px;background:var(--stamp);border:1.5px dashed var(--border);border-radius:11px;font-size:14px;color:var(--muted);cursor:pointer;font-family:inherit;margin-top:4px;}
 .note-readonly{white-space:pre-wrap;font-size:15px;line-height:1.85;color:#1c1917;padding:4px 2px;}
+.note-readonly.note-block{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border);}
+.note-readonly.note-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
 .weather-city-row{display:flex;gap:8px;margin-bottom:8px;}
 .weather-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
 .weather-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -584,6 +591,7 @@ var editDraft=null;
 var publishDraftTabs=null; // 公開設定中に選択中のタブ配列（モーダルを開くとsel.publicTabsで初期化）
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
 var itinWeatherOpen=false; // 行程タブ内の天気セクション折り畳み状態
+var noteExtraBoxes=0; // メモタブ：保存済みメモに加えて表示する空の入力欄の数
 var isViewOnly=false,viewOnlyTrip=null;
 var feedViewId=null; // 現在閲覧中のfeedアイテムID（feed由来の閲覧専用詳細）
 var feedViewItem=null; // 現在閲覧中のfeedアイテム実体（feedItemsまたはprofileFeed由来）
@@ -1873,15 +1881,49 @@ function renderWeather(sel){
   return d;
 }
 
+function noteList(sel){
+  var n=sel&&sel.note;
+  if(Array.isArray(n))return n;
+  if(typeof n==="string"&&n)return [n];
+  return [];
+}
+function mkNoteDelBtn(fn){
+  var b=ce("button","note-del-btn",{onclick:function(e){e.stopPropagation();fn();}});
+  ap(b,tx("✕"));
+  return b;
+}
 function renderNote(sel){
   var d=ce("div","content");
+  var notes=noteList(sel);
   if(isViewOnly){
-    var ro=ce("div","note-readonly");ap(ro,tx(sel.note||"（メモはありません）"));ap(d,ro);return d;
+    var shown=notes.filter(function(n){return (n||"").trim()!=="";});
+    if(shown.length===0){var ro=ce("div","note-readonly");ap(ro,tx("（メモはありません）"));ap(d,ro);return d;}
+    shown.forEach(function(n){var ro=ce("div","note-readonly note-block");ap(ro,tx(n));ap(d,ro);});
+    return d;
   }
-  ap(d,ap(ce("div","",{style:{fontSize:"12px",color:"var(--muted)",marginBottom:"8px",lineHeight:"1.7"}}),tx("国や街の歴史・言葉・気づいたことなど、自由に書き残せるノートです。")));
-  var ta=ce("textarea","note-ta",{placeholder:"例：通貨はウォン。「ありがとう」はカムサハムニダ。古都の歴史メモ…",onblur:function(e){if((sel.note||"")!==e.target.value)upd({note:e.target.value});}});
-  ta.value=sel.note||"";
-  ap(d,ta);
+  ap(d,ap(ce("div","note-hint"),tx("旅する国や街の歴史・言葉や気に入ったお店、気づいたことなど、自由に書き残せるノートです。タイムラインにも公開できます。")));
+  var boxCount=Math.max(1,notes.length+noteExtraBoxes);
+  for(var i=0;i<boxCount;i++){
+    var row=ce("div","note-block-wrap");
+    var ta=ce("textarea","note-ta",{placeholder:"例：通貨はウォン。「ありがとう」はカムサハムニダ。古都の歴史メモ…",onblur:function(){
+      var vals=Array.prototype.map.call(d.querySelectorAll(".note-ta"),function(t){return t.value;});
+      while(vals.length&&vals[vals.length-1]==="")vals.pop();
+      noteExtraBoxes=0;
+      if(JSON.stringify(vals)!==JSON.stringify(notes))upd({note:vals});
+    }});
+    ta.value=notes[i]||"";
+    ap(row,ta);
+    if(boxCount>1){
+      ap(row,(function(idx){return mkNoteDelBtn(function(){
+        var vals=Array.prototype.map.call(d.querySelectorAll(".note-ta"),function(t){return t.value;});
+        vals.splice(idx,1);
+        noteExtraBoxes=0;
+        upd({note:vals});
+      });})(i));
+    }
+    ap(d,row);
+  }
+  ap(d,ap(ce("button","note-add-btn",{onclick:function(){noteExtraBoxes++;render();}}),tx("＋ 追加")));
   return d;
 }
 function mkCurSelect(current, onchange){
@@ -2122,7 +2164,7 @@ function renderModal_guide(){
    {title:"行程を記録する",desc:"日付・時刻・種別（到着/出発/食事/ミーティングなど）・内容を入力して旅程を登録。種別はカラーバッジで表示されます。登録済みの行程はタップで編集、×で削除できます。"},
    {title:"予算を管理する",desc:"39カ国の通貨に対応。リアルタイム為替レートで円換算も自動表示されます。金額欄では「15000+3000」のような四則演算も入力できます。"},
    {title:"天気を確認する",desc:"行程タブ上部の「天気」を開くと、都市名を入力して天気予報を確認できます。国名つきの候補から正しい場所を選んで追加でき、旅行期間中の天気予報と最高・最低気温が表示されます。"},
-   {title:"メモを残す",desc:"メモタブでは、国や街の歴史・現地の言葉・気づいたことなどを自由に書き残せます。入力欄から離れると自動で保存されます。"},
+   {title:"メモを残す",desc:"メモタブでは、旅する国や街の歴史・言葉・気に入ったお店などを自由に書き残せます。入力欄から離れると自動で保存され、「＋ 追加」で入力欄を増やせます。タイムラインにも公開できます。"},
    {title:"旅行を共有する",desc:"🔗ボタンから閲覧リンクを発行（ログイン不要）、またはメールアドレスで編集メンバーを招待できます。"},
    {title:"旅行情報メモ・持ち物リストを活用する",desc:"右上の「☰ Menu」から「旅行情報メモ」や、マイ持ち物リスト（旅行作成時に自動追加されるテンプレートの編集）を開けます。「旅行情報メモ」では項目名を自由に決めてメモでき、「旅行用記録」には書類やEチケットなどのファイルを添付できます。※個人の特定につながる情報の保存はお控えください。"}
   ].forEach(function(s,i){
