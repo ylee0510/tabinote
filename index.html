@@ -652,6 +652,20 @@ var REGION_INDEX=(function(){
 function regionGroups(mode){return mode==="domestic"?PREFS_BY_REGION:COUNTRIES_BY_CONTINENT;}
 // 地域名 → 表示ラベル（国は国旗付き）。県は名前のみ。
 function regionLabel(name){var info=REGION_INDEX[name];if(info&&info.cc)return flagEmoji(info.cc)+" "+name;return name;}
+// メモタブのプレースホルダー例文（ランダム表示）
+var NOTE_PLACEHOLDERS=[
+  "例：韓国の通貨はウォン。「ありがとう」はカムサハムニダ。明洞の屋台のトッポギが美味しかった。",
+  "例：台湾のMRTはICカード「悠遊卡」が便利。「ありがとう」はシエシエ。夜市の魯肉飯がお気に入り。",
+  "例：タイの寺院では肌の露出に注意。「ありがとう」はコップンカー。屋台のパッタイが絶品だった。",
+  "例：アメリカはチップが会計の15〜20%が目安。NYのベーグル屋さんがお気に入り。歩行者信号は短め。",
+  "例：メキシコの「ありがとう」はグラシアス。タコス屋台のサルサは辛さに注意。マヤ文明の遺跡が見られる街。",
+  "例：フランスではお店に入る時の挨拶「ボンジュール」が基本。マレ地区のパン屋さんが気に入った。",
+  "例：イタリアは午後にお店が閉まるシエスタ文化。「ありがとう」はグラツィエ。広場のジェラート屋さんが絶品。",
+  "例：スペインの夕食は21時頃から。「ありがとう」はグラシアス。バル巡りで出会ったタパス屋さんをメモ。",
+  "例：ベトナムはバイクが多く道路横断に注意。「ありがとう」はカムオン。路地のフォー屋さんがお気に入り。",
+  "例：バリ島は独自のヒンドゥー文化。「ありがとう」はトゥリマカシ。ローカル食堂のナシゴレンが美味しい。"
+];
+function randomNotePlaceholder(){return NOTE_PLACEHOLDERS[Math.floor(Math.random()*NOTE_PLACEHOLDERS.length)];}
 function initMap(){var el=document.getElementById("leaflet-map");if(!el||mapInst||!window.L)return;mapInst=L.map(el).setView([35.6762,139.6503],5);L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{detectRetina:true,subdomains:"abcd",attribution:"© OpenStreetMap contributors © CARTO"}).addTo(mapInst);mapInst.on("click",function(e){pendingPin=e.latlng;pinName="";showPinModal=true;render();});syncMarkers();}
 function destroyMap(){if(mapInst){mapInst.remove();mapInst=null;mapMarkers=[];}}
 // 各renderでDOMが作り直されるため、地図インスタンスが古いコンテナを指していたら作り直す
@@ -1905,7 +1919,7 @@ function renderNote(sel){
   var boxCount=Math.max(1,notes.length+noteExtraBoxes);
   for(var i=0;i<boxCount;i++){
     var row=ce("div","note-block-wrap");
-    var ta=ce("textarea","note-ta",{placeholder:"例：通貨はウォン。「ありがとう」はカムサハムニダ。古都の歴史メモ…",onblur:function(){
+    var ta=ce("textarea","note-ta",{placeholder:randomNotePlaceholder(),onblur:function(){
       var vals=Array.prototype.map.call(d.querySelectorAll(".note-ta"),function(t){return t.value;});
       while(vals.length&&vals[vals.length-1]==="")vals.pop();
       noteExtraBoxes=0;
