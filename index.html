@@ -586,7 +586,7 @@ var editingItinId=null;
 var checkInput="",placeInput="",placeMemo="",shareEmail="",pinName="";
 var placeSuggestions=[],placeSearchTm=null,geoPlaceCache={};
 var tplTab="domestic",tplInput={packing:"",todo:""};
-var showNewTrip=false,showEditTrip=false,showShare=false,showPinModal=false,showMap=false,showNewBudget=false,showGuide=false,showMenu=false,showMyPage=false,guidePage="guide";
+var showNewTrip=false,showEditTrip=false,showShare=false,showPublish=false,showPinModal=false,showMap=false,showNewBudget=false,showGuide=false,showMenu=false,showMyPage=false,guidePage="guide";
 var editDraft=null;
 var publishDraftTabs=null; // 公開設定中に選択中のタブ配列（モーダルを開くとsel.publicTabsで初期化）
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
@@ -1097,6 +1097,7 @@ function render(){
   if(showNewTrip)ap(wrap,renderModal_newTrip());
   if(showEditTrip)ap(wrap,renderModal_editTrip());
   if(showShare)ap(wrap,renderModal_share());
+  if(showPublish)ap(wrap,renderModal_publish());
   if(showPinModal)ap(wrap,renderModal_pin());
   if(showNewBudget)ap(wrap,renderModal_newBudget());
   if(showGuide)ap(wrap,renderModal_guide());
@@ -1790,6 +1791,36 @@ function renderPublishTabPicker(){
   });
   return box;
 }
+// タイムライン公開設定の共通UI（投稿モーダル・編集モーダルで共有）
+// withHeading=true の場合、先頭に見出し「タイムラインに公開」を表示する（編集モーダル用）
+function renderPublishSection(withHeading){
+  var sel=getSel();if(!sel)return ce("div","");
+  var box=ce("div","");
+  if(withHeading){
+    ap(box,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",margin:"4px 0 8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("タイムラインに公開")));
+  }
+  if(publishDraftTabs==null)publishDraftTabs=(sel.publicTabs||["itinerary"]).slice();
+  if(sel.publishedToFeed){
+    var st=ce("div","",{style:{fontSize:"13px",color:"var(--green)",fontWeight:"700",marginBottom:"8px",display:"flex",alignItems:"center",gap:"6px"}});
+    ap(st,svgIcon("check","var(--green)",14),tx("タイムラインに公開中"));ap(box,st);
+    ap(box,renderPublishTabPicker());
+    ap(box,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"8px"},onclick:async function(){var tabs=publishDraftTabs.slice();await upd({publicTabs:tabs});var t=Object.assign({},getSel(),{publicTabs:tabs});await syncFeed(t);publishDraftTabs=null;toast("公開内容を更新しました");render();}}),tx("公開内容を更新する")));
+    ap(box,ap(ce("button","",{style:{width:"100%",padding:"10px",background:"none",border:"1px solid var(--border)",borderRadius:"10px",fontSize:"13px",color:"var(--muted)",cursor:"pointer"},onclick:async function(){await unpublishFeed(sel.id);await upd({publishedToFeed:false});publishDraftTabs=null;toast("タイムラインへの公開を停止しました");render();}}),tx("公開を停止する")));
+  }else{
+    ap(box,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.6"}}),tx("投稿すると、行程など選んだ内容がタイムラインに流れ、他のユーザーがいいね・コメントできます。")));
+    ap(box,renderPublishTabPicker());
+    ap(box,ap(ce("button","btn-ok",{style:{width:"100%",border:"none"},onclick:async function(){if(!(await ensureNickname())){render();return;}var tabs=publishDraftTabs.slice();await upd({publishedToFeed:true,publicTabs:tabs});var t=Object.assign({},getSel(),{publishedToFeed:true,publicTabs:tabs});await syncFeed(t);publishDraftTabs=null;track('feed_publish',{});toast("タイムラインに投稿しました！");render();}}),tx("投稿する")));
+  }
+  return box;
+}
+function renderModal_publish(){
+  var sel=getSel();if(!sel)return ce("div","");
+  var m=mkOverlay(function(){showPublish=false;publishDraftTabs=null;render();});
+  ap(m.modal,ap(ce("div","modal-title",{style:{display:"flex",alignItems:"center",gap:"8px"}}),svgIcon("globe","currentColor",18),tx("タイムラインに投稿")));
+  ap(m.modal,renderPublishSection(false));
+  ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{style:{flex:"1"},onclick:function(){showPublish=false;publishDraftTabs=null;render();}}),tx("閉じる"))));
+  return m.ov;
+}
 function renderModal_share(){
   var sel=getSel();if(!sel)return ce("div","");var m=mkOverlay(function(){showShare=false;publishDraftTabs=null;render();});
   ap(m.modal,ap(ce("div","modal-title",{style:{display:"flex",alignItems:"center",gap:"8px"}}),svgIcon("link","currentColor",18),tx("旅行を共有")));
@@ -1802,21 +1833,6 @@ function renderModal_share(){
   }else{
     ap(m.modal,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.6"}}),tx("リンクを発行すると、ログインなしで誰でも閲覧できます。")));
     ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"16px",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"6px"},onclick:async function(){await enableShare(sel.id);toast("リンクを発行しました！");render();}}),svgIcon("unlock","currentColor",15),tx("閲覧リンクを発行する")));
-  }
-  if(user&&sel.ownerId===user.uid){
-    ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",margin:"4px 0 8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("みんなのタイムラインに公開")));
-    if(sel.publishedToFeed){
-      ap(m.modal,ap(ce("div","",{style:{fontSize:"13px",color:"var(--green)",fontWeight:"700",marginBottom:"8px"}}),tx("✓ タイムラインに公開中")));
-      if(publishDraftTabs==null)publishDraftTabs=(sel.publicTabs||["itinerary"]).slice();
-      ap(m.modal,renderPublishTabPicker());
-      ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"8px"},onclick:async function(){var tabs=publishDraftTabs.slice();await upd({publicTabs:tabs});var t=Object.assign({},getSel(),{publicTabs:tabs});await syncFeed(t);publishDraftTabs=null;toast("公開内容を更新しました");render();}}),tx("公開内容を更新する")));
-      ap(m.modal,ap(ce("button","",{style:{width:"100%",padding:"10px",background:"none",border:"1px solid var(--border)",borderRadius:"10px",fontSize:"13px",color:"var(--muted)",cursor:"pointer",marginBottom:"16px"},onclick:async function(){await unpublishFeed(sel.id);await upd({publishedToFeed:false});publishDraftTabs=null;toast("タイムラインへの公開を停止しました");render();}}),tx("公開を停止する")));
-    }else{
-      ap(m.modal,ap(ce("div","",{style:{fontSize:"13px",color:"var(--muted)",marginBottom:"10px",lineHeight:"1.6"}}),tx("公開すると、行程など選んだ内容がタイムラインに流れ、他のユーザーがいいね・コメントできます。")));
-      if(publishDraftTabs==null)publishDraftTabs=(sel.publicTabs||["itinerary"]).slice();
-      ap(m.modal,renderPublishTabPicker());
-      ap(m.modal,ap(ce("button","btn-ok",{style:{width:"100%",border:"none",marginBottom:"16px"},onclick:async function(){if(!(await ensureNickname())){render();return;}var tabs=publishDraftTabs.slice();await upd({publishedToFeed:true,publicTabs:tabs});var t=Object.assign({},getSel(),{publishedToFeed:true,publicTabs:tabs});await syncFeed(t);publishDraftTabs=null;track('feed_publish',{});toast("タイムラインに公開しました！");render();}}),tx("タイムラインに公開する")));
-    }
   }
   ap(m.modal,ap(ce("div","",{style:{fontSize:"12px",fontWeight:"700",color:"var(--muted)",marginBottom:"8px",textTransform:"uppercase",letterSpacing:"1px"}}),tx("メンバー招待（ログイン必須・編集可能）")));
   (sel.members||[]).forEach(function(mb){
