@@ -1766,16 +1766,16 @@ function openNewTrip(){showNewTrip=true;rpView=null;render();}
 function openEditTrip(){
   var sel=getSel();if(!sel)return;
   editDraft={name:sel.name||"",destination:sel.destination||"",startDate:sel.startDate||"",endDate:sel.endDate||"",type:sel.type||"overseas",regions:(sel.regions||[]).slice()};
-  rpView=null;showEditTrip=true;render();
+  publishDraftTabs=null;rpView=null;showEditTrip=true;render();
 }
 async function saveEditTrip(){
   if(!editDraft||!editDraft.name.trim())return;
   await upd({name:editDraft.name.trim(),destination:editDraft.destination.trim(),startDate:editDraft.startDate,endDate:editDraft.endDate,type:editDraft.type,regions:editDraft.regions.slice()});
-  showEditTrip=false;editDraft=null;toast("保存しました");render();
+  showEditTrip=false;editDraft=null;publishDraftTabs=null;toast("保存しました");render();
 }
 function renderModal_editTrip(){
   if(!editDraft)return ce("div","");
-  var m=mkOverlay(function(){showEditTrip=false;editDraft=null;render();});
+  var m=mkOverlay(function(){showEditTrip=false;editDraft=null;publishDraftTabs=null;render();});
   ap(m.modal,ap(ce("div","modal-title",{style:{display:"flex",alignItems:"center",gap:"7px"}}),svgIcon("pencil","currentColor",17),tx("旅行を編集")));
   var tg=ce("div","fg");ap(tg,ap(ce("label","lbl"),tx("旅行の種類")));
   var tr=typeToggleRow(editDraft.type,function(t){if(editDraft.type!==t){editDraft.type=t;editDraft.regions=[];rpView=null;}render();});
@@ -1789,8 +1789,9 @@ function renderModal_editTrip(){
   var rg=ce("div","fg");ap(rg,ap(ce("label","lbl"),tx(editDraft.type==="overseas"?"行き先の国（複数選択可）":"行き先の都道府県（複数選択可）")));
   ap(rg,renderRegionPicker(editDraft.type,editDraft.regions,function(nm){toggleRegion(editDraft.regions,nm);render();}));
   ap(m.modal,rg);
+  ap(m.modal,renderPublishSection(true));
   var b=ce("button","btn-ok",{onclick:saveEditTrip});ap(b,tx("保存する"));
-  ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{onclick:function(){showEditTrip=false;editDraft=null;render();}}),tx("キャンセル")),b));
+  ap(m.modal,ap(ce("div","modal-acts"),ap(ce("button","btn-cancel",{onclick:function(){showEditTrip=false;editDraft=null;publishDraftTabs=null;render();}}),tx("キャンセル")),b));
   return m.ov;
 }
 
