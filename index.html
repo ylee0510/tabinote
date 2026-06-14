@@ -241,6 +241,15 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .note-readonly{white-space:pre-wrap;font-size:15px;line-height:1.85;color:#1c1917;padding:4px 2px;}
 .note-readonly.note-block{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border);}
 .note-readonly.note-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.note-ai-toggle{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--stamp);border:1.5px solid var(--border);border-radius:16px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;font-family:inherit;margin-bottom:12px;}
+.note-ai-toggle.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.note-ai-panel{background:var(--stamp);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;}
+.note-ai-section-label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;}
+.note-ai-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.note-ai-chip{background:var(--paper);border:1.5px solid var(--border);border-radius:16px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;}
+.note-ai-chip.on{background:#dbeafe;border-color:#1d4ed8;color:#1d4ed8;}
+.note-ai-ask{display:flex;gap:8px;margin-top:12px;}
+.note-ai-ask .finp{flex:1;}
 .weather-city-row{display:flex;gap:8px;margin-bottom:8px;}
 .weather-card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
 .weather-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -594,6 +603,10 @@ var publishDraftTabs=null; // 公開設定中に選択中のタブ配列（モ�
 var weatherCityInput="",weatherCache={},weatherSuggestions=[],weatherSearchTm=null,geoCache={};
 var itinWeatherOpen=false; // 行程タブ内の天気セクション折り畳み状態
 var noteExtraBoxes=0; // メモタブ：保存済みメモに加えて表示する空の入力欄の数
+var showAiMode=false; // メモタブAIモード：パネルの開閉
+var aiThemes=[]; // メモタブAIモード：選択中のテーマキー配列
+var aiQuestion=""; // メモタブAIモード：自由記述の入力値
+var aiLoading=false; // メモタブAIモード：false=待機中／"themes"=テーマ提案生成中／"question"=自由記述回答生成中
 var isViewOnly=false,viewOnlyTrip=null;
 var feedViewId=null; // 現在閲覧中のfeedアイテムID（feed由来の閲覧専用詳細）
 var feedViewItem=null; // 現在閲覧中のfeedアイテム実体（feedItemsまたはprofileFeed由来）
@@ -1041,7 +1054,8 @@ var ICONS={
   chevdown:'<polyline points="6 9 12 15 18 9"/>',
   chevup:'<polyline points="18 15 12 9 6 15"/>',
   image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
-  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  sparkles:'<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>'
 };
 function svgIcon(name,color,size){var s=size||16;var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+(color||"currentColor")+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||"")+'</svg>';return w;}
 function heartIcon(filled,size,color){var s=size||16;var c=color||(filled?"#e0526a":"currentColor");var w=ce("span","",{style:{display:"inline-flex",width:s+"px",height:s+"px",flexShrink:"0"}});w.innerHTML='<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="'+(filled?c:"none")+'" stroke="'+c+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS.heart+'</svg>';return w;}
@@ -1927,6 +1941,17 @@ function renderWeather(sel){
   return d;
 }
 
+// メモタブ「AIモード」のテーマ定義（チップ表示・見出し・APIへの送信に使用）
+var AI_THEME_DEFS=[
+  {key:"history",label:"歴史"},
+  {key:"language",label:"言語・あいさつ"},
+  {key:"shops",label:"おすすめのお店・グルメ"},
+  {key:"spots",label:"おすすめのスポット"},
+  {key:"transport",label:"交通・移動"},
+  {key:"safety",label:"治安・物価・注意事項"},
+  {key:"food_culture",label:"食事・グルメ事情"},
+  {key:"events",label:"イベント・祭り"}
+];
 function noteList(sel){
   var n=sel&&sel.note;
   if(Array.isArray(n))return n;
