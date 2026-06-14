@@ -1,0 +1,7 @@
+{
+  "name": "tavy-ai-memo-function",
+  "private": true,
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
