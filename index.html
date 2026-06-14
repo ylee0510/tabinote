@@ -1973,6 +1973,12 @@ function renderNote(sel){
     return d;
   }
   ap(d,ap(ce("div","note-hint"),tx("旅する国や街の歴史・言葉や気に入ったお店、気づいたことなど、自由に書き残せるノートです。タイムラインにも公開できます。")));
+  if(!isGuest&&user){
+    var aiBtn=ce("button","note-ai-toggle"+(showAiMode?" on":""),{type:"button",onclick:function(){showAiMode=!showAiMode;render();}});
+    ap(aiBtn,svgIcon("sparkles","currentColor",15),tx("AIモード"));
+    ap(d,aiBtn);
+    if(showAiMode)ap(d,renderAiPanel(sel));
+  }
   var boxCount=Math.max(1,notes.length+noteExtraBoxes);
   for(var i=0;i<boxCount;i++){
     var row=ce("div","note-block-wrap");
@@ -1996,6 +2002,101 @@ function renderNote(sel){
   }
   ap(d,ap(ce("button","note-add-btn",{onclick:function(){noteExtraBoxes++;render();}}),tx("＋ 追加")));
   return d;
+}
+function renderAiPanel(sel){
+  var panel=ce("div","note-ai-panel");
+  ap(panel,ap(ce("div","note-ai-section-label"),tx("テーマを選んでAIに提案してもらう")));
+  var chips=ce("div","note-ai-chips");
+  AI_THEME_DEFS.forEach(function(t){
+    var on=aiThemes.indexOf(t.key)>=0;
+    var chip=ce("button","note-ai-chip"+(on?" on":""),{type:"button",onclick:function(){
+      var i=aiThemes.indexOf(t.key);
+      if(i>=0)aiThemes.splice(i,1);else aiThemes.push(t.key);
+      render();
+    }});
+    ap(chip,tx(t.label));
+    ap(chips,chip);
+  });
+  ap(panel,chips);
+  var genBtn=ce("button","btn-ok",{type:"button",style:{width:"100%",border:"none"},onclick:function(){generateAiThemes();}});
+  genBtn.disabled=!!aiLoading||aiThemes.length===0;
+  ap(genBtn,tx(aiLoading==="themes"?"生成中...":"AIで提案"));
+  ap(panel,genBtn);
+  ap(panel,ap(ce("div","note-ai-section-label",{style:{marginTop:"14px"}}),tx("AIに質問する")));
+  var askRow=ce("div","note-ai-ask");
+  var input=ce("input","finp",{type:"text",maxlength:"200",placeholder:"例: 子連れでも楽しめるスポットは？"});
+  input.value=aiQuestion;
+  input.disabled=!!aiLoading;
+  var askBtn=ce("button","btn-ok",{type:"button",style:{flex:"0 0 auto",border:"none"},onclick:function(){askAiQuestion();}});
+  askBtn.disabled=!!aiLoading||!aiQuestion.trim();
+  input.oninput=function(){aiQuestion=input.value;askBtn.disabled=!!aiLoading||!aiQuestion.trim();};
+  ap(askBtn,tx(aiLoading==="question"?"生成中...":"聞く"));
+  ap(askRow,input,askBtn);
+  ap(panel,askRow);
+  return panel;
+}
+async function callAiMemo(payload){
+  var token=await user.getIdToken();
+  var res=await fetch("/.netlify/functions/ai-memo",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body:JSON.stringify(payload)
+  });
+  var data;
+  try{data=await res.json();}catch(e){data={};}
+  if(!res.ok||data.error)throw new Error(data.error||"AI生成に失敗しました");
+  return data;
+}
+function aiBasePayload(){
+  var sel=getSel()||{};
+  return {destination:sel.destination||"",regions:sel.regions||[],type:sel.type||"overseas",startDate:sel.startDate||"",endDate:sel.endDate||""};
+}
+async function generateAiThemes(){
+  if(aiLoading||aiThemes.length===0)return;
+  aiLoading="themes";render();
+  try{
+    var payload=Object.assign(aiBasePayload(),{mode:"themes",themes:aiThemes.slice()});
+    var data=await callAiMemo(payload);
+    var sel=getSel();
+    if(sel){
+      var notes=noteList(sel).slice();
+      (data.results||[]).forEach(function(r){
+        var def=AI_THEME_DEFS.find(function(t){return t.key===r.theme;});
+        var label=def?def.label:r.theme;
+        notes.push("【"+label+"】(AI生成)\n"+r.text);
+      });
+      noteExtraBoxes=0;
+      aiThemes=[];
+      await upd({note:notes});
+    }
+  }catch(e){
+    console.error(e);
+    toast("AI生成に失敗しました。しばらくしてから再度お試しください。");
+  }finally{
+    aiLoading=false;render();
+  }
+}
+async function askAiQuestion(){
+  var q=aiQuestion.trim();
+  if(aiLoading||!q)return;
+  aiLoading="question";render();
+  try{
+    var payload=Object.assign(aiBasePayload(),{mode:"question",question:q});
+    var data=await callAiMemo(payload);
+    var sel=getSel();
+    if(sel){
+      var notes=noteList(sel).slice();
+      notes.push("【AIへの質問: "+q+"】(AI生成)\n"+(data.answer||""));
+      noteExtraBoxes=0;
+      aiQuestion="";
+      await upd({note:notes});
+    }
+  }catch(e){
+    console.error(e);
+    toast("AI生成に失敗しました。しばらくしてから再度お試しください。");
+  }finally{
+    aiLoading=false;render();
+  }
 }
 function mkCurSelect(current, onchange){
   var sel=ce("select","",{style:{flex:"1",padding:"9px 10px",border:"1.5px solid var(--border)",borderRadius:"10px",fontSize:"13px",color:"var(--ink)",background:"var(--paper)",fontFamily:"inherit",outline:"none"}});
