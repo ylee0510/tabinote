@@ -1327,7 +1327,10 @@ function renderList(){
       var leftGrp=ce("div","",{style:{display:"flex",alignItems:"center",gap:"14px"}});
       var delBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"#ccc",cursor:"pointer",fontFamily:"inherit"},onclick:function(e){e.stopPropagation();deleteTrip(trip.id);}});ap(delBtn,tx("✕ 削除"));
       var edBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:"5px"},onclick:function(e){e.stopPropagation();selId=trip.id;openEditTrip();}});ap(edBtn,svgIcon("pencil","currentColor",13),tx("編集"));
-      ap(leftGrp,delBtn,edBtn);
+      var edGrp=ce("div","",{style:{display:"inline-flex",alignItems:"center",gap:"5px"}});
+      ap(edGrp,edBtn);
+      if(trip.editedAt&&trip.editedAt.seconds){var edTs=ce("span","",{style:{fontSize:"11px",color:"#bbb"}});ap(edTs,tx(relTime(trip.editedAt)));ap(edGrp,edTs);}
+      ap(leftGrp,delBtn,edGrp);
       var dupBtn=ce("button","",{style:{background:"none",border:"none",fontSize:"12px",color:"var(--muted)",cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:"5px"},onclick:function(e){e.stopPropagation();duplicateTrip(trip);}});ap(dupBtn,copyIcon("currentColor",13),tx("複製する"));
       ap(dupRow,leftGrp,dupBtn);ap(body,dupRow);
     }
@@ -1784,7 +1787,7 @@ function openEditTrip(){
 }
 async function saveEditTrip(){
   if(!editDraft||!editDraft.name.trim())return;
-  await upd({name:editDraft.name.trim(),destination:editDraft.destination.trim(),startDate:editDraft.startDate,endDate:editDraft.endDate,type:editDraft.type,regions:editDraft.regions.slice()});
+  await upd({name:editDraft.name.trim(),destination:editDraft.destination.trim(),startDate:editDraft.startDate,endDate:editDraft.endDate,type:editDraft.type,regions:editDraft.regions.slice(),editedAt:firebase.firestore.FieldValue.serverTimestamp()});
   showEditTrip=false;editDraft=null;publishDraftTabs=null;toast("保存しました");render();
 }
 function renderModal_editTrip(){
