@@ -191,7 +191,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','Noto Sans JP',sans-serif;background
 .type-row{display:flex;gap:8px;margin-bottom:12px;}
 .type-btn{flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--paper);color:var(--muted);font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
 .type-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;z-index:100;backdrop-filter:blur(2px);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:100;}
 .modal{background:var(--paper);border-radius:22px 22px 0 0;padding:22px 18px 44px;width:100%;max-width:480px;margin:0 auto;max-height:92vh;overflow-y:auto;animation:up 0.22s ease;}
 @keyframes up{from{transform:translateY(50px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 .modal-bar{width:34px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 18px;}
@@ -1757,7 +1757,16 @@ function renderRegionPicker(mode,selected,onToggle){
 }
 // selected 配列に対するトグル（破壊的）。呼び出し側で render() する。
 function toggleRegion(arr,nm){var i=arr.indexOf(nm);if(i>=0)arr.splice(i,1);else arr.push(nm);}
-function mkOverlay(closeF){var ov=ce("div","overlay",{onclick:function(e){if(e.target===ov)closeF();}});var modal=ce("div","modal",{onclick:function(e){e.stopPropagation();}});ap(modal,ce("div","modal-bar"));ap(ov,modal);return{ov:ov,modal:modal};}
+function mkOverlay(closeF){
+  var ov=ce("div","overlay");
+  var modal=ce("div","modal");
+  // pointerdownで判定することでAndroidキーボード展開時のレイアウトシフトによる誤閉じを防ぐ
+  var _pdOnOv=false;
+  ov.addEventListener("pointerdown",function(e){_pdOnOv=(e.target===ov);});
+  ov.addEventListener("pointerup",function(e){if(_pdOnOv&&e.target===ov)closeF();_pdOnOv=false;});
+  modal.addEventListener("pointerdown",function(e){e.stopPropagation();});
+  ap(modal,ce("div","modal-bar"));ap(ov,modal);return{ov:ov,modal:modal};
+}
 // 行程・持ち物・ToDo・スポット共通の削除ボタン（枠なし✕／色は天気タブと同じ濃さ）
 function mkDelBtn(fn){var b=ce("button","",{style:{background:"none",border:"none",color:"var(--muted)",fontSize:"15px",cursor:"pointer",padding:"0 2px",flexShrink:"0",lineHeight:"1"},onclick:function(e){e.stopPropagation();fn();}});ap(b,tx("✕"));return b;}
 
