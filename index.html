@@ -2056,7 +2056,7 @@ async function callAiMemo(payload){
   });
   var data;
   try{data=await res.json();}catch(e){data={};}
-  if(!res.ok||data.error)throw new Error(data.error||"AI生成に失敗しました");
+  if(!res.ok||data.error){var emsg=data.error||"AI生成に失敗しました";if(data.debug)emsg+=" ["+data.debug+"]";throw new Error(emsg);}
   return data;
 }
 function aiBasePayload(){
@@ -2112,9 +2112,10 @@ async function askAiQuestion(){
 }
 function aiErrMsg(e){
   var msg=e&&e.message||"";
-  if(msg==="サーバー設定が不完全です")return"⚙️ サーバー設定エラー（管理者にお問い合わせください）";
-  if(msg==="認証が必要です")return"🔑 再ログインしてからお試しください";
-  if(msg==="AIの応答を解析できませんでした")return"AI応答の解析に失敗しました。再度お試しください";
+  if(msg.indexOf("サーバー設定が不完全です")>=0)return"⚙️ サーバー設定エラー（管理者にお問い合わせください）";
+  if(msg.indexOf("認証が必要です")>=0)return"🔑 再ログインしてからお試しください";
+  if(msg.indexOf("AIの応答を解析できませんでした")>=0)return"AI応答の解析に失敗しました。再度お試しください";
+  if(msg.indexOf("[")>=0)return msg; // debug情報付き：そのまま表示
   return"AI生成に失敗しました。しばらくしてから再度お試しください。";
 }
 function mkCurSelect(current, onchange){

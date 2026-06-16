@@ -144,6 +144,6 @@ exports.handler = async function (event) {
     return resp(400, { error: "modeが不正です" });
   } catch (e) {
     console.error(e);
-    return resp(500, { error: "AI生成に失敗しました" });
+    return resp(500, { error: "AI生成に失敗しました", debug: e.message });
   }
 };
