@@ -702,7 +702,7 @@ async function loginGoogle(){
   }
 }
 async function logout(){if(tripsUnsub){tripsUnsub();tripsUnsub=null;}if(tplUnsub){tplUnsub();tplUnsub=null;}await auth.signOut();trips=[];view="list";selId=null;render();}
-async function upd(patch){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var sel=getSel();if(!sel)return;await db.collection("trips").doc(sel.id).update(patch);
+async function upd(patch){if(isGuest){toast("💡 保存するにはログインが必要です");return;}var sel=getSel();if(!sel)return;await db.collection("trips").doc(sel.id).update(Object.assign({editedAt:firebase.firestore.FieldValue.serverTimestamp()},patch));
   var fresh=Object.assign({},sel,patch);
   if(fresh.publishedToFeed){try{await syncFeed(fresh);}catch(e){console.warn("feed resync:",e);}}
 }
@@ -1787,7 +1787,7 @@ function openEditTrip(){
 }
 async function saveEditTrip(){
   if(!editDraft||!editDraft.name.trim())return;
-  await upd({name:editDraft.name.trim(),destination:editDraft.destination.trim(),startDate:editDraft.startDate,endDate:editDraft.endDate,type:editDraft.type,regions:editDraft.regions.slice(),editedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await upd({name:editDraft.name.trim(),destination:editDraft.destination.trim(),startDate:editDraft.startDate,endDate:editDraft.endDate,type:editDraft.type,regions:editDraft.regions.slice()});
   showEditTrip=false;editDraft=null;publishDraftTabs=null;toast("保存しました");render();
 }
 function renderModal_editTrip(){
