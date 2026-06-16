@@ -2083,7 +2083,7 @@ async function generateAiThemes(){
     }
   }catch(e){
     console.error(e);
-    toast("AI生成に失敗しました。しばらくしてから再度お試しください。");
+    toast(aiErrMsg(e));
   }finally{
     aiLoading=false;render();
   }
@@ -2105,10 +2105,17 @@ async function askAiQuestion(){
     }
   }catch(e){
     console.error(e);
-    toast("AI生成に失敗しました。しばらくしてから再度お試しください。");
+    toast(aiErrMsg(e));
   }finally{
     aiLoading=false;render();
   }
+}
+function aiErrMsg(e){
+  var msg=e&&e.message||"";
+  if(msg==="サーバー設定が不完全です")return"⚙️ サーバー設定エラー（管理者にお問い合わせください）";
+  if(msg==="認証が必要です")return"🔑 再ログインしてからお試しください";
+  if(msg==="AIの応答を解析できませんでした")return"AI応答の解析に失敗しました。再度お試しください";
+  return"AI生成に失敗しました。しばらくしてから再度お試しください。";
 }
 function mkCurSelect(current, onchange){
   var sel=ce("select","",{style:{flex:"1",padding:"9px 10px",border:"1.5px solid var(--border)",borderRadius:"10px",fontSize:"13px",color:"var(--ink)",background:"var(--paper)",fontFamily:"inherit",outline:"none"}});
