@@ -31,26 +31,33 @@ function tripContextText(body) {
   return lines.join("\n");
 }
 
-async function callGemini(prompt, opts) {
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash-lite";
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + process.env.GEMINI_API_KEY;
-  const generationConfig = { maxOutputTokens: opts.maxOutputTokens || 500 };
-  if (opts.responseMimeType) generationConfig.responseMimeType = opts.responseMimeType;
+async function callGroq(prompt, opts) {
+  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  const body = {
+    model: model,
+    messages: [{ role: "user", content: prompt }],
+    max_tokens: opts.maxTokens || 500,
+    temperature: 0.7
+  };
+  if (opts.jsonMode) body.response_format = { type: "json_object" };
 
-  const res = await fetch(url, {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig })
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + process.env.GROQ_API_KEY
+    },
+    body: JSON.stringify(body)
   });
+
   if (!res.ok) {
     const errBody = await res.text();
-    throw new Error("Gemini API error: " + res.status + " " + errBody);
+    throw new Error("Groq API error: " + res.status + " " + errBody);
   }
+
   const data = await res.json();
-  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
-    data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
-    data.candidates[0].content.parts[0].text;
-  if (!text) throw new Error("Gemini API returned no text");
+  const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!text) throw new Error("Groq API returned no text");
   return text;
 }
 
@@ -63,10 +70,10 @@ async function handleThemes(body) {
   const prompt = context + "\n\n" +
     "上記の旅行に関する情報をもとに、以下の各テーマについて日本語で150〜250文字程度で説明してください。\n" +
     instructions + "\n\n" +
-    "出力は必ず次のJSON形式のみで返してください（説明文や前置き、コードブロック記号は不要）:\n" +
+    "必ず次のJSON形式のみで返してください（説明文や前置き不要）:\n" +
     '{"results":[{"theme":"テーマキー","text":"本文"}]}';
 
-  const raw = await callGemini(prompt, { responseMimeType: "application/json", maxOutputTokens: themes.length * 300 });
+  const raw = await callGroq(prompt, { jsonMode: true, maxTokens: themes.length * 300 });
   let parsed;
   try { parsed = JSON.parse(raw); } catch (e) { return { statusCode: 500, body: { error: "AIの応答を解析できませんでした" } }; }
   if (!parsed || !Array.isArray(parsed.results)) return { statusCode: 500, body: { error: "AIの応答を解析できませんでした" } };
@@ -78,7 +85,7 @@ async function handleQuestion(body) {
   if (!question) return { statusCode: 400, body: { error: "questionが不正です" } };
   const context = tripContextText(body);
   const prompt = context + "\n\n上記の旅行に関する次の質問に、日本語で200〜300文字程度で回答してください。\n質問: " + question;
-  const text = await callGemini(prompt, { maxOutputTokens: 500 });
+  const text = await callGroq(prompt, { maxTokens: 500 });
   return { statusCode: 200, body: { answer: text.trim() } };
 }
 
@@ -92,7 +99,7 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT || !process.env.GEMINI_API_KEY) {
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT || !process.env.GROQ_API_KEY) {
     return res.status(500).json({ error: "サーバー設定が不完全です" });
   }
 
