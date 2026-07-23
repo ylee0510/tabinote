@@ -32,7 +32,7 @@ function tripContextText(body) {
 }
 
 async function callGemini(prompt, opts) {
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + process.env.GEMINI_API_KEY;
   const generationConfig = { maxOutputTokens: opts.maxOutputTokens || 500 };
   if (opts.responseMimeType) generationConfig.responseMimeType = opts.responseMimeType;
