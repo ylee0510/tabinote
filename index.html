@@ -2116,7 +2116,7 @@ function aiErrMsg(e){
   if(msg.indexOf("サーバー設定が不完全です")>=0)return"⚙️ サーバー設定エラー（管理者にお問い合わせください）";
   if(msg.indexOf("認証が必要です")>=0)return"🔑 再ログインしてからお試しください";
   if(msg.indexOf("AIの応答を解析できませんでした")>=0)return"AI応答の解析に失敗しました。再度お試しください";
-  if(msg.indexOf("[HTTP")>=0)return msg; // debug情報付き：そのまま表示
+  if(msg.indexOf(" | ")>=0)return msg; // debug情報付き：そのまま表示
   return"AI生成に失敗しました。しばらくしてから再度お試しください。";
 }
 function mkCurSelect(current, onchange){
