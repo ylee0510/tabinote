@@ -122,6 +122,6 @@ module.exports = async function handler(req, res) {
     return res.status(result.statusCode).json(result.body);
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: "AI生成に失敗しました", debug: e.message });
+    return res.status(500).json({ error: "AI生成に失敗しました" });
   }
 };
