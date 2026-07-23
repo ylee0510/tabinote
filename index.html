@@ -2055,13 +2055,9 @@ async function callAiMemo(payload){
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
     body:JSON.stringify(payload)
   });
-  var rawText="";var data={};
-  try{rawText=await res.text();data=JSON.parse(rawText);}catch(e){data={};}
-  if(!res.ok||data.error){
-    var emsg="[HTTP "+res.status+"] "+(data.error||rawText.slice(0,120)||"no body");
-    if(data.debug)emsg+=" / "+data.debug;
-    throw new Error(emsg);
-  }
+  var data;
+  try{data=await res.json();}catch(e){data={};}
+  if(!res.ok||data.error)throw new Error(data.error||"AI生成に失敗しました");
   return data;
 }
 function aiBasePayload(){
