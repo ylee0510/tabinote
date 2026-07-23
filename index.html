@@ -2057,7 +2057,7 @@ async function callAiMemo(payload){
   });
   var data;
   try{data=await res.json();}catch(e){data={};}
-  if(!res.ok||data.error)throw new Error(data.error||"AI生成に失敗しました");
+  if(!res.ok||data.error)throw new Error((data.error||"err")+(data.debug?" | "+data.debug:""));
   return data;
 }
 function aiBasePayload(){
